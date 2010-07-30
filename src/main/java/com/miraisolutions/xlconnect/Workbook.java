@@ -7,7 +7,6 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
-import com.miraisolutions.xlconnect.utils.WorkbookUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,6 +20,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -31,10 +31,14 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyles;
 
 
 /**
  * Microsoft Excel Workbook Entity
+ *
+ * This is the main entity when working with XLConnect
  * 
  * @author Martin Studer, Mirai Solutions GmbH
  */
@@ -44,8 +48,9 @@ public final class Workbook {
     private final static Logger logger = Logger.getLogger("com.miraisolutions.xlconnect");
 
     // Prefix
-    private final static String HEADER = "H";
-    private final static String COLUMN = "C";
+    private final static String HEADER = "Header";
+    private final static String COLUMN = "Column";
+    private final static String SEP = ".";
 
     // Default style names
     private final static String XLCONNECT_STYLE = "XLCONNECT_STYLE";
@@ -63,8 +68,8 @@ public final class Workbook {
     private File excelFile;
     // Style action
     private StyleAction styleAction = StyleAction.XLCONNECT;
-    // Style name
-    private String styleName = null;
+    // Style name prefix
+    private String styleNamePrefix = null;
     // Cell style map
     private Map<String, Map<String, CellStyle>> stylesMap = new HashMap<String, Map<String, CellStyle>>(10);
 
@@ -138,12 +143,12 @@ public final class Workbook {
         this.styleAction = styleAction;
     }
 
-    public String getStyleName() {
-        return styleName;
+    public String getStyleNamePrefix() {
+        return styleNamePrefix;
     }
 
-    public void setStyleName(String styleName) {
-        this.styleName = styleName;
+    public void setStyleNamePrefix(String styleNamePrefix) {
+        this.styleNamePrefix = styleNamePrefix;
     }
     
     public String[] getSheets() {
@@ -745,6 +750,30 @@ public final class Workbook {
         addImage(new File(filename), originalSize, name, location, overwrite);
     }
 
+    public CellStyle createCellStyle(String name) {
+        if(getCellStyle(name) == null) {
+            if(isHSSF()) {
+                HSSFWorkbook wb = (HSSFWorkbook) workbook;
+                HSSFCellStyle cs = wb.createCellStyle();
+                cs.setUserStyleName(name);
+                return cs;
+            } else if(isXSSF()) {
+                XSSFWorkbook wb = (XSSFWorkbook) workbook;
+                // TODO: change this once possible
+                CTCellStyles ctCellStyles = wb.getStylesSource().getCTStylesheet().getCellStyles();
+                if(ctCellStyles == null) ctCellStyles = wb.getStylesSource().getCTStylesheet().addNewCellStyles();
+                CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
+                ctCellStyle.setName(name);
+                return getCellStyle(name);
+            }
+            
+            return null;
+        } else {
+            logger.log(Level.SEVERE, "Cell style with name '" + name + "' already exists!");
+            throw new IllegalArgumentException("Cell style with name '" + name + "' already exists!");
+        }
+    }
+
     public void save() throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Saving workbook to '" + excelFile.getCanonicalPath() + "'");
         FileOutputStream fos = new FileOutputStream(excelFile);
@@ -848,6 +877,48 @@ public final class Workbook {
         return columnType;
     }
 
+    /**
+     * Gets a cell style by name.
+     * Currently there does not exist a nice way to get a style by name from an XSSF
+     * document - so currently this goes via "internal" XML fragment classes.
+     *
+     * @param name  Cell style name
+     * @return      The corresponding cell style if there exists one with the specified name;
+     *              null otherwise
+     */
+    private CellStyle getCellStyle(String name) {
+        short nStyles = workbook.getNumCellStyles();
+        
+        if(isHSSF()) {
+            HSSFWorkbook wb = (HSSFWorkbook) workbook;
+            for(short i = 0; i < nStyles; i++) {
+                HSSFCellStyle cs = wb.getCellStyleAt(i);
+                String userStyleName = cs.getUserStyleName();
+                if(userStyleName != null && cs.getUserStyleName().equals(name)) return cs;
+            }
+        } else if(isXSSF()) {
+            XSSFWorkbook wb = (XSSFWorkbook) workbook;
+            // TODO: change this once possible
+            CTCellStyles cellStyles = wb.getStylesSource().getCTStylesheet().getCellStyles();
+            if(cellStyles != null) {
+                for(short i = 0; i < nStyles; i++) {
+                   if(cellStyles.getCellStyleArray(i).getName().equals(name)) return wb.getCellStyleAt(i);
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Determines the cell styles for headers and columns by column based on the defined style action.
+     *
+     * @param data      Data frame to be written
+     * @param sheet     Worksheet
+     * @param startRow  Start row in specified sheet for beginning to write the specified data frame
+     * @param startCol  Start column in specified sheet for beginning to write the specified data frame
+     * @return          A mapping of header/column indices to cell styles
+     */
     private Map<String, CellStyle> getStyles(DataFrame data, Sheet sheet, int startRow, int startCol) {
         Map<String, CellStyle> cstyles = new HashMap<String, CellStyle>(data.columns());
 
@@ -873,6 +944,7 @@ public final class Workbook {
                             cstyles.put(COLUMN + i, xlconnectStyles.get(STRING_STYLE));
                             break;
                         default:
+                            logger.log(Level.SEVERE, "Unknown column type detected!");
                             throw new IllegalArgumentException("Unknown column type detected!");
                     }
                 }
@@ -890,35 +962,60 @@ public final class Workbook {
                     cstyles.put(COLUMN + i, cell.getCellStyle());
                 }
                 break;
-            case STYLE_NAME:
-                if(isHSSF()) {
-                    HSSFWorkbook wb = (HSSFWorkbook) workbook;
-                    if(data.hasColumnHeader()) {
-                        for(int i = 0; i < data.columns(); i++)
-                            cstyles.put(HEADER + i, WorkbookUtils.findCellStyleByName(wb, styleName + "_" + HEADER_STYLE));
-                    }
+            case STYLE_NAME_PREFIX:
+                if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++) {
-                        switch(data.getColumnType(i)) {
-                            case Boolean:
-                                cstyles.put(COLUMN + i, WorkbookUtils.findCellStyleByName(wb, styleName + "_" + BOOLEAN_STYLE));
-                                break;
-                            case DateTime:
-                                cstyles.put(COLUMN + i, WorkbookUtils.findCellStyleByName(wb, styleName + "_" + DATETIME_STYLE));
-                                break;
-                            case Numeric:
-                                cstyles.put(COLUMN + i, WorkbookUtils.findCellStyleByName(wb, styleName + "_" + NUMERIC_STYLE));
-                                break;
-                            case String:
-                                cstyles.put(COLUMN + i, WorkbookUtils.findCellStyleByName(wb, styleName + "_" + STRING_STYLE));
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unknown column type detected!");
+                        String prefix = styleNamePrefix + SEP + HEADER;
+                        // Check for style <STYLE_NAME_PREFIX><SEP><HEADER><SEP><COLUMN_NAME>
+                        CellStyle cs = getCellStyle(prefix + SEP + data.getColumnName(i));
+                        // Check for style <STYLE_NAME_PREFIX><SEP><HEADER><SEP><COLUMN_INDEX>
+                        if(cs == null) {
+                            logger.log(Level.INFO, "No header style for column '" + data.getColumnName(i) +
+                                    "' (specified by column name) found.");
+                            cs = getCellStyle(prefix + SEP + i);
                         }
+                        // Check for style <STYLE_NAME_PREFIX><SEP><HEADER>
+                        if(cs == null) {
+                            logger.log(Level.INFO, "No header style for column '" + data.getColumnName(i) +
+                                    "' (specified by index) found.");
+                            cs = getCellStyle(prefix);
+                        }
+                        if(cs == null) {
+                            logger.log(Level.WARNING, "No header style found for header '" +
+                                    data.getColumnName(i) + "' - taking default");
+                            cs = workbook.getCellStyleAt((short)0);
+                        }
+                        
+                        cstyles.put(HEADER + i, cs);
                     }
-                } else
-                    throw new IllegalArgumentException("Style name action not supported for XSSF worksheets!");
+                }
+                for(int i = 0; i < data.columns(); i++) {
+                    String prefix = styleNamePrefix + SEP + COLUMN;
+                    // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><COLUMN_NAME>
+                    CellStyle cs = getCellStyle(prefix + SEP + data.getColumnName(i));
+                    // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><COLUMN_INDEX>
+                    if(cs == null) {
+                        logger.log(Level.INFO, "No column style for column '" + data.getColumnName(i) +
+                                "' (specified by column name) found.");
+                        cs = getCellStyle(prefix + SEP + i);
+                    }
+                    // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><DATA_TYPE>
+                    if(cs == null) {
+                        logger.log(Level.INFO, "No column style for column '" + data.getColumnName(i) +
+                                "' (specified by index) found.");
+                        cs = getCellStyle(prefix + SEP + data.getColumnType(i).toString());
+                    }
+                    if(cs == null) {
+                        logger.log(Level.WARNING, "No column style found for column '" +
+                                data.getColumnName(i) + "' - taking default");
+                        cs = workbook.getCellStyleAt((short)0);
+                    }
+
+                    cstyles.put(COLUMN + i, cs);
+                }
                 break;
             default:
+                logger.log(Level.SEVERE, "Style action not supported!");
                 throw new IllegalArgumentException("Style action not supported!");
         }
 

@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import org.apache.poi.ss.usermodel.CellStyle;
 
 /**
  * Hello world!
@@ -58,6 +59,13 @@ public class App
         // Add images
         workbook.addImage("C:/temp/mirai_solutions1.jpg", true, "Mirai1", "Image!$B$3:$D$5", true);
         workbook.addImage("C:/temp/mirai-solutions2.jpg", false, "Mirai2", "Image!$B$10", true);
+
+        /** Custom style **/
+        CellStyle cs = workbook.createCellStyle("MyPersonalStyle.Header");
+        cs.setBorderBottom(CellStyle.BORDER_THICK);
+        workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
+        workbook.setStyleNamePrefix("MyPersonalStyle");
+        workbook.writeNamedRegion(df, "Somewhere", "Somewhere!$C$5", true);
 
         workbook.save();
 

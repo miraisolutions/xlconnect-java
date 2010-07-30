@@ -10,5 +10,5 @@ package com.miraisolutions.xlconnect;
  * @author mstuder
  */
 public enum StyleAction {
-    XLCONNECT, PREDEFINED, STYLE_NAME
+    XLCONNECT, PREDEFINED, STYLE_NAME_PREFIX;
 }
