@@ -29,10 +29,16 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.xmlbeans.impl.schema.SchemaTypeImpl;
+import org.apache.xmlbeans.impl.values.XmlObjectBase;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyleXfs;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyles;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTTableStyles;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTXf;
 
 
 /**
@@ -63,7 +69,7 @@ public final class Workbook {
     private final static String DATETIME_STYLE = "DateTime";
 
     // Apache POI workbook instance
-    private org.apache.poi.ss.usermodel.Workbook workbook;
+    private final org.apache.poi.ss.usermodel.Workbook workbook;
     // Underlying file instance
     private File excelFile;
     // Style action
@@ -71,7 +77,7 @@ public final class Workbook {
     // Style name prefix
     private String styleNamePrefix = null;
     // Cell style map
-    private Map<String, Map<String, CellStyle>> stylesMap = new HashMap<String, Map<String, CellStyle>>(10);
+    private final Map<String, Map<String, CellStyle>> stylesMap = new HashMap<String, Map<String, CellStyle>>(10);
 
 
     /**
@@ -760,10 +766,57 @@ public final class Workbook {
             } else if(isXSSF()) {
                 XSSFWorkbook wb = (XSSFWorkbook) workbook;
                 // TODO: change this once possible
+//                CTTableStyles ctTableStyles = wb.getStylesSource().getCTStylesheet().getTableStyles();
+//                if(ctTableStyles == null) {
+//                    ctTableStyles = wb.getStylesSource().getCTStylesheet().addNewTableStyles();
+//                    ctTableStyles.setCount(0);
+//                    ctTableStyles.setDefaultTableStyle("TableStyleMedium9");
+//                    ctTableStyles.setDefaultPivotStyle("PivotStyleLight16");
+//                }
+
+                CTCellStyleXfs ctCellStyleXfs = wb.getStylesSource().getCTStylesheet().getCellStyleXfs();
+                if(ctCellStyleXfs == null) {
+                    ctCellStyleXfs = wb.getStylesSource().getCTStylesheet().addNewCellStyleXfs();
+                    ctCellStyleXfs.setCount(0);
+                }
+//                if(ctCellStyleXfs.getCount() == 0) {
+//                    CTXf standardXf = ctCellStyleXfs.addNewXf();
+//                    standardXf.setNumFmtId(0);
+//                    standardXf.setFontId(0);
+//                    standardXf.setFillId(0);
+//                    standardXf.setBorderId(0);
+//                    ctCellStyleXfs.setCount(1);
+//                }
+//
                 CTCellStyles ctCellStyles = wb.getStylesSource().getCTStylesheet().getCellStyles();
-                if(ctCellStyles == null) ctCellStyles = wb.getStylesSource().getCTStylesheet().addNewCellStyles();
+                if(ctCellStyles == null) {
+                    ctCellStyles = wb.getStylesSource().getCTStylesheet().addNewCellStyles();
+                    ctCellStyles.setCount(0);
+//                    CTCellStyle standardCellStyle = ctCellStyles.addNewCellStyle();
+//                    standardCellStyle.setName("Standard");
+//                    standardCellStyle.setXfId(0);
+//                    standardCellStyle.setBuiltinId(0);
+//                    ctCellStyles.setCount(1);
+                }
+
+                long count = ctCellStyles.getCount() + 1;
+                
                 CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
                 ctCellStyle.setName(name);
+                ctCellStyle.setXfId(count - 1);
+
+//                CTXf ctXf = ctCellStyleXfs.addNewXf();
+//                ctXf.setNumFmtId(0);
+//                ctXf.setFontId(0);
+//                ctXf.setFillId(0);
+//                ctXf.setBorderId(0);
+
+                ctCellStyles.setCount(count);
+//                ctCellStyleXfs.setCount(count);
+
+                XSSFCellStyle cs = wb.createCellStyle();
+                long id = cs.getCoreXf().getXfId();
+
                 return getCellStyle(name);
             }
             
@@ -901,9 +954,16 @@ public final class Workbook {
             // TODO: change this once possible
             CTCellStyles cellStyles = wb.getStylesSource().getCTStylesheet().getCellStyles();
             if(cellStyles != null) {
-                for(short i = 0; i < nStyles; i++) {
-                   if(cellStyles.getCellStyleArray(i).getName().equals(name)) return wb.getCellStyleAt(i);
+                // for(short i = 0; i < nStyles; i++) {
+                long count = cellStyles.getCount();
+                for(long ii = 0; ii < count; ii++) {
+                    int i = (int) ii;
+                    if(cellStyles.getCellStyleArray(i).getName().equals(name))
+                        return wb.getStylesSource().getStyleAt(i);
                 }
+//                for(short i = 0; i < nStyles; i++) {
+//                   if(cellStyles.getCellStyleArray(i).getName().equals(name)) return wb.getCellStyleAt(i);
+//                }
             }
         }
         

@@ -3,12 +3,12 @@
  * and open the template in the editor.
  */
 
-package com.miraisolutions.xlconnect.data;
+package com.miraisolutions.xlconnect.integration.splus;
 
 /**
  *
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public enum DataType {
-    Boolean, DateTime, Numeric, String
+public final class SplusWorkbookWrapper {
+
 }

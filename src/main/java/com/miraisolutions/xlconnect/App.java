@@ -3,16 +3,20 @@ package com.miraisolutions.xlconnect;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Date;
 import java.util.Vector;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-/**
- * Hello world!
- *
- */
+
 public class App 
 {
     private final static Logger logger = Logger.getLogger("com.miraisolutions.xlconnect");
@@ -20,8 +24,34 @@ public class App
     public static void main( String[] args ) throws Exception
     {
         LogManager.getLogManager().readConfiguration(App.class.getResourceAsStream("logging.properties"));
+
+//        XSSFWorkbook wb = new XSSFWorkbook();
+//        wb.createSheet("asdf");
+//
+//        DataFormat dataFormat = wb.createDataFormat();
+//
+//        // Header style
+//        CellStyle headerStyle = wb.createCellStyle();
+//        headerStyle.setDataFormat(dataFormat.getFormat("General"));
+//        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+//        headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+//        headerStyle.setWrapText(true);
+//        // String / boolean / numeric style
+//        CellStyle style = wb.createCellStyle();
+//        style.setDataFormat(dataFormat.getFormat("General"));
+//        style.setWrapText(true);
+//        // Date style
+//        CellStyle dateStyle = wb.createCellStyle();
+//        dateStyle.setDataFormat(dataFormat.getFormat("mm/dd/yyyy hh:mm:ss"));
+//        dateStyle.setWrapText(true);
+//
+//        FileOutputStream fos = new FileOutputStream("C:/temp/test.xlsx");
+//        wb.write(fos);
+//        fos.close();
+//
+//        if(1 == 1) return;
         
-        File excelFile = new File("C:/temp/test.xls");
+        File excelFile = new File("C:/temp/test.xlsx");
         if(excelFile.exists()) excelFile.delete();
 
         Vector<String> col1 = new Vector<String>(5);
@@ -67,6 +97,8 @@ public class App
         workbook.setStyleNamePrefix("MyPersonalStyle");
         workbook.writeNamedRegion(df, "Somewhere", "Somewhere!$C$5", true);
 
+//        workbook.createCellStyle("MyStyle1");
+//        workbook.createSheet("asdf");
         workbook.save();
 
         DataFrame res = workbook.readNamedRegion("Test", true);
