@@ -25,6 +25,11 @@ public class App
     {
         LogManager.getLogManager().readConfiguration(App.class.getResourceAsStream("logging.properties"));
 
+        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/Test.xls"));
+        wb.removeSheetAt(wb.getSheetIndex("BBB"));
+        wb.write(new FileOutputStream("C:/Users/mstuder/Documents/Test2.xls"));
+        if(1 == 1) return;
+
 //        XSSFWorkbook wb = new XSSFWorkbook();
 //        wb.createSheet("asdf");
 //
@@ -79,7 +84,7 @@ public class App
         df.addColumn("Logical", DataType.Boolean, col3);
         df.addColumn("DateTime", DataType.DateTime, col4);
 
-        Workbook workbook = Workbook.getWorkbook(excelFile);
+        Workbook workbook = Workbook.getWorkbook(excelFile, true);
         workbook.setStyleAction(StyleAction.XLCONNECT);
 
         // Write named region

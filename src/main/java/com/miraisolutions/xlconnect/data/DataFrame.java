@@ -73,6 +73,14 @@ public class DataFrame {
         return columns.get(index);
     }
 
+    public Vector<String> getColumnNames() {
+        return columnNames;
+    }
+
+    public Vector<DataType> getColumnTypes() {
+        return columnTypes;
+    }
+
     /*
     public Vector getColumn(String name) {
         int index = columnNames.indexOf(name);

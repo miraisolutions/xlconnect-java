@@ -1097,28 +1097,37 @@ public final class Workbook {
      * @throws IOException
      * @throws InvalidFormatException
      */
-    public static Workbook getWorkbook(File excelFile) throws FileNotFoundException, IOException, InvalidFormatException {
+    public static Workbook getWorkbook(File excelFile, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
         Workbook wb;
 
         if(excelFile.exists()) {
             logger.log(Level.INFO, "Creating XLConnect workbook instance for existing file '" + excelFile.getCanonicalPath() + "'");
             wb = new Workbook(excelFile);
         } else {
-            logger.log(Level.INFO, "Creating XLConnect workbook instance for new file '" + excelFile.getCanonicalPath() + "'");
-            String filename = excelFile.getName().toLowerCase();
-            if(filename.endsWith(".xls")) {
-                wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL97);
-            } else if(filename.endsWith(".xlsx")) {
-                wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL2007);
-            } else
-                throw new IllegalArgumentException("File extension not supported! Only *.xls and *.xlsx are allowd!");
+            if(create) {
+                logger.log(Level.INFO, "Creating XLConnect workbook instance for new file '" + excelFile.getCanonicalPath() + "'");
+                String filename = excelFile.getName().toLowerCase();
+                if(filename.endsWith(".xls")) {
+                    wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL97);
+                } else if(filename.endsWith(".xlsx")) {
+                    wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL2007);
+                } else {
+                    logger.log(Level.SEVERE, "File extension not supported! Only *.xls and *.xlsx are allowed!");
+                    throw new IllegalArgumentException("File extension not supported! Only *.xls and *.xlsx are allowed!");
+                }
+            } else {
+                logger.log(Level.SEVERE, "File '" + excelFile.getName() + "' could not be found - " +
+                        "you may specify to automatically create the file if not existing.");
+                throw new FileNotFoundException("File '" + excelFile.getName() + "' could not be found - " +
+                        "you may specify to automatically create the file if not existing.");
+            }
         }
 
         logger.log(Level.INFO, "Excel version: " + (wb.isHSSF() ? SpreadsheetVersion.EXCEL97.toString() : SpreadsheetVersion.EXCEL2007.toString()));
         return wb;
     }
 
-    public static Workbook getWorkbook(String filename) throws FileNotFoundException, IOException, InvalidFormatException {
-        return Workbook.getWorkbook(new File(filename));
+    public static Workbook getWorkbook(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+        return Workbook.getWorkbook(new File(filename), create);
     }
 }
