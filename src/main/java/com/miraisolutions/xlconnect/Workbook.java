@@ -182,11 +182,11 @@ public final class Workbook {
         return nameNames;
     }
 
-    public boolean isSheetExisting(String name) {
+    public boolean existsSheet(String name) {
         return workbook.getSheet(name) != null;
     }
 
-    public boolean isNameExisting(String name) {
+    public boolean existsName(String name) {
         return workbook.getName(name) != null;
     }
 
@@ -197,13 +197,15 @@ public final class Workbook {
         }
     }
 
+    public void removeSheet(int sheetIndex) {
+        setAlternativeActiveSheet(sheetIndex);
+        logger.log(Level.INFO, "Removing sheet " + sheetIndex);
+        workbook.removeSheetAt(sheetIndex);
+    }
+
     public void removeSheet(String name) {
-        Sheet sheet = workbook.getSheet(name);
-        if(sheet != null) {
-            int index = workbook.getSheetIndex(sheet);
-            logger.log(Level.INFO, "Removing sheet '" + name + "'");
-            workbook.removeSheetAt(index);
-        }
+        logger.log(Level.INFO, "Removing sheet '" + name + "'");
+        removeSheet(workbook.getSheetIndex(name));
     }
     
     public void createName(String name, String formula) {
@@ -608,8 +610,8 @@ public final class Workbook {
         writeWorksheet(data, worksheetIndex, 0, 0);
     }
 
-    public void writeWorksheet(DataFrame data, String worksheetName) {
-        writeWorksheet(data, worksheetName, 0, 0, false);
+    public void writeWorksheet(DataFrame data, String worksheetName, boolean create) {
+        writeWorksheet(data, worksheetName, 0, 0, create);
     }
 
     /**
@@ -827,6 +829,46 @@ public final class Workbook {
         }
     }
 
+    public int getActiveSheetIndex() {
+        return workbook.getActiveSheetIndex();
+    }
+
+    public String getActiveSheetName() {
+        return workbook.getSheetName(workbook.getActiveSheetIndex());
+    }
+
+    public void setActiveSheet(int sheetIndex) {
+        logger.log(Level.INFO, "Setting active sheet index: " + sheetIndex);
+        workbook.setActiveSheet(sheetIndex);
+    }
+
+    public void setActiveSheet(String sheetName) {
+        logger.log(Level.INFO, "Setting active sheet: " + sheetName);
+        int sheetIndex  = workbook.getSheetIndex(sheetName);
+        setActiveSheet(sheetIndex);
+    }
+
+    public void hideSheet(int sheetIndex, boolean veryHidden) {
+        setAlternativeActiveSheet(sheetIndex);
+        logger.log(Level.INFO, (veryHidden ? "Very hiding" : "Hiding") + " sheet with index " + sheetIndex);
+        workbook.setSheetHidden(sheetIndex, veryHidden ? 2 : 1);
+    }
+
+    public void hideSheet(String sheetName, boolean veryHidden) {
+        logger.log(Level.INFO, (veryHidden ? "Very hiding" : "Hiding") + " sheet '" + sheetName + "'");
+        hideSheet(workbook.getSheetIndex(sheetName), veryHidden);
+    }
+
+    public void unhideSheet(int sheetIndex) {
+        logger.log(Level.INFO, "Unhiding sheet " + sheetIndex);
+        workbook.setSheetHidden(sheetIndex, 0);
+    }
+
+    public void unhideSheet(String sheetName) {
+        logger.log(Level.INFO, "Unhiding sheet '" + sheetName + "'");
+        unhideSheet(workbook.getSheetIndex(sheetName));
+    }
+
     public void save() throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Saving workbook to '" + excelFile.getCanonicalPath() + "'");
         FileOutputStream fos = new FileOutputStream(excelFile);
@@ -851,7 +893,7 @@ public final class Workbook {
         AreaReference areaReference = new AreaReference(location);
         String sheetName = areaReference.getFirstCell().getSheetName();
 
-        if(isNameExisting(name)) {
+        if(existsName(name)) {
             logger.log(Level.INFO, "Name already exists");
             if(overwrite) {
                 // Name already exists but we overwrite --> remove
@@ -928,6 +970,37 @@ public final class Workbook {
         }
 
         return columnType;
+    }
+
+    /**
+     * Function to set an alternative active sheet in the case
+     * the sheet to hide or remove is the currently active sheet
+     * in the workbook.
+     * If this would not be done, strange behaviour could result
+     * when opening an Excel file.
+     *
+     * @param sheetIndex Sheet to hide or remove
+     * @throws IllegalArgumentException In case no alternative active sheet can be found
+     */
+    private void setAlternativeActiveSheet(int sheetIndex) {
+        if(sheetIndex == getActiveSheetIndex()) {
+            logger.log(Level.INFO, "Sheet to hide or remove is the currently active sheet in the workbook. " +
+                    "Relocating active sheet.");
+            // Set active sheet to be first non-hidden/non-very-hidden sheet
+            // in the workbook; if there are no such sheets left,
+            // then throw an exception
+            boolean ok = false;
+            for(int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                if(i != sheetIndex && !workbook.isSheetHidden(i) && !workbook.isSheetVeryHidden(i)) {
+                    setActiveSheet(i);
+                    ok = true;
+                    break;
+                }
+            }
+
+            if(!ok) throw new IllegalArgumentException("Cannot hide or remove sheet as there would be no " +
+                    "alternative active sheet left!");
+        }
     }
 
     /**

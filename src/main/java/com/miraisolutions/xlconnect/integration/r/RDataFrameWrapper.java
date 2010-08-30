@@ -70,6 +70,8 @@ public final class RDataFrameWrapper {
             else 
                 elements[i] = dateTimeParser.parse(column[i]);
         }
+        Vector<Date> v = new Vector<Date>(Arrays.asList(elements));
+        dataFrame.addColumn(name, DataType.DateTime, v);
     }
 
     public String[] getColumnTypes() {
