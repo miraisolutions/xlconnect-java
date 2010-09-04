@@ -869,6 +869,22 @@ public final class Workbook {
         unhideSheet(workbook.getSheetIndex(sheetName));
     }
 
+    public boolean isSheetHidden(int sheetIndex) {
+        return workbook.isSheetHidden(sheetIndex);
+    }
+
+    public boolean isSheetHidden(String sheetName) {
+        return isSheetHidden(workbook.getSheetIndex(sheetName));
+    }
+
+    public boolean isSheetVeryHidden(int sheetIndex) {
+        return workbook.isSheetVeryHidden(sheetIndex);
+    }
+
+    public boolean isSheetVeryHidden(String sheetName) {
+        return isSheetVeryHidden(workbook.getSheetIndex(sheetName));
+    }
+
     public void save() throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Saving workbook to '" + excelFile.getCanonicalPath() + "'");
         FileOutputStream fos = new FileOutputStream(excelFile);

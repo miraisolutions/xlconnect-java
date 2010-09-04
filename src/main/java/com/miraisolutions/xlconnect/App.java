@@ -25,9 +25,9 @@ public class App
     {
         LogManager.getLogManager().readConfiguration(App.class.getResourceAsStream("logging.properties"));
 
-        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/Test.xls"));
-        wb.removeSheetAt(wb.getSheetIndex("BBB"));
-        wb.write(new FileOutputStream("C:/Users/mstuder/Documents/Test2.xls"));
+        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/testWorkbookHiddenSheets.xlsx"));
+        wb.setSheetHidden(3, 3);
+        wb.write(new FileOutputStream("C:/Users/mstuder/Documents/testWorkbookHiddenSheets2.xlsx"));
         if(1 == 1) return;
 
 //        XSSFWorkbook wb = new XSSFWorkbook();

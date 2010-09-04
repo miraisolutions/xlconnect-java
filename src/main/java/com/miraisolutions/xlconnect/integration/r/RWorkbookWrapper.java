@@ -132,6 +132,22 @@ public final class RWorkbookWrapper {
         workbook.unhideSheet(sheetName);
     }
 
+    public boolean isSheetHidden(int sheetIndex) {
+        return workbook.isSheetHidden(sheetIndex);
+    }
+
+    public boolean isSheetHidden(String sheetName) {
+        return workbook.isSheetHidden(sheetName);
+    }
+
+    public boolean isSheetVeryHidden(int sheetIndex) {
+        return workbook.isSheetVeryHidden(sheetIndex);
+    }
+
+    public boolean isSheetVeryHidden(String sheetName) {
+        return workbook.isSheetVeryHidden(sheetName);
+    }
+
     public void save() throws FileNotFoundException, IOException {
         workbook.save();
     }
