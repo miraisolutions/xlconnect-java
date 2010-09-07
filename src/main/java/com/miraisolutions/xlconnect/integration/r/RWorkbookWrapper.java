@@ -148,6 +148,16 @@ public final class RWorkbookWrapper {
         return workbook.isSheetVeryHidden(sheetName);
     }
 
+    public void addImage(String filename, boolean originalSize, String name,
+            String location, boolean overwrite) throws FileNotFoundException, IOException {
+        workbook.addImage(filename, originalSize, name, location, overwrite);
+    }
+
+    public void addImage(String filename, boolean originalSize, String name)
+            throws FileNotFoundException, IOException {
+        workbook.addImage(filename, originalSize, name);
+    }
+
     public void save() throws FileNotFoundException, IOException {
         workbook.save();
     }

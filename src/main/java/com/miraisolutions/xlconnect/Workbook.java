@@ -191,6 +191,11 @@ public final class Workbook {
     }
 
     public void createSheet(String name) {
+        if(name.length() > 31) {
+            logger.log(Level.SEVERE, "Sheet names are not allowed to contain more than 31 characters!");
+            throw new IllegalArgumentException("Sheet names are not allowed to contain more than 31 characters!");
+        }
+
         if(workbook.getSheetIndex(name) < 0) {
             logger.log(Level.INFO, "Creating non-existing sheet '" + name + "'");
             workbook.createSheet(name);
