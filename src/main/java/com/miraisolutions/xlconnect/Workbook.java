@@ -203,9 +203,11 @@ public final class Workbook {
     }
 
     public void removeSheet(int sheetIndex) {
-        setAlternativeActiveSheet(sheetIndex);
-        logger.log(Level.INFO, "Removing sheet " + sheetIndex);
-        workbook.removeSheetAt(sheetIndex);
+        if(sheetIndex > -1 && sheetIndex < workbook.getNumberOfSheets()) {
+            setAlternativeActiveSheet(sheetIndex);
+            logger.log(Level.INFO, "Removing sheet " + sheetIndex);
+            workbook.removeSheetAt(sheetIndex);
+        }
     }
 
     public void removeSheet(String name) {
@@ -667,6 +669,12 @@ public final class Workbook {
         if(startRow < 0) {
             logger.log(Level.SEVERE, "Start row cannot be determined!");
             throw new IllegalArgumentException("Start row cannot be determined!");
+        }
+
+        // Check that the start row actually exists
+        if(sheet.getRow(startRow) == null) {
+            logger.log(Level.SEVERE, "Specified sheet contains no data!");
+            throw new IllegalArgumentException("Specified sheet does not contain any data!");
         }
 
         if(endRow < 0) endRow = sheet.getLastRowNum();

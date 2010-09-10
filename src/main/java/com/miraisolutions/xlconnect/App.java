@@ -2,6 +2,8 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+import com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper;
+import com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,6 +16,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Name;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -28,10 +31,14 @@ public class App
         LogManager.getLogManager().readConfiguration(App.class.getResourceAsStream("logging.properties"));
 
         // org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/overwriteName.xls"));
-        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
-        Name n1 = wb.createName();
-        System.out.println(n1.getNameName());
+        // org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
+        // Sheet sheet = wb.createSheet();
+        // System.out.println(sheet.getFirstRowNum());
         // wb.write(new FileOutputStream("C:/Users/mstuder/Documents/overwriteName.xlsx"));
+
+        RWorkbookWrapper wb = new RWorkbookWrapper("mytest.xls", true);
+        wb.createSheet("Bla");
+        wb.readWorksheet("Bla", true);
         if(1 == 1) return;
 
 //        XSSFWorkbook wb = new XSSFWorkbook();

@@ -47,6 +47,10 @@ public final class RWorkbookWrapper {
         workbook.removeSheet(name);
     }
 
+    public void removeSheet(int sheetIndex) {
+        workbook.removeSheet(sheetIndex);
+    }
+
     public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header) {
         workbook.writeNamedRegion(dataFrame.dataFrame, name, header);
     }
