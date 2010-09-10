@@ -13,7 +13,9 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
@@ -25,9 +27,11 @@ public class App
     {
         LogManager.getLogManager().readConfiguration(App.class.getResourceAsStream("logging.properties"));
 
-        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/testWorkbookHiddenSheets.xlsx"));
-        wb.setSheetHidden(3, 3);
-        wb.write(new FileOutputStream("C:/Users/mstuder/Documents/testWorkbookHiddenSheets2.xlsx"));
+        // org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/overwriteName.xls"));
+        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
+        Name n1 = wb.createName();
+        System.out.println(n1.getNameName());
+        // wb.write(new FileOutputStream("C:/Users/mstuder/Documents/overwriteName.xlsx"));
         if(1 == 1) return;
 
 //        XSSFWorkbook wb = new XSSFWorkbook();
@@ -88,19 +92,23 @@ public class App
         workbook.setStyleAction(StyleAction.XLCONNECT);
 
         // Write named region
-        workbook.writeNamedRegion(df, "Test", "Test!$B$2", true);
+        workbook.createName("Test", "Test!$B$2", true);
+        workbook.writeNamedRegion(df, "Test", true);
         // Write worksheet
         workbook.writeWorksheet(df, "Test Data", 0, 0, true);
         // Add images
-        workbook.addImage("C:/temp/mirai_solutions1.jpg", true, "Mirai1", "Image!$B$3:$D$5", true);
-        workbook.addImage("C:/temp/mirai-solutions2.jpg", false, "Mirai2", "Image!$B$10", true);
+        workbook.createName("Mirai1", "Image!$B$3:$D$5", true);
+        workbook.createName("Mirai2", "Image!$B$10", true);
+        workbook.addImage("C:/temp/mirai_solutions1.jpg", "Mirai1", true);
+        workbook.addImage("C:/temp/mirai-solutions2.jpg", "Mirai2", false);
 
         /** Custom style **/
         CellStyle cs = workbook.createCellStyle("MyPersonalStyle.Header");
         cs.setBorderBottom(CellStyle.BORDER_THICK);
         workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
         workbook.setStyleNamePrefix("MyPersonalStyle");
-        workbook.writeNamedRegion(df, "Somewhere", "Somewhere!$C$5", true);
+        workbook.createName("Somewhere", "Somewhere!$C$5", true);
+        workbook.writeNamedRegion(df, "Somewhere", true);
 
 //        workbook.createCellStyle("MyStyle1");
 //        workbook.createSheet("asdf");

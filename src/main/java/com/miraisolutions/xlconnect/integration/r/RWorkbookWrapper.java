@@ -35,6 +35,10 @@ public final class RWorkbookWrapper {
         workbook.createSheet(name);
     }
 
+    public void createName(String name, String formula, boolean overwrite) {
+        workbook.createName(name, formula, overwrite);
+    }
+
     public void removeName(String name) {
         workbook.removeName(name);
     }
@@ -43,12 +47,8 @@ public final class RWorkbookWrapper {
         workbook.removeSheet(name);
     }
 
-    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name) {
-        workbook.writeNamedRegion(dataFrame.dataFrame, name);
-    }
-
-    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, String location, boolean overwrite) {
-        workbook.writeNamedRegion(dataFrame.dataFrame, name, location, overwrite);
+    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header) {
+        workbook.writeNamedRegion(dataFrame.dataFrame, name, header);
     }
 
     public RDataFrameWrapper readNamedRegion(String name, boolean header) {
@@ -84,20 +84,20 @@ public final class RWorkbookWrapper {
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, int startRow, int startCol) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, startRow, startCol);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, int startRow, int startCol, boolean header) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, startRow, startCol, header);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, int startRow, int startCol, boolean create) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, startRow, startCol, create);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, int startRow, int startCol, boolean header) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, startRow, startCol, header);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, boolean header) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, header);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, boolean create) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, create);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, boolean header) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, header);
     }
 
     public int getActiveSheetIndex() {
@@ -148,14 +148,9 @@ public final class RWorkbookWrapper {
         return workbook.isSheetVeryHidden(sheetName);
     }
 
-    public void addImage(String filename, boolean originalSize, String name,
-            String location, boolean overwrite) throws FileNotFoundException, IOException {
-        workbook.addImage(filename, originalSize, name, location, overwrite);
-    }
-
-    public void addImage(String filename, boolean originalSize, String name)
+    public void addImage(String filename, String name, boolean originalSize)
             throws FileNotFoundException, IOException {
-        workbook.addImage(filename, originalSize, name);
+        workbook.addImage(filename, name, originalSize);
     }
 
     public void save() throws FileNotFoundException, IOException {

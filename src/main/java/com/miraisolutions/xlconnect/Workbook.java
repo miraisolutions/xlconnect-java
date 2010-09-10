@@ -213,11 +213,40 @@ public final class Workbook {
         removeSheet(workbook.getSheetIndex(name));
     }
     
-    public void createName(String name, String formula) {
+    public void createName(String name, String formula, boolean overwrite) {
+        AreaReference areaReference = new AreaReference(formula);
+        String sheetName = areaReference.getFirstCell().getSheetName();
+
+        if(existsName(name)) {
+            logger.log(Level.INFO, "Name already exists");
+            if(overwrite) {
+                // Name already exists but we overwrite --> remove
+                logger.log(Level.INFO, "Specified to overwrite name if already existing, " +
+                        "therefore remove existing name");
+                removeName(name);
+            } else {
+                // Name already exists but we don't want to overwrite --> error
+                logger.log(Level.SEVERE, "Specified name already exists - specified to not overwrite");
+                throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
+            }
+        }
+
+        createSheet(sheetName);
+
         Name cname = workbook.createName();
-        logger.log(Level.INFO, "Creating name '" + name + "' refering to formula '" + formula + "'");
-        cname.setNameName(name);
-        cname.setRefersToFormula(formula);
+        try {
+            logger.log(Level.INFO, "Creating name '" + name + "' refering to formula '" + formula + "'");
+            cname.setNameName(name);
+            cname.setRefersToFormula(formula);
+        } catch(IllegalArgumentException e) {
+            logger.log(Level.SEVERE, "Failed creating name '" + name + "'. Cleaning up.");
+            // --> Clean up (= remove) name
+            // Need to set dummy name in order to be able to remove it ...
+            String dummyNameName = "XLConnectDummyName";
+            cname.setNameName(dummyNameName);
+            removeName(dummyNameName);
+            throw e;
+        }
     }
 
     public void removeName(String name) {
@@ -228,7 +257,7 @@ public final class Workbook {
         }
     }
 
-    private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol) {
+    private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header) {
         logger.log(Level.INFO, "Writing data of dimension " + data.rows() + " rows & " + data.columns() + " columns" +
                 " to sheet '" + sheet.getSheetName() + "' starting at row " + startRow + " and column " + startCol);
 
@@ -240,8 +269,7 @@ public final class Workbook {
         int colIndex = startCol;
 
         // In case of column headers ...
-        if(data.hasColumnHeader()) {
-            logger.log(Level.FINE, "Column header detected.");
+        if(header && data.hasColumnHeader()) {
             // For each column write corresponding column name
             for(int i = 0; i < data.columns(); i++) {
                 logger.log(Level.FINER, "Writing header '" + data.getColumnName(i) + "'");
@@ -533,7 +561,7 @@ public final class Workbook {
         return data;
     }
 
-    public void writeNamedRegion(DataFrame data, String name) {
+    public void writeNamedRegion(DataFrame data, String name, boolean header) {
         logger.log(Level.INFO, "Writing named region '" + name + "' ...");
         Name cname = getName(name);
 
@@ -559,14 +587,7 @@ public final class Workbook {
         // Redefine named range
         cname.setRefersToFormula(aref.formatAsString());
 
-        writeData(data, sheet, topLeft.getRow(), topLeft.getCol());
-    }
-
-    public void writeNamedRegion(DataFrame data, String name, String location, boolean overwrite) {
-        logger.log(Level.INFO, "Writing named region '" + name + "' to location '" + location + "'; overwrite = " +
-                overwrite + " ...");
-        defineOrOverwriteName(name, location, overwrite);
-        writeNamedRegion(data, name);
+        writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header);
     }
 
     public DataFrame readNamedRegion(String name, boolean header) {
@@ -597,26 +618,26 @@ public final class Workbook {
      * @param worksheetIndex    Worksheet index (0-based)
      * @param startRow          Start row (row index of top left cell)
      * @param startCol          Start column (column index of top left cell)
+     * @param header            If true, column headers are written, otherwise not
      */
-    public void writeWorksheet(DataFrame data, int worksheetIndex, int startRow, int startCol) {
+    public void writeWorksheet(DataFrame data, int worksheetIndex, int startRow, int startCol, boolean header) {
         logger.log(Level.INFO, "Writing data to worksheet index " + worksheetIndex + ", start row = " + startRow +
                 ", start column = " + startCol);
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
-        writeData(data, sheet, startRow, startCol);
+        writeData(data, sheet, startRow, startCol, header);
     }
 
-    public void writeWorksheet(DataFrame data, String worksheetName, int startRow, int startCol, boolean create) {
+    public void writeWorksheet(DataFrame data, String worksheetName, int startRow, int startCol, boolean header) {
         logger.log(Level.INFO, "Writing data to worksheet '" + worksheetName + "'");
-        if(create) createSheet(worksheetName);
-        writeWorksheet(data, workbook.getSheetIndex(worksheetName), startRow, startCol);
+        writeWorksheet(data, workbook.getSheetIndex(worksheetName), startRow, startCol, header);
     }
 
-    public void writeWorksheet(DataFrame data, int worksheetIndex) {
-        writeWorksheet(data, worksheetIndex, 0, 0);
+    public void writeWorksheet(DataFrame data, int worksheetIndex, boolean header) {
+        writeWorksheet(data, worksheetIndex, 0, 0, header);
     }
 
-    public void writeWorksheet(DataFrame data, String worksheetName, boolean create) {
-        writeWorksheet(data, worksheetName, 0, 0, create);
+    public void writeWorksheet(DataFrame data, String worksheetName, boolean header) {
+        writeWorksheet(data, worksheetName, 0, 0, header);
     }
 
     /**
@@ -682,7 +703,7 @@ public final class Workbook {
         return readWorksheet(worksheetName, -1, -1, -1, -1, header);
     }
 
-    public void addImage(File imageFile, boolean originalSize, String name) throws FileNotFoundException, IOException {
+    public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Adding image '" + imageFile.getName() + "', original size = " + originalSize);
         Name cname = getName(name);
 
@@ -746,21 +767,8 @@ public final class Workbook {
         if(originalSize) picture.resize();
     }
 
-    public void addImage(File imageFile, boolean originalSize, String name, String location,
-            boolean overwrite) throws FileNotFoundException, IOException {
-
-        defineOrOverwriteName(name, location, overwrite);
-        addImage(imageFile, originalSize, name);
-    }
-
-    public void addImage(String filename, boolean originalSize, String name) throws FileNotFoundException, IOException {
-        addImage(new File(filename), originalSize, name);
-    }
-
-    public void addImage(String filename, boolean originalSize, String name, String location,
-            boolean overwrite) throws FileNotFoundException, IOException {
-
-        addImage(new File(filename), originalSize, name, location, overwrite);
+    public void addImage(String filename, String name, boolean originalSize) throws FileNotFoundException, IOException {
+        addImage(new File(filename), name, originalSize);
     }
 
     public CellStyle createCellStyle(String name) {
@@ -908,28 +916,6 @@ public final class Workbook {
         else
             logger.log(Level.SEVERE, "Name '" + name + "' does not exist!");
             throw new IllegalArgumentException("Name '" + name + "' does not exist!");
-    }
-
-    private void defineOrOverwriteName(String name, String location, boolean overwrite) {
-        AreaReference areaReference = new AreaReference(location);
-        String sheetName = areaReference.getFirstCell().getSheetName();
-
-        if(existsName(name)) {
-            logger.log(Level.INFO, "Name already exists");
-            if(overwrite) {
-                // Name already exists but we overwrite --> remove
-                logger.log(Level.INFO, "Specified to overwrite named region if already existing, " +
-                        "therefore remove existing name");
-                removeName(name);
-            } else {
-                // Name already exists but we don't want to overwrite --> error
-                logger.log(Level.SEVERE, "Specified named region already exists - specified to not overwrite");
-                throw new IllegalArgumentException("Specified named region '" + name + "' already exists!");
-            }
-        }
-
-        createSheet(sheetName);
-        createName(name, location);
     }
 
     private boolean isXSSF() {
