@@ -7,20 +7,10 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -29,16 +19,8 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xmlbeans.impl.schema.SchemaTypeImpl;
-import org.apache.xmlbeans.impl.values.XmlObjectBase;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyleXfs;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyles;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTTableStyles;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTXf;
 
 
 /**
@@ -77,7 +59,8 @@ public final class Workbook {
     // Style name prefix
     private String styleNamePrefix = null;
     // Cell style map
-    private final Map<String, Map<String, CellStyle>> stylesMap = new HashMap<String, Map<String, CellStyle>>(10);
+    private final Map<String, Map<String, CellStyle>> stylesMap =
+            new HashMap<String, Map<String, CellStyle>>(10);
 
 
     /**
@@ -113,21 +96,23 @@ public final class Workbook {
     }
 
     private void initDefaultStyles() {
-        Map<String, CellStyle> xlconnectDefaults = new HashMap<String, CellStyle>(5);
+        Map<String, CellStyle> xlconnectDefaults =
+                new HashMap<String, CellStyle>(5);
         DataFormat dataFormat = workbook.createDataFormat();
 
         // Header style
-        CellStyle headerStyle = workbook.createCellStyle();
+        CellStyle headerStyle = createCellStyle("XLConnect.Header");
         headerStyle.setDataFormat(dataFormat.getFormat("General"));
-        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-        headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex()); 
+        // headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
         headerStyle.setWrapText(true);
         // String / boolean / numeric style
-        CellStyle style = workbook.createCellStyle();
+        CellStyle style = createCellStyle("XLConnect.General");
         style.setDataFormat(dataFormat.getFormat("General"));
         style.setWrapText(true);
         // Date style
-        CellStyle dateStyle = workbook.createCellStyle();
+        CellStyle dateStyle = createCellStyle("XLConnect.Date");
         dateStyle.setDataFormat(dataFormat.getFormat("mm/dd/yyyy hh:mm:ss"));
         dateStyle.setWrapText(true);
 
@@ -169,17 +154,21 @@ public final class Workbook {
         return sheetNames;
     }
 
-    public String[] getDefinedNames() {
+    public String[] getDefinedNames(boolean validOnly) {
         int count = workbook.getNumberOfNames();
-        String[] nameNames = new String[count];
+        // String[] nameNames = new String[count];
+        ArrayList<String> nameNames = new ArrayList<String>();
 
         for(int i = 0; i < count; i++) {
             Name namedRegion = workbook.getNameAt(i);
+            // if valid only, check corresponding reference formula validity
+            if(validOnly && !isValidReference(namedRegion.getRefersToFormula())) continue;
+
             logger.log(Level.FINE, "Found name '" + namedRegion.getNameName() + "'");
-            nameNames[i] = namedRegion.getNameName();
+            nameNames.add(namedRegion.getNameName());
         }
 
-        return nameNames;
+        return nameNames.toArray(new String[nameNames.size()]);
     }
 
     public boolean existsSheet(String name) {
@@ -278,7 +267,7 @@ public final class Workbook {
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
                 cell.setCellType(Cell.CELL_TYPE_STRING);
                 cell.setCellValue(data.getColumnName(i));
-                cell.setCellStyle(styles.get(HEADER + i));
+                cell.setCellStyle(styles.get(HEADER + i).getPOICellStyle());
             }
 
             ++rowIndex;
@@ -304,7 +293,7 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Writing double value '" + d.doubleValue() + "'");
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             cell.setCellValue(d.doubleValue());
-                            cell.setCellStyle(cs);
+                            cell.setCellStyle(cs.getPOICellStyle());
                         }
                     }
                     break;
@@ -322,7 +311,7 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Writing string value '" + stringValues.get(j) + "'");
                             cell.setCellType(Cell.CELL_TYPE_STRING);
                             cell.setCellValue(stringValues.get(j));
-                            cell.setCellStyle(cs);
+                            cell.setCellStyle(cs.getPOICellStyle());
                         }
                     }
                     break;
@@ -340,7 +329,7 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Writing boolean value '" + booleanValues.get(j).booleanValue() + "'");
                             cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             cell.setCellValue(booleanValues.get(j).booleanValue());
-                            cell.setCellStyle(cs);
+                            cell.setCellStyle(cs.getPOICellStyle());
                         }
                     }
                     break;
@@ -359,7 +348,7 @@ public final class Workbook {
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             // TODO: date formatting
                             cell.setCellValue(d);
-                            cell.setCellStyle(cs);
+                            cell.setCellStyle(cs.getPOICellStyle());
                         }
                     }
                     break;
@@ -595,6 +584,7 @@ public final class Workbook {
     public DataFrame readNamedRegion(String name, boolean header) {
         logger.log(Level.INFO, "Reading named region '" + name + "' ... (header = " + header + ")");
         Name cname = getName(name);
+        checkName(cname);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
@@ -782,67 +772,10 @@ public final class Workbook {
     public CellStyle createCellStyle(String name) {
         if(getCellStyle(name) == null) {
             if(isHSSF()) {
-                HSSFWorkbook wb = (HSSFWorkbook) workbook;
-                HSSFCellStyle cs = wb.createCellStyle();
-                cs.setUserStyleName(name);
-                return cs;
+                return HCellStyle.create((HSSFWorkbook) workbook, name);
             } else if(isXSSF()) {
-                XSSFWorkbook wb = (XSSFWorkbook) workbook;
-                // TODO: change this once possible
-//                CTTableStyles ctTableStyles = wb.getStylesSource().getCTStylesheet().getTableStyles();
-//                if(ctTableStyles == null) {
-//                    ctTableStyles = wb.getStylesSource().getCTStylesheet().addNewTableStyles();
-//                    ctTableStyles.setCount(0);
-//                    ctTableStyles.setDefaultTableStyle("TableStyleMedium9");
-//                    ctTableStyles.setDefaultPivotStyle("PivotStyleLight16");
-//                }
-
-                CTCellStyleXfs ctCellStyleXfs = wb.getStylesSource().getCTStylesheet().getCellStyleXfs();
-                if(ctCellStyleXfs == null) {
-                    ctCellStyleXfs = wb.getStylesSource().getCTStylesheet().addNewCellStyleXfs();
-                    ctCellStyleXfs.setCount(0);
-                }
-//                if(ctCellStyleXfs.getCount() == 0) {
-//                    CTXf standardXf = ctCellStyleXfs.addNewXf();
-//                    standardXf.setNumFmtId(0);
-//                    standardXf.setFontId(0);
-//                    standardXf.setFillId(0);
-//                    standardXf.setBorderId(0);
-//                    ctCellStyleXfs.setCount(1);
-//                }
-//
-                CTCellStyles ctCellStyles = wb.getStylesSource().getCTStylesheet().getCellStyles();
-                if(ctCellStyles == null) {
-                    ctCellStyles = wb.getStylesSource().getCTStylesheet().addNewCellStyles();
-                    ctCellStyles.setCount(0);
-//                    CTCellStyle standardCellStyle = ctCellStyles.addNewCellStyle();
-//                    standardCellStyle.setName("Standard");
-//                    standardCellStyle.setXfId(0);
-//                    standardCellStyle.setBuiltinId(0);
-//                    ctCellStyles.setCount(1);
-                }
-
-                long count = ctCellStyles.getCount() + 1;
-                
-                CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
-                ctCellStyle.setName(name);
-                ctCellStyle.setXfId(count - 1);
-
-//                CTXf ctXf = ctCellStyleXfs.addNewXf();
-//                ctXf.setNumFmtId(0);
-//                ctXf.setFontId(0);
-//                ctXf.setFillId(0);
-//                ctXf.setBorderId(0);
-
-                ctCellStyles.setCount(count);
-//                ctCellStyleXfs.setCount(count);
-
-                XSSFCellStyle cs = wb.createCellStyle();
-                long id = cs.getCoreXf().getXfId();
-
-                return getCellStyle(name);
+                return XCellStyle.create((XSSFWorkbook) workbook, name);
             }
-            
             return null;
         } else {
             logger.log(Level.SEVERE, "Cell style with name '" + name + "' already exists!");
@@ -851,11 +784,17 @@ public final class Workbook {
     }
 
     public int getActiveSheetIndex() {
-        return workbook.getActiveSheetIndex();
+        if(workbook.getNumberOfSheets() < 1)
+            return -1;
+        else
+            return workbook.getActiveSheetIndex();
     }
 
     public String getActiveSheetName() {
-        return workbook.getSheetName(workbook.getActiveSheetIndex());
+        if(workbook.getNumberOfSheets() < 1)
+            return null;
+        else
+            return workbook.getSheetName(workbook.getActiveSheetIndex());
     }
 
     public void setActiveSheet(int sheetIndex) {
@@ -872,7 +811,9 @@ public final class Workbook {
     public void hideSheet(int sheetIndex, boolean veryHidden) {
         setAlternativeActiveSheet(sheetIndex);
         logger.log(Level.INFO, (veryHidden ? "Very hiding" : "Hiding") + " sheet with index " + sheetIndex);
-        workbook.setSheetHidden(sheetIndex, veryHidden ? 2 : 1);
+        workbook.setSheetHidden(sheetIndex, veryHidden ? 
+            org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_VERY_HIDDEN :
+            org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_HIDDEN);
     }
 
     public void hideSheet(String sheetName, boolean veryHidden) {
@@ -882,7 +823,7 @@ public final class Workbook {
 
     public void unhideSheet(int sheetIndex) {
         logger.log(Level.INFO, "Unhiding sheet " + sheetIndex);
-        workbook.setSheetHidden(sheetIndex, 0);
+        workbook.setSheetHidden(sheetIndex, org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_VISIBLE);
     }
 
     public void unhideSheet(String sheetName) {
@@ -924,6 +865,17 @@ public final class Workbook {
         else
             logger.log(Level.SEVERE, "Name '" + name + "' does not exist!");
             throw new IllegalArgumentException("Name '" + name + "' does not exist!");
+    }
+    
+    private boolean isValidReference(String reference) {
+        return reference != null && !reference.startsWith("#REF!") && !reference.startsWith("#NULL!");
+    }
+
+    private void checkName(Name name) {
+        if(!isValidReference(name.getRefersToFormula())) {
+            logger.log(Level.SEVERE, "Name '" + name.getNameName() + "' has invalid reference!");
+            throw new IllegalArgumentException("Name '" + name.getNameName() + "' has invalid reference!");
+        }
     }
 
     private boolean isXSSF() {
@@ -1020,41 +972,17 @@ public final class Workbook {
 
     /**
      * Gets a cell style by name.
-     * Currently there does not exist a nice way to get a style by name from an XSSF
-     * document - so currently this goes via "internal" XML fragment classes.
      *
      * @param name  Cell style name
      * @return      The corresponding cell style if there exists one with the specified name;
      *              null otherwise
      */
-    private CellStyle getCellStyle(String name) {
-        short nStyles = workbook.getNumCellStyles();
-        
+    public CellStyle getCellStyle(String name) {
         if(isHSSF()) {
-            HSSFWorkbook wb = (HSSFWorkbook) workbook;
-            for(short i = 0; i < nStyles; i++) {
-                HSSFCellStyle cs = wb.getCellStyleAt(i);
-                String userStyleName = cs.getUserStyleName();
-                if(userStyleName != null && cs.getUserStyleName().equals(name)) return cs;
-            }
+            return HCellStyle.get((HSSFWorkbook) workbook, name);
         } else if(isXSSF()) {
-            XSSFWorkbook wb = (XSSFWorkbook) workbook;
-            // TODO: change this once possible
-            CTCellStyles cellStyles = wb.getStylesSource().getCTStylesheet().getCellStyles();
-            if(cellStyles != null) {
-                // for(short i = 0; i < nStyles; i++) {
-                long count = cellStyles.getCount();
-                for(long ii = 0; ii < count; ii++) {
-                    int i = (int) ii;
-                    if(cellStyles.getCellStyleArray(i).getName().equals(name))
-                        return wb.getStylesSource().getStyleAt(i);
-                }
-//                for(short i = 0; i < nStyles; i++) {
-//                   if(cellStyles.getCellStyleArray(i).getName().equals(name)) return wb.getCellStyleAt(i);
-//                }
-            }
-        }
-        
+            return XCellStyle.get((XSSFWorkbook) workbook, name);
+        }      
         return null;
     }
 
@@ -1101,13 +1029,13 @@ public final class Workbook {
                 // In case of a header, determine header styles
                 if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++) {
-                        cstyles.put(HEADER + i, getCell(sheet, startRow, startCol + i).getCellStyle());
+                        cstyles.put(HEADER + i, new SSCellStyle(getCell(sheet, startRow, startCol + i).getCellStyle()));
                     }
                 }
                 int styleRow = startRow + (data.hasColumnHeader() ? 1 : 0);
                 for(int i = 0; i < data.columns(); i++) {
                     Cell cell = getCell(sheet, styleRow, startCol + i);
-                    cstyles.put(COLUMN + i, cell.getCellStyle());
+                    cstyles.put(COLUMN + i, new SSCellStyle(cell.getCellStyle()));
                 }
                 break;
             case STYLE_NAME_PREFIX:
@@ -1131,7 +1059,7 @@ public final class Workbook {
                         if(cs == null) {
                             logger.log(Level.WARNING, "No header style found for header '" +
                                     data.getColumnName(i) + "' - taking default");
-                            cs = workbook.getCellStyleAt((short)0);
+                            cs = new SSCellStyle(workbook.getCellStyleAt((short)0)); // getCellStyle("Standard");
                         }
                         
                         cstyles.put(HEADER + i, cs);
@@ -1156,7 +1084,7 @@ public final class Workbook {
                     if(cs == null) {
                         logger.log(Level.WARNING, "No column style found for column '" +
                                 data.getColumnName(i) + "' - taking default");
-                        cs = workbook.getCellStyleAt((short)0);
+                        cs =  new SSCellStyle(workbook.getCellStyleAt((short)0)); // getCellStyle("Standard");
                     }
 
                     cstyles.put(COLUMN + i, cs);

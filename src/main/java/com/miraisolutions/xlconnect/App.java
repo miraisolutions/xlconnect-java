@@ -2,44 +2,50 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
-import com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper;
-import com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper;
+import com.miraisolutions.xlconnect.utils.Logging;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Date;
 import java.util.Vector;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
+import java.util.logging.Level;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.WorkbookUtil;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
 public class App 
 {
-    private final static Logger logger = Logger.getLogger("com.miraisolutions.xlconnect");
-
     public static void main( String[] args ) throws Exception
     {
-        LogManager.getLogManager().readConfiguration(App.class.getResourceAsStream("logging.properties"));
+        Logging.withLevel(Level.INFO);
 
-        // org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/overwriteName.xls"));
-        // org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
-        // Sheet sheet = wb.createSheet();
-        // System.out.println(sheet.getFirstRowNum());
-        // wb.write(new FileOutputStream("C:/Users/mstuder/Documents/overwriteName.xlsx"));
+        // org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/GP-CTRLPARA-RBC 09 Q2 B1-V8.xls"));
+        // Name name = wb.getName("AM.input");
 
-        RWorkbookWrapper wb = new RWorkbookWrapper("mytest.xls", true);
-        wb.createSheet("Bla");
-        wb.readWorksheet("Bla", true);
-        if(1 == 1) return;
+        // Workbook workbookx = Workbook.getWorkbook("C:/Users/mstuder/Documents/GP-CTRLPARA-RBC 09 Q2 B1-V8.xls", false);
+        // workbookx.getDefinedNames(true);
+        
+//        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
+//        Sheet sheet = wb.createSheet();
+//        Cell c = sheet.createRow(0).createCell(0);
+//        org.apache.poi.ss.usermodel.CellStyle cs = wb.createCellStyle();
+//        cs.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+//        cs.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+//        c.setCellStyle(cs);
+//        wb.write(new FileOutputStream("C:/temp/repro.xlsx"));
+//
+//        if(1 == 1) return;
+
 
 //        XSSFWorkbook wb = new XSSFWorkbook();
 //        wb.createSheet("asdf");
@@ -99,9 +105,14 @@ public class App
         workbook.setStyleAction(StyleAction.XLCONNECT);
 
         // Write named region
-        workbook.createName("Test", "Test!$B$2", true);
-        workbook.writeNamedRegion(df, "Test", true);
+        // workbook.createName("Test", "Test!$B$2", true);
+        // workbook.writeNamedRegion(df, "Test", true);
+        
+        workbook.createSheet("Test");
+
+        /*
         // Write worksheet
+        workbook.createSheet("Test Data");
         workbook.writeWorksheet(df, "Test Data", 0, 0, true);
         // Add images
         workbook.createName("Mirai1", "Image!$B$3:$D$5", true);
@@ -109,23 +120,25 @@ public class App
         workbook.addImage("C:/temp/mirai_solutions1.jpg", "Mirai1", true);
         workbook.addImage("C:/temp/mirai-solutions2.jpg", "Mirai2", false);
 
-        /** Custom style **/
+        
         CellStyle cs = workbook.createCellStyle("MyPersonalStyle.Header");
-        cs.setBorderBottom(CellStyle.BORDER_THICK);
+        cs.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
         workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
         workbook.setStyleNamePrefix("MyPersonalStyle");
         workbook.createName("Somewhere", "Somewhere!$C$5", true);
         workbook.writeNamedRegion(df, "Somewhere", true);
+        **/
 
-//        workbook.createCellStyle("MyStyle1");
-//        workbook.createSheet("asdf");
         workbook.save();
 
+        /*
         DataFrame res = workbook.readNamedRegion("Test", true);
         printDataFrame(res);
 
         res = workbook.readWorksheet("Test Data", true);
         printDataFrame(res);
+         * 
+         */
     }
 
     public static void printDataFrame(DataFrame df) {

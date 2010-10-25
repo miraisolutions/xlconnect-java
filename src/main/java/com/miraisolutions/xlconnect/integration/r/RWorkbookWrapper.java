@@ -27,8 +27,8 @@ public final class RWorkbookWrapper {
         return workbook.getSheets();
     }
 
-    public String[] getDefinedNames() {
-        return workbook.getDefinedNames();
+    public String[] getDefinedNames(boolean validOnly) {
+        return workbook.getDefinedNames(validOnly);
     }
 
     public void createSheet(String name) {
