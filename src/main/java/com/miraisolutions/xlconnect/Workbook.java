@@ -770,17 +770,18 @@ public final class Workbook {
     }
 
     public CellStyle createCellStyle(String name) {
-        if(getCellStyle(name) == null) {
+        // if(getCellStyle(name) == null) {
             if(isHSSF()) {
                 return HCellStyle.create((HSSFWorkbook) workbook, name);
             } else if(isXSSF()) {
                 return XCellStyle.create((XSSFWorkbook) workbook, name);
             }
             return null;
-        } else {
+        /** } else {
             logger.log(Level.SEVERE, "Cell style with name '" + name + "' already exists!");
             throw new IllegalArgumentException("Cell style with name '" + name + "' already exists!");
         }
+         **/
     }
 
     public int getActiveSheetIndex() {

@@ -7,6 +7,7 @@ package com.miraisolutions.xlconnect;
 
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.model.ThemesTable;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -15,6 +16,7 @@ import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellFill;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorder;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorderPr;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCell;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellAlignment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyleXfs;
@@ -26,7 +28,9 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.STBorderStyle;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
 
 /**
- *
+ * Partially uses code from XSSFCellStyle from
+ * http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java
+ * 
  * @author Martin Studer, Mirai Solutions GmbH
  */
 public class XCellStyle implements CellStyle {
@@ -50,6 +54,10 @@ public class XCellStyle implements CellStyle {
         return new XSSFCellStyle(xfId, styleXfId, stylesSource, themes);
     }
 
+    private CTXf getCoreXf() {
+        return stylesSource.getCellXfAt(xfId);
+    }
+
     private CTXf getStyleXf() {
         return stylesSource.getCellStyleXfAt(styleXfId);
     }
@@ -58,6 +66,7 @@ public class XCellStyle implements CellStyle {
         CTBorder ct;
         CTXf styleXf = getStyleXf();
         if(styleXf.getApplyBorder()) {
+        // if(getCoreXf().getApplyBorder()) {
             int idx = (int) styleXf.getBorderId();
             XSSFCellBorder cf = stylesSource.getBorderAt(idx);
             ct = (CTBorder)cf.getCTBorder().copy();
@@ -71,6 +80,7 @@ public class XCellStyle implements CellStyle {
         CTFill ct;
         CTXf styleXf = getStyleXf();
         if(styleXf.getApplyFill()) {
+        // if(getCoreXf().getApplyFill()) {
             int fillIndex = (int)styleXf.getFillId();
             XSSFCellFill cf = stylesSource.getFillAt(fillIndex);
 
@@ -105,14 +115,20 @@ public class XCellStyle implements CellStyle {
         int idx = stylesSource.putBorder(new XSSFCellBorder(ct));
 
         CTXf styleXf = getStyleXf();
+        // ???
+        getCoreXf().setBorderId(idx);
         styleXf.setBorderId(idx);
         styleXf.setApplyBorder(true);
+        // getCoreXf().setApplyBorder(true);
     }
 
     public void setDataFormat(short format) {
         CTXf styleXf = getStyleXf();
         styleXf.setApplyNumberFormat(true);
+        // getCoreXf().setApplyNumberFormat(true);
         styleXf.setNumFmtId(format);
+        // ???
+        getCoreXf().setNumFmtId(format);
     }
 
     private void setFillForegroundColor(XSSFColor color) {
@@ -129,8 +145,11 @@ public class XCellStyle implements CellStyle {
         int idx = stylesSource.putFill(new XSSFCellFill(ct));
 
         CTXf styleXf = getStyleXf();
+        // ???
+        getCoreXf().setFillId(idx);
         styleXf.setFillId(idx);
         styleXf.setApplyFill(true);
+        // getCoreXf().setApplyFill(true);
     }
 
     public void setFillForegroundColor(short fg) {
@@ -148,8 +167,11 @@ public class XCellStyle implements CellStyle {
         int idx = stylesSource.putFill(new XSSFCellFill(ct));
 
         CTXf styleXf = stylesSource.getCellStyleXfAt(styleXfId);
+        // ???
+        getCoreXf().setFillId(idx);
         styleXf.setFillId(idx);
         styleXf.setApplyFill(true);
+        // getCoreXf().setApplyFill(true);
     }
 
     public void setWrapText(boolean wrap) {
@@ -185,14 +207,6 @@ public class XCellStyle implements CellStyle {
             ctCellStyles.setCount(1);
         }
 
-//        CTXf xf = CTXf.Factory.newInstance();
-//        xf.setNumFmtId(0);
-//        xf.setFontId(0);
-//        xf.setFillId(0);
-//        xf.setBorderId(0);
-//        xf.setXfId(0);
-//        int xfSize = workbook.getStylesSource().putCellXf(xf);
-
         CTXf styleXf = CTXf.Factory.newInstance();
         styleXf.setNumFmtId(0);
         styleXf.setFontId(0);
@@ -201,12 +215,21 @@ public class XCellStyle implements CellStyle {
 
         int styleXfSize = workbook.getStylesSource().putCellStyleXf(styleXf);
 
+        CTXf xf = CTXf.Factory.newInstance();
+        xf.setNumFmtId(0);
+        xf.setFontId(0);
+        xf.setFillId(0);
+        xf.setBorderId(0);
+        xf.setXfId(styleXfSize - 1);
+        int xfSize = workbook.getStylesSource().putCellXf(xf);
+
         CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
         ctCellStyle.setName(name);
         // ctCellStyle.setXfId(workbook.getStylesSource()._getStyleXfsSize() - 1);
         ctCellStyle.setXfId(styleXfSize - 1);
+        ctCellStyles.setCount(ctCellStyles.getCount() + 1);
 
-        return new XCellStyle(workbook.getStylesSource(), ctCellStyle,workbook.getStylesSource()._getXfsSize() - 1,
+        return new XCellStyle(workbook.getStylesSource(), ctCellStyle, xfSize - 1,
                 styleXfSize - 1, workbook.getTheme());
     }
 

@@ -105,12 +105,10 @@ public class App
         workbook.setStyleAction(StyleAction.XLCONNECT);
 
         // Write named region
-        // workbook.createName("Test", "Test!$B$2", true);
-        // workbook.writeNamedRegion(df, "Test", true);
-        
-        workbook.createSheet("Test");
+        workbook.createName("Test", "Test!$B$2", true);
+        workbook.writeNamedRegion(df, "Test", true);
 
-        /*
+        /**
         // Write worksheet
         workbook.createSheet("Test Data");
         workbook.writeWorksheet(df, "Test Data", 0, 0, true);
@@ -126,19 +124,19 @@ public class App
         workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
         workbook.setStyleNamePrefix("MyPersonalStyle");
         workbook.createName("Somewhere", "Somewhere!$C$5", true);
-        workbook.writeNamedRegion(df, "Somewhere", true);
-        **/
+        workbook.writeNamedRegion(df, "Somewhere", true);     
+
+         **/
 
         workbook.save();
 
-        /*
+        /**
         DataFrame res = workbook.readNamedRegion("Test", true);
         printDataFrame(res);
 
         res = workbook.readWorksheet("Test Data", true);
         printDataFrame(res);
-         * 
-         */
+         **/
     }
 
     public static void printDataFrame(DataFrame df) {
