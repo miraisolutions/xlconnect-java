@@ -6,7 +6,6 @@
 package com.miraisolutions.xlconnect;
 
 import org.apache.poi.xssf.model.StylesTable;
-import org.apache.poi.xssf.model.ThemesTable;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
@@ -16,10 +15,8 @@ import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellFill;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorder;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorderPr;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCell;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellAlignment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyleXfs;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyles;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTFill;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTPatternFill;
@@ -35,31 +32,35 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
  */
 public class XCellStyle implements CellStyle {
 
-    private final StylesTable stylesSource;
-    private final CTCellStyle cellStyle;
+    /**
+     * getCoreXf().setXXX(...)
+     * getStyleXf().setXXX(...)
+     * getStyleXf().applyXXX(...)
+     */
+
+    private final XSSFWorkbook workbook;
+    // private final StylesTable stylesSource;
     private final int xfId, styleXfId;
-    private final ThemesTable themes;
+    // private final ThemesTable themes;
     private XSSFCellAlignment cellAlignment;
 
-    public XCellStyle(StylesTable stylesSource, CTCellStyle cellStyle, int xfId, int styleXfId,
-            ThemesTable themes) {
-        this.stylesSource = stylesSource;
+    public XCellStyle(XSSFWorkbook workbook, int xfId, int styleXfId) {
+        this.workbook = workbook;
         this.xfId = xfId;
         this.styleXfId = styleXfId;
-        this.cellStyle = cellStyle;
-        this.themes = themes;
-    }
-
-    public org.apache.poi.ss.usermodel.CellStyle getPOICellStyle() {
-        return new XSSFCellStyle(xfId, styleXfId, stylesSource, themes);
     }
 
     private CTXf getCoreXf() {
-        return stylesSource.getCellXfAt(xfId);
+        return workbook.getStylesSource().getCellXfAt(xfId);
     }
 
     private CTXf getStyleXf() {
-        return stylesSource.getCellStyleXfAt(styleXfId);
+        return workbook.getStylesSource().getCellStyleXfAt(styleXfId);
+    }
+
+    private CTXf getXf() {
+        if(styleXfId > -1) return workbook.getStylesSource().getCellStyleXfAt(styleXfId);
+        else return workbook.getStylesSource().getCellXfAt(xfId);
     }
 
     private CTBorder getCTBorder(){
@@ -68,7 +69,7 @@ public class XCellStyle implements CellStyle {
         if(styleXf.getApplyBorder()) {
         // if(getCoreXf().getApplyBorder()) {
             int idx = (int) styleXf.getBorderId();
-            XSSFCellBorder cf = stylesSource.getBorderAt(idx);
+            XSSFCellBorder cf = workbook.getStylesSource().getBorderAt(idx);
             ct = (CTBorder)cf.getCTBorder().copy();
         } else {
             ct = CTBorder.Factory.newInstance();
@@ -82,7 +83,7 @@ public class XCellStyle implements CellStyle {
         if(styleXf.getApplyFill()) {
         // if(getCoreXf().getApplyFill()) {
             int fillIndex = (int)styleXf.getFillId();
-            XSSFCellFill cf = stylesSource.getFillAt(fillIndex);
+            XSSFCellFill cf = workbook.getStylesSource().getFillAt(fillIndex);
 
             ct = (CTFill)cf.getCTFill().copy();
         } else {
@@ -112,7 +113,7 @@ public class XCellStyle implements CellStyle {
         if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetBottom();
         else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
 
-        int idx = stylesSource.putBorder(new XSSFCellBorder(ct));
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
 
         CTXf styleXf = getStyleXf();
         // ???
@@ -142,7 +143,7 @@ public class XCellStyle implements CellStyle {
             ptrn.setFgColor(color.getCTColor());
         }
 
-        int idx = stylesSource.putFill(new XSSFCellFill(ct));
+        int idx = workbook.getStylesSource().putFill(new XSSFCellFill(ct));
 
         CTXf styleXf = getStyleXf();
         // ???
@@ -164,9 +165,9 @@ public class XCellStyle implements CellStyle {
         if(fp == org.apache.poi.ss.usermodel.CellStyle.NO_FILL && ptrn.isSetPatternType()) ptrn.unsetPatternType();
         else ptrn.setPatternType(STPatternType.Enum.forInt(fp + 1));
 
-        int idx = stylesSource.putFill(new XSSFCellFill(ct));
+        int idx = workbook.getStylesSource().putFill(new XSSFCellFill(ct));
 
-        CTXf styleXf = stylesSource.getCellStyleXfAt(styleXfId);
+        CTXf styleXf = workbook.getStylesSource().getCellStyleXfAt(styleXfId);
         // ???
         getCoreXf().setFillId(idx);
         styleXf.setFillId(idx);
@@ -180,59 +181,56 @@ public class XCellStyle implements CellStyle {
 
     public static XCellStyle create(XSSFWorkbook workbook, String name) {
 
-//        CTCellStyleXfs ctCellStyleXfs = workbook.getStylesSource().getCTStylesheet().getCellStyleXfs();
-//        if(ctCellStyleXfs == null) {
-//            ctCellStyleXfs = workbook.getStylesSource().getCTStylesheet().addNewCellStyleXfs();
-//            ctCellStyleXfs.setCount(0);
-//        }
-//        if(ctCellStyleXfs.getCount() == 0) {
-//            CTXf standardXf = ctCellStyleXfs.addNewXf();
-//            standardXf.setNumFmtId(0);
-//            standardXf.setFontId(0);
-//            standardXf.setFillId(0);
-//            standardXf.setBorderId(0);
-//            ctCellStyleXfs.setCount(1);
-//        }
-
-        CTCellStyles ctCellStyles = workbook.getStylesSource().getCTStylesheet().getCellStyles();
-        if(ctCellStyles == null) {
-            ctCellStyles = workbook.getStylesSource().getCTStylesheet().addNewCellStyles();
-            ctCellStyles.setCount(0);
-        }
-        if(ctCellStyles.getCount() == 0) {
-            CTCellStyle standardCellStyle = ctCellStyles.addNewCellStyle();
-            standardCellStyle.setName("Standard");
-            standardCellStyle.setXfId(0);
-            standardCellStyle.setBuiltinId(0);
-            ctCellStyles.setCount(1);
-        }
-
-        CTXf styleXf = CTXf.Factory.newInstance();
-        styleXf.setNumFmtId(0);
-        styleXf.setFontId(0);
-        styleXf.setFillId(0);
-        styleXf.setBorderId(0);
-
-        int styleXfSize = workbook.getStylesSource().putCellStyleXf(styleXf);
+        int styleXfSize = 0;
 
         CTXf xf = CTXf.Factory.newInstance();
         xf.setNumFmtId(0);
         xf.setFontId(0);
         xf.setFillId(0);
         xf.setBorderId(0);
-        xf.setXfId(styleXfSize - 1);
+
+        if(name != null) {
+            CTCellStyles ctCellStyles = workbook.getStylesSource().getCTStylesheet().getCellStyles();
+            if(ctCellStyles == null) {
+                ctCellStyles = workbook.getStylesSource().getCTStylesheet().addNewCellStyles();
+                ctCellStyles.setCount(0);
+            }
+            if(ctCellStyles.getCount() == 0) {
+                CTCellStyle standardCellStyle = ctCellStyles.addNewCellStyle();
+                standardCellStyle.setName("Standard");
+                standardCellStyle.setXfId(0);
+                standardCellStyle.setBuiltinId(0);
+                ctCellStyles.setCount(1);
+            }
+
+            CTXf styleXf = CTXf.Factory.newInstance();
+            styleXf.setNumFmtId(0);
+            styleXf.setFontId(0);
+            styleXf.setFillId(0);
+            styleXf.setBorderId(0);
+
+            styleXfSize = workbook.getStylesSource().putCellStyleXf(styleXf);
+            xf.setXfId(styleXfSize - 1);
+            
+            CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
+            ctCellStyle.setName(name);
+            ctCellStyle.setXfId(styleXfSize - 1);
+            ctCellStyles.setCount(ctCellStyles.getCount() + 1);
+        }
+
         int xfSize = workbook.getStylesSource().putCellXf(xf);
 
-        CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
-        ctCellStyle.setName(name);
-        // ctCellStyle.setXfId(workbook.getStylesSource()._getStyleXfsSize() - 1);
-        ctCellStyle.setXfId(styleXfSize - 1);
-        ctCellStyles.setCount(ctCellStyles.getCount() + 1);
-
-        return new XCellStyle(workbook.getStylesSource(), ctCellStyle, xfSize - 1,
-                styleXfSize - 1, workbook.getTheme());
+        return new XCellStyle(workbook, xfSize - 1, styleXfSize - 1);
     }
 
+    /**
+     * Used for querying user-named cell styles (style xf only).
+     *
+     * @param workbook
+     * @param name
+     * @return          XCellStyle with core xf id = 0 and id of
+     *                  corresponding (named) style xf
+     */
     public static XCellStyle get(XSSFWorkbook workbook, String name) {
         StylesTable stylesSource = workbook.getStylesSource();
         CTCellStyles ctCellStyles = stylesSource.getCTStylesheet().getCellStyles();
@@ -242,13 +240,38 @@ public class XCellStyle implements CellStyle {
                 CTCellStyle ctCellStyle = ctCellStyles.getCellStyleArray(i);
                 if(ctCellStyle.getName().equals(name)) {
                     int styleXfId = (int) ctCellStyle.getXfId();
-                    
-                    return new XCellStyle(stylesSource, ctCellStyle, stylesSource._getXfsSize() - 1,
-                            styleXfId, workbook.getTheme());
+
+                    return new XCellStyle(workbook, -1, styleXfId);
                 }
             }
         }
 
         return null;
+    }
+
+    public static void set(XSSFCell c, XCellStyle cs) {
+        if(cs.xfId < 0) {
+            // Only the style xf is of interest
+
+            CTXf styleXf = cs.getStyleXf();
+
+            CTXf xf = CTXf.Factory.newInstance();
+            xf.setNumFmtId(styleXf.getNumFmtId());
+            xf.setFontId(styleXf.getFontId());
+            xf.setFillId(styleXf.getFillId());
+            xf.setBorderId(styleXf.getBorderId());
+            xf.setXfId(cs.styleXfId);
+
+            int xfSize = cs.workbook.getStylesSource().putCellXf(xf);
+            c.setCellStyle(new XSSFCellStyle(xfSize - 1, cs.styleXfId,
+                    cs.workbook.getStylesSource(), cs.workbook.getTheme()));
+        } else if(cs.styleXfId < 0) {
+            // It's an unnamed cell style - only the core xf is of interest
+
+            c.setCellStyle(new XSSFCellStyle(cs.xfId, 0, cs.workbook.getStylesSource(),
+                    cs.workbook.getTheme()));
+        } else
+            c.setCellStyle(new XSSFCellStyle(cs.xfId, cs.styleXfId,
+                    cs.workbook.getStylesSource(), cs.workbook.getTheme()));
     }
 }

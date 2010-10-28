@@ -5,6 +5,7 @@
 
 package com.miraisolutions.xlconnect;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
@@ -19,11 +20,7 @@ public class HCellStyle implements CellStyle {
     public HCellStyle(HSSFCellStyle cellStyle) {
         this.cellStyle = cellStyle;
     }
-
-    public org.apache.poi.ss.usermodel.CellStyle getPOICellStyle() {
-        return cellStyle;
-    }
-
+    
     public void setBorderBottom(short border) {
         cellStyle.setBorderBottom(border);
     }
@@ -46,8 +43,7 @@ public class HCellStyle implements CellStyle {
 
     public static HCellStyle create(HSSFWorkbook workbook, String name) {
         HSSFCellStyle cellStyle = workbook.createCellStyle();
-        // if(name != null)
-            cellStyle.setUserStyleName(name);
+        if(name != null) cellStyle.setUserStyleName(name);
         return new HCellStyle(cellStyle);
     }
 
@@ -61,5 +57,9 @@ public class HCellStyle implements CellStyle {
         }
 
         return null;
+    }
+
+    public static void set(HSSFCell c, HCellStyle cs) {
+        c.setCellStyle(cs.cellStyle);
     }
 }

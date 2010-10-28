@@ -108,7 +108,7 @@ public class App
         workbook.createName("Test", "Test!$B$2", true);
         workbook.writeNamedRegion(df, "Test", true);
 
-        /**
+        //--
         // Write worksheet
         workbook.createSheet("Test Data");
         workbook.writeWorksheet(df, "Test Data", 0, 0, true);
@@ -121,12 +121,14 @@ public class App
         
         CellStyle cs = workbook.createCellStyle("MyPersonalStyle.Header");
         cs.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
+        // cs.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+        // cs.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
         workbook.setStyleNamePrefix("MyPersonalStyle");
         workbook.createName("Somewhere", "Somewhere!$C$5", true);
         workbook.writeNamedRegion(df, "Somewhere", true);     
 
-         **/
+        // ---
 
         workbook.save();
 

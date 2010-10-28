@@ -5,6 +5,8 @@
 
 package com.miraisolutions.xlconnect;
 
+import org.apache.poi.ss.usermodel.Cell;
+
 /**
  *
  * @author Martin Studer, Mirai Solutions GmbH
@@ -15,10 +17,6 @@ public class SSCellStyle implements CellStyle {
 
     public SSCellStyle(org.apache.poi.ss.usermodel.CellStyle cellStyle) {
         this.cellStyle = cellStyle;
-    }
-
-    public org.apache.poi.ss.usermodel.CellStyle getPOICellStyle() {
-        return cellStyle;
     }
 
     public void setBorderBottom(short border) {
@@ -41,4 +39,7 @@ public class SSCellStyle implements CellStyle {
         cellStyle.setWrapText(wrap);
     }
 
+    public static void set(Cell c, SSCellStyle cs) {
+        c.setCellStyle(cs.cellStyle);
+    }
 }

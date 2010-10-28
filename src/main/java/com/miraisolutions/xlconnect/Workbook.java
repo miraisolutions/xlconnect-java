@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -19,6 +20,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -267,7 +269,7 @@ public final class Workbook {
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
                 cell.setCellType(Cell.CELL_TYPE_STRING);
                 cell.setCellValue(data.getColumnName(i));
-                cell.setCellStyle(styles.get(HEADER + i).getPOICellStyle());
+                setCellStyle(cell, styles.get(HEADER + i));
             }
 
             ++rowIndex;
@@ -293,7 +295,7 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Writing double value '" + d.doubleValue() + "'");
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             cell.setCellValue(d.doubleValue());
-                            cell.setCellStyle(cs.getPOICellStyle());
+                            setCellStyle(cell, cs);
                         }
                     }
                     break;
@@ -311,7 +313,7 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Writing string value '" + stringValues.get(j) + "'");
                             cell.setCellType(Cell.CELL_TYPE_STRING);
                             cell.setCellValue(stringValues.get(j));
-                            cell.setCellStyle(cs.getPOICellStyle());
+                            setCellStyle(cell, cs);
                         }
                     }
                     break;
@@ -329,7 +331,7 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Writing boolean value '" + booleanValues.get(j).booleanValue() + "'");
                             cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             cell.setCellValue(booleanValues.get(j).booleanValue());
-                            cell.setCellStyle(cs.getPOICellStyle());
+                            setCellStyle(cell, cs);
                         }
                     }
                     break;
@@ -348,7 +350,7 @@ public final class Workbook {
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             // TODO: date formatting
                             cell.setCellValue(d);
-                            cell.setCellStyle(cs.getPOICellStyle());
+                            setCellStyle(cell, cs);
                         }
                     }
                     break;
@@ -912,14 +914,6 @@ public final class Workbook {
         return getCell(sheet, rowIndex, colIndex, true);
     }
 
-    /*
-    private Cell getCell(CellReference cref) {
-        Sheet sheet = workbook.getSheet(cref.getSheetName());
-        return getCell(sheet, cref.getRow(), cref.getCol());
-    }
-     * 
-     */
-
     private void setMissing(Cell cell) {
         cell.setCellType(Cell.CELL_TYPE_BLANK);
     }
@@ -985,6 +979,16 @@ public final class Workbook {
             return XCellStyle.get((XSSFWorkbook) workbook, name);
         }      
         return null;
+    }
+
+    public void setCellStyle(Cell c, CellStyle cs) {
+        if(cs instanceof HCellStyle) {
+            HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
+        } else if(cs instanceof XCellStyle) {
+            XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
+        } else {
+            SSCellStyle.set(c, (SSCellStyle) cs);
+        }
     }
 
     /**
