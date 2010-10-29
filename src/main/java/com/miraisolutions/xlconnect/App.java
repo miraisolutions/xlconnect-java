@@ -72,7 +72,20 @@ public class App
 //        fos.close();
 //
 //        if(1 == 1) return;
-        
+
+
+//        File f = new File("C:/Users/mstuder/Documents/testWorkbookReferenceFormula.xlsx");
+//        Workbook wb = Workbook.getWorkbook(f, false);
+//        System.out.println(wb.getReferenceFormula("SecondName"));
+//
+//        if(1 == 1) return;
+
+        for(IndexedColors col : IndexedColors.values()) {
+            System.out.println("XLC$\"COLOR." + col.toString() + "\" <- " + col.getIndex());
+        }
+
+        if(1 == 1) return;
+
         File excelFile = new File("C:/temp/test.xlsx");
         if(excelFile.exists()) excelFile.delete();
 
@@ -128,6 +141,11 @@ public class App
         workbook.createName("Somewhere", "Somewhere!$C$5", true);
         workbook.writeNamedRegion(df, "Somewhere", true);     
 
+        CellStyle funky = workbook.createCellStyle();
+        funky.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
+        funky.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+        workbook.setCellStyle("Somewhere!$D$6:$E$9", funky);
+        
         // ---
 
         workbook.save();

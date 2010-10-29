@@ -7,7 +7,7 @@ package com.miraisolutions.xlconnect;
 
 /**
  *
- * @author mstuder
+ * @author Martin Studer, Mirai Solutions GmbH
  */
 public enum StyleAction {
     XLCONNECT, PREDEFINED, STYLE_NAME_PREFIX;

@@ -32,6 +32,7 @@
                     <options>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper { public *; }</option>
+                        <option>-keep public class com.miraisolutions.xlconnect.integration.r.RCellStyleWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.utils.Logging { public *; }</option>
                         <option>-optimizationpasses 3</option>
                         <option>-overloadaggressively</option>

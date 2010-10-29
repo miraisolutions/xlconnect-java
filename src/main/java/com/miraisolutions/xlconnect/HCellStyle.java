@@ -8,6 +8,7 @@ package com.miraisolutions.xlconnect;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.DataFormat;
 
 /**
  *
@@ -15,9 +16,11 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
  */
 public class HCellStyle implements CellStyle {
 
+    private final HSSFWorkbook workbook;
     private final HSSFCellStyle cellStyle;
 
-    public HCellStyle(HSSFCellStyle cellStyle) {
+    public HCellStyle(HSSFWorkbook workbook, HSSFCellStyle cellStyle) {
+        this.workbook = workbook;
         this.cellStyle = cellStyle;
     }
     
@@ -25,8 +28,9 @@ public class HCellStyle implements CellStyle {
         cellStyle.setBorderBottom(border);
     }
 
-    public void setDataFormat(short format) {
-        cellStyle.setDataFormat(format);
+    public void setDataFormat(String format) {
+        DataFormat dataFormat = workbook.createDataFormat();
+        cellStyle.setDataFormat(dataFormat.getFormat(format));
     }
 
     public void setFillForegroundColor(short fp) {
@@ -44,7 +48,7 @@ public class HCellStyle implements CellStyle {
     public static HCellStyle create(HSSFWorkbook workbook, String name) {
         HSSFCellStyle cellStyle = workbook.createCellStyle();
         if(name != null) cellStyle.setUserStyleName(name);
-        return new HCellStyle(cellStyle);
+        return new HCellStyle(workbook, cellStyle);
     }
 
     public static HCellStyle get(HSSFWorkbook workbook, String name) {
@@ -53,7 +57,7 @@ public class HCellStyle implements CellStyle {
             HSSFCellStyle cs = wb.getCellStyleAt(i);
             String userStyleName = cs.getUserStyleName();
             if(userStyleName != null && cs.getUserStyleName().equals(name))
-                return new HCellStyle(cs);
+                return new HCellStyle(workbook, cs);
         }
 
         return null;

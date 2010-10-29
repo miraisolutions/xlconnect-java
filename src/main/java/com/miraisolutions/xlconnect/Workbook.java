@@ -100,22 +100,21 @@ public final class Workbook {
     private void initDefaultStyles() {
         Map<String, CellStyle> xlconnectDefaults =
                 new HashMap<String, CellStyle>(5);
-        DataFormat dataFormat = workbook.createDataFormat();
 
         // Header style
         CellStyle headerStyle = createCellStyle("XLConnect.Header");
-        headerStyle.setDataFormat(dataFormat.getFormat("General"));
+        headerStyle.setDataFormat("General");
         headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
         headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex()); 
         // headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
         headerStyle.setWrapText(true);
         // String / boolean / numeric style
         CellStyle style = createCellStyle("XLConnect.General");
-        style.setDataFormat(dataFormat.getFormat("General"));
+        style.setDataFormat("General");
         style.setWrapText(true);
         // Date style
         CellStyle dateStyle = createCellStyle("XLConnect.Date");
-        dateStyle.setDataFormat(dataFormat.getFormat("mm/dd/yyyy hh:mm:ss"));
+        dateStyle.setDataFormat("mm/dd/yyyy hh:mm:ss");
         dateStyle.setWrapText(true);
 
         xlconnectDefaults.put(HEADER_STYLE, headerStyle);
@@ -248,6 +247,10 @@ public final class Workbook {
             logger.log(Level.INFO, "Removing name '" + name + "'");
             workbook.removeName(name);
         }
+    }
+
+    public String getReferenceFormula(String name) {
+        return getName(name).getRefersToFormula();
     }
 
     private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header) {
@@ -786,6 +789,10 @@ public final class Workbook {
          **/
     }
 
+    public CellStyle createCellStyle() {
+        return createCellStyle(null);
+    }
+
     public int getActiveSheetIndex() {
         if(workbook.getNumberOfSheets() < 1)
             return -1;
@@ -990,6 +997,18 @@ public final class Workbook {
             SSCellStyle.set(c, (SSCellStyle) cs);
         }
     }
+    
+    public void setCellStyle(String formula, CellStyle cs) {
+        AreaReference aref = new AreaReference(formula);
+        String sheetName = aref.getFirstCell().getSheetName();
+        Sheet sheet = workbook.getSheet(sheetName);
+        
+        CellReference[] crefs = aref.getAllReferencedCells();
+        for(CellReference cref : crefs) {
+            Cell c = sheet.getRow(cref.getRow()).getCell(cref.getCol());
+            setCellStyle(c, cs);
+        }
+    }
 
     /**
      * Determines the cell styles for headers and columns by column based on the defined style action.
@@ -1034,13 +1053,13 @@ public final class Workbook {
                 // In case of a header, determine header styles
                 if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++) {
-                        cstyles.put(HEADER + i, new SSCellStyle(getCell(sheet, startRow, startCol + i).getCellStyle()));
+                        cstyles.put(HEADER + i, new SSCellStyle(workbook, getCell(sheet, startRow, startCol + i).getCellStyle()));
                     }
                 }
                 int styleRow = startRow + (data.hasColumnHeader() ? 1 : 0);
                 for(int i = 0; i < data.columns(); i++) {
                     Cell cell = getCell(sheet, styleRow, startCol + i);
-                    cstyles.put(COLUMN + i, new SSCellStyle(cell.getCellStyle()));
+                    cstyles.put(COLUMN + i, new SSCellStyle(workbook, cell.getCellStyle()));
                 }
                 break;
             case STYLE_NAME_PREFIX:
@@ -1064,7 +1083,7 @@ public final class Workbook {
                         if(cs == null) {
                             logger.log(Level.WARNING, "No header style found for header '" +
                                     data.getColumnName(i) + "' - taking default");
-                            cs = new SSCellStyle(workbook.getCellStyleAt((short)0)); // getCellStyle("Standard");
+                            cs = new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
                         }
                         
                         cstyles.put(HEADER + i, cs);
@@ -1089,7 +1108,7 @@ public final class Workbook {
                     if(cs == null) {
                         logger.log(Level.WARNING, "No column style found for column '" +
                                 data.getColumnName(i) + "' - taking default");
-                        cs =  new SSCellStyle(workbook.getCellStyleAt((short)0)); // getCellStyle("Standard");
+                        cs =  new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
                     }
 
                     cstyles.put(COLUMN + i, cs);

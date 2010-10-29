@@ -11,7 +11,7 @@ package com.miraisolutions.xlconnect;
  */
 public interface CellStyle {
     void setBorderBottom(short border);
-    void setDataFormat(short format);
+    void setDataFormat(String format);
     void setFillForegroundColor(short fp);
     void setFillPattern(short bg);
     void setWrapText(boolean wrap);

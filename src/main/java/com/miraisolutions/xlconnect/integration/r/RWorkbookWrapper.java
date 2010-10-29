@@ -5,6 +5,8 @@
 
 package com.miraisolutions.xlconnect.integration.r;
 
+import com.miraisolutions.xlconnect.CellStyle;
+import com.miraisolutions.xlconnect.StyleAction;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import java.io.FileNotFoundException;
@@ -41,6 +43,10 @@ public final class RWorkbookWrapper {
 
     public void removeName(String name) {
         workbook.removeName(name);
+    }
+
+    public String getReferenceFormula(String name) {
+        return workbook.getReferenceFormula(name);
     }
 
     public void removeSheet(String name) {
@@ -155,6 +161,31 @@ public final class RWorkbookWrapper {
     public void addImage(String filename, String name, boolean originalSize)
             throws FileNotFoundException, IOException {
         workbook.addImage(filename, name, originalSize);
+    }
+
+    public RCellStyleWrapper createCellStyle(String name) {
+        CellStyle cs = workbook.createCellStyle(name);
+        return new RCellStyleWrapper(cs);
+    }
+
+    public RCellStyleWrapper createCellStyle() {
+        CellStyle cs = workbook.createCellStyle();
+        return new RCellStyleWrapper(cs);
+    }
+
+    public void setStyleAction(String action) {
+        if("XLCONNECT".equals(action))
+            workbook.setStyleAction(StyleAction.XLCONNECT);
+        else if("PREDEFINED".equals(action))
+            workbook.setStyleAction(StyleAction.PREDEFINED);
+        else if("STYLE_NAME_PREFIX".equals(action))
+            workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
+        else
+            throw new IllegalArgumentException("Provided action is not a valid style action!");
+    }
+
+    public void setStyleNamePrefix(String prefix) {
+        workbook.setStyleNamePrefix(prefix);
     }
 
     public void save() throws FileNotFoundException, IOException {

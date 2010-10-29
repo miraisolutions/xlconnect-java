@@ -6,6 +6,7 @@
 package com.miraisolutions.xlconnect;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormat;
 
 /**
  *
@@ -13,9 +14,11 @@ import org.apache.poi.ss.usermodel.Cell;
  */
 public class SSCellStyle implements CellStyle {
 
+    org.apache.poi.ss.usermodel.Workbook workbook;
     org.apache.poi.ss.usermodel.CellStyle cellStyle;
 
-    public SSCellStyle(org.apache.poi.ss.usermodel.CellStyle cellStyle) {
+    public SSCellStyle(org.apache.poi.ss.usermodel.Workbook workbook, org.apache.poi.ss.usermodel.CellStyle cellStyle) {
+        this.workbook = workbook;
         this.cellStyle = cellStyle;
     }
 
@@ -23,8 +26,9 @@ public class SSCellStyle implements CellStyle {
         cellStyle.setBorderBottom(border);
     }
 
-    public void setDataFormat(short format) {
-        cellStyle.setDataFormat(format);
+    public void setDataFormat(String format) {
+        DataFormat dataFormat = workbook.createDataFormat();
+        cellStyle.setDataFormat(dataFormat.getFormat(format));
     }
 
     public void setFillForegroundColor(short fp) {
