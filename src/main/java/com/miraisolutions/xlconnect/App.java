@@ -6,6 +6,7 @@ import com.miraisolutions.xlconnect.utils.Logging;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -80,9 +81,17 @@ public class App
 //
 //        if(1 == 1) return;
 
-        for(IndexedColors col : IndexedColors.values()) {
-            System.out.println("XLC$\"COLOR." + col.toString() + "\" <- " + col.getIndex());
+        String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",
+            "THICK_HORZ_BANDS", "THICK_VERT_BANDS", "THICK_BACKWARD_DIAG", "THICK_FORWARD_DIAG", "BIG_SPOTS",
+            "BRICKS", "THIN_HORZ_BANDS", "THIN_VERT_BANDS", "THIN_BACKWARD_DIAG", "THIN_FORWARD_DIAG",
+            "SQUARES", "DIAMONDS"};
+
+        Class c = Class.forName("org.apache.poi.ss.usermodel.CellStyle");
+        for(String val : values) {
+            System.out.println("XLC$\"FILL." + val + "\" <- " + c.getField(val).get(null));
         }
+
+        org.apache.poi.ss.usermodel.CellStyle css;
 
         if(1 == 1) return;
 

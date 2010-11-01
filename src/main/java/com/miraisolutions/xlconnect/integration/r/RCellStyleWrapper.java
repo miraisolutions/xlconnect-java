@@ -19,23 +19,45 @@ public class RCellStyleWrapper {
         this.cellStyle = cellStyle;
     }
 
-    public void setBorderBottom(int border) {
-        cellStyle.setBorderBottom((short) border);
+    public void setBorder(String[] side, int[] border, int[] color) {
+        assert border.length == side.length && color.length == side.length;
+
+        for(int i = 0; i < side.length; i++) {
+            if("bottom".equals(side[i])) {
+                cellStyle.setBorderBottom((short) border[i]);
+                cellStyle.setBottomBorderColor((short) color[i]);
+            } else if("left".equals(side[i])) {
+                cellStyle.setBorderLeft((short) border[i]);
+                cellStyle.setLeftBorderColor((short) color[i]);
+            } else if("right".equals(side[i])) {
+                cellStyle.setBorderRight((short) border[i]);
+                cellStyle.setRightBorderColor((short) color[i]);
+            } else if("top".equals(side[i])) {
+                cellStyle.setBorderTop((short) border[i]);
+                cellStyle.setTopBorderColor((short) color[i]);
+            } else
+                throw new IllegalArgumentException("Undefined border side: '" + side[i] + "'");
+        }
+
     }
 
-    void setDataFormat(String format) {
+    public void setDataFormat(String format) {
         cellStyle.setDataFormat(format);
     }
 
-    void setFillForegroundColor(int fp) {
+    public void setFillBackgroundColor(int bg) {
+        cellStyle.setFillBackgroundColor((short) bg);
+    }
+
+    public void setFillForegroundColor(int fp) {
         cellStyle.setFillForegroundColor((short) fp);
     }
 
-    void setFillPattern(int bg) {
+    public void setFillPattern(int bg) {
         cellStyle.setFillPattern((short) bg);
     }
 
-    void setWrapText(boolean wrap) {
+    public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);
     }
 }

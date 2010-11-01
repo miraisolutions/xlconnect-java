@@ -26,7 +26,7 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.STBorderStyle;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
 
 /**
- * Partially uses code from XSSFCellStyle from
+ * Uses code from XSSFCellStyle from
  * http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java
  * 
  * @author Martin Studer, Mirai Solutions GmbH
@@ -120,6 +120,136 @@ public class XCellStyle implements CellStyle {
         getCoreXf().setBorderId(idx);
     }
 
+    public void setBorderLeft(short border) {
+        CTBorder ct = getCTBorder();
+        CTBorderPr pr = ct.isSetLeft() ? ct.getLeft() : ct.addNewLeft();
+        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetLeft();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    public void setBorderRight(short border) {
+        CTBorder ct = getCTBorder();
+        CTBorderPr pr = ct.isSetRight() ? ct.getRight() : ct.addNewRight();
+        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetRight();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    public void setBorderTop(short border) {
+        CTBorder ct = getCTBorder();
+        CTBorderPr pr = ct.isSetTop() ? ct.getTop() : ct.addNewTop();
+        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetTop();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    private void setBottomBorderColor(XSSFColor color) {
+        CTBorder ct = getCTBorder();
+        if(color == null && !ct.isSetBottom()) return;
+
+        CTBorderPr pr = ct.isSetBottom() ? ct.getBottom() : ct.addNewBottom();
+        if(color != null)  pr.setColor(color.getCTColor());
+        else pr.unsetColor();
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    public void setBottomBorderColor(short color) {
+        XSSFColor clr = new XSSFColor();
+        clr.setIndexed(color);
+        setBottomBorderColor(clr);
+    }
+
+    private void setLeftBorderColor(XSSFColor color) {
+        CTBorder ct = getCTBorder();
+        if(color == null && !ct.isSetLeft()) return;
+
+        CTBorderPr pr = ct.isSetLeft() ? ct.getLeft() : ct.addNewLeft();
+        if(color != null)  pr.setColor(color.getCTColor());
+        else pr.unsetColor();
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    public void setLeftBorderColor(short color) {
+        XSSFColor clr = new XSSFColor();
+        clr.setIndexed(color);
+        setLeftBorderColor(clr);
+    }
+
+    private void setRightBorderColor(XSSFColor color) {
+        CTBorder ct = getCTBorder();
+        if(color == null && !ct.isSetRight()) return;
+
+        CTBorderPr pr = ct.isSetRight() ? ct.getRight() : ct.addNewRight();
+        if(color != null)  pr.setColor(color.getCTColor());
+        else pr.unsetColor();
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    public void setRightBorderColor(short color) {
+        XSSFColor clr = new XSSFColor();
+        clr.setIndexed(color);
+        setRightBorderColor(clr);
+    }
+
+    private void setTopBorderColor(XSSFColor color) {
+        CTBorder ct = getCTBorder();
+        if(color == null && !ct.isSetTop()) return;
+
+        CTBorderPr pr = ct.isSetTop() ? ct.getTop() : ct.addNewTop();
+        if(color != null)  pr.setColor(color.getCTColor());
+        else pr.unsetColor();
+
+        int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
+
+        CTXf xf = getXf();
+        xf.setBorderId(idx);
+        xf.setApplyBorder(true);
+        getCoreXf().setBorderId(idx);
+    }
+
+    public void setTopBorderColor(short color) {
+        XSSFColor clr = new XSSFColor();
+        clr.setIndexed(color);
+        setTopBorderColor(clr);
+    }
+
     public void setDataFormat(String format) {
         DataFormat dataFormat = workbook.createDataFormat();
         short fmtId = dataFormat.getFormat(format);
@@ -128,6 +258,30 @@ public class XCellStyle implements CellStyle {
         xf.setApplyNumberFormat(true);
         xf.setNumFmtId(fmtId);
         getCoreXf().setNumFmtId(fmtId);
+    }
+
+    private void setFillBackgroundColor(XSSFColor color) {
+        CTFill ct = getCTFill();
+        CTPatternFill ptrn = ct.getPatternFill();
+        if(color == null) {
+            if(ptrn != null) ptrn.unsetBgColor();
+        } else {
+            if(ptrn == null) ptrn = ct.addNewPatternFill();
+            ptrn.setBgColor(color.getCTColor());
+        }
+
+        int idx = workbook.getStylesSource().putFill(new XSSFCellFill(ct));
+
+        CTXf xf = getXf();
+        xf.setFillId(idx);
+        xf.setApplyFill(true);
+        getCoreXf().setFillId(idx);
+    }
+
+    public void setFillBackgroundColor(short bg) {
+        XSSFColor clr = new XSSFColor();
+        clr.setIndexed(bg);
+        setFillBackgroundColor(clr);
     }
 
     private void setFillForegroundColor(XSSFColor color) {

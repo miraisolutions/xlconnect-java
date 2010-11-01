@@ -28,9 +28,41 @@ public class HCellStyle implements CellStyle {
         cellStyle.setBorderBottom(border);
     }
 
+    public void setBorderLeft(short border) {
+        cellStyle.setBorderLeft(border);
+    }
+
+    public void setBorderRight(short border) {
+        cellStyle.setBorderRight(border);
+    }
+
+    public void setBorderTop(short border) {
+        cellStyle.setBorderTop(border);
+    }
+
+    public void setBottomBorderColor(short color) {
+        cellStyle.setBottomBorderColor(color);
+    }
+
+    public void setLeftBorderColor(short color) {
+        cellStyle.setLeftBorderColor(color);
+    }
+
+    public void setRightBorderColor(short color) {
+        cellStyle.setRightBorderColor(color);
+    }
+
+    public void setTopBorderColor(short color) {
+        cellStyle.setTopBorderColor(color);
+    }
+
     public void setDataFormat(String format) {
         DataFormat dataFormat = workbook.createDataFormat();
         cellStyle.setDataFormat(dataFormat.getFormat(format));
+    }
+
+    public void setFillBackgroundColor(short bg) {
+        cellStyle.setFillBackgroundColor(bg);
     }
 
     public void setFillForegroundColor(short fp) {
