@@ -147,6 +147,7 @@ public final class Workbook {
     }
 
     public void setStyleAction(StyleAction styleAction) {
+        logger.log(Level.INFO, "Setting style action to '" + styleAction.toString() + "'");
         this.styleAction = styleAction;
     }
 
@@ -155,6 +156,7 @@ public final class Workbook {
     }
 
     public void setStyleNamePrefix(String styleNamePrefix) {
+        logger.log(Level.INFO, "Setting style name prefix to '" + styleNamePrefix + "'");
         this.styleNamePrefix = styleNamePrefix;
     }
     
@@ -790,18 +792,17 @@ public final class Workbook {
     }
 
     public CellStyle createCellStyle(String name) {
-        // if(getCellStyle(name) == null) {
+        if(getCellStyle(name) == null) {
             if(isHSSF()) {
                 return HCellStyle.create((HSSFWorkbook) workbook, name);
             } else if(isXSSF()) {
                 return XCellStyle.create((XSSFWorkbook) workbook, name);
             }
             return null;
-        /** } else {
+        } else {
             logger.log(Level.SEVERE, "Cell style with name '" + name + "' already exists!");
             throw new IllegalArgumentException("Cell style with name '" + name + "' already exists!");
         }
-         **/
     }
 
     public CellStyle createCellStyle() {
@@ -871,6 +872,32 @@ public final class Workbook {
     public boolean isSheetVeryHidden(String sheetName) {
         return isSheetVeryHidden(workbook.getSheetIndex(sheetName));
     }
+    
+    public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
+        logger.log(Level.INFO, "Setting width of column " + columnIndex + " on sheet " +
+                sheetIndex + " to " + width + " (in units of 1/256th of a character width)");
+        workbook.getSheetAt(sheetIndex).setColumnWidth(columnIndex, width);
+    }
+
+    public void setColumnWidth(String sheetName, int columnIndex, int width) {
+        setColumnWidth(workbook.getSheetIndex(sheetName), columnIndex, width);
+    }
+
+    public void setRowHeight(int sheetIndex, int rowIndex, float height) {
+        Row r = workbook.getSheetAt(sheetIndex).getRow(rowIndex);
+        if(r == null) {
+            logger.log(Level.INFO, "Row does not exist - creating it.");
+            r = workbook.getSheetAt(sheetIndex).createRow(rowIndex);
+        }
+
+        logger.log(Level.INFO, "Setting row " + rowIndex + " of sheet " + sheetIndex +
+                " to height " + height + " (in points)");
+        r.setHeightInPoints(height);
+    }
+
+    public void setRowHeight(String sheetName, int rowIndex, float height) {
+        setRowHeight(workbook.getSheetIndex(sheetName), rowIndex, height);
+    }
 
     public void save() throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Saving workbook to '" + excelFile.getCanonicalPath() + "'");
@@ -878,10 +905,6 @@ public final class Workbook {
         workbook.write(fos);
         fos.close();
     }
-
-    /**
-     * UTILITY FUNCTIONS
-     */
 
     private Name getName(String name) {
         Name cname = workbook.getName(name);

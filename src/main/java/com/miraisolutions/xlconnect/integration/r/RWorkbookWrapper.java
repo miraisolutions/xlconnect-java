@@ -203,6 +203,22 @@ public final class RWorkbookWrapper {
         workbook.setStyleNamePrefix(prefix);
     }
 
+    public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
+        workbook.setColumnWidth(sheetIndex, columnIndex, width);
+    }
+
+    public void setColumnWidth(String sheetName, int columnIndex, int width) {
+        workbook.setColumnWidth(sheetName, columnIndex, width);
+    }
+
+    public void setRowHeight(int sheetIndex, int rowIndex, double height) {
+        workbook.setRowHeight(sheetIndex, rowIndex, (float) height);
+    }
+
+    public void setRowHeight(String sheetName, int rowIndex, double height) {
+        workbook.setRowHeight(sheetName, rowIndex, (float) height);
+    }
+
     public void save() throws FileNotFoundException, IOException {
         workbook.save();
     }

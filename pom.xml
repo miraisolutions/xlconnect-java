@@ -16,14 +16,37 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.miraisolutions</groupId>
-  <artifactId>XLConnect</artifactId>
-  <packaging>jar</packaging>
-  <version>0.1-1-SNAPSHOT</version>
-  <name>XLConnect</name>
-  <url>http://maven.apache.org</url>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.miraisolutions</groupId>
+    <artifactId>XLConnect</artifactId>
+    <packaging>jar</packaging>
+    <version>0.1-1-SNAPSHOT</version>
+    <name>XLConnect</name>
+    <url>http://www.mirai-solutions.com</url>
+    <profiles>
+        <profile>
+            <id>R</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <integration.package>r</integration.package>
+            </properties>
+        </profile>
+        <profile>
+            <id>Splus</id>
+            <properties>
+                <integration.package>splus</integration.package>
+            </properties>
+        </profile>
+        <profile>
+            <id>Matlab</id>
+            <properties>
+                <integration.package>matlab</integration.package>
+            </properties>
+        </profile>
+    </profiles>
     <build>
         <plugins>
             <plugin>
@@ -33,9 +56,14 @@
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
+                    <includes>
+                        <include>**/xlconnect/*.java</include>
+                        <include>**/xlconnect/data/*.java</include>
+                        <include>**/xlconnect/utils/*.java</include>
+                        <include>**/xlconnect/integration/${integration.package}/*.java</include>
+                    </includes>
                 </configuration>
             </plugin>
-            <!--
             <plugin>
                 <groupId>com.pyx4me</groupId>
                 <artifactId>proguard-maven-plugin</artifactId>
@@ -53,9 +81,12 @@
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RCellStyleWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.utils.Logging { public *; }</option>
                         <option>-optimizationpasses 3</option>
+                        <option>-dontobfuscate</option>
+                        <!--
                         <option>-overloadaggressively</option>
                         <option>-allowaccessmodification</option>
                         <option>-mergeinterfacesaggressively</option>
+                        -->
                     </options>
                     <libs>
                         <lib>${java.home}/lib/rt.jar</lib>
@@ -70,55 +101,54 @@
                     </dependency>
                 </dependencies>
             </plugin>
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
-                  <execution>
-                    <id>copy-dependencies</id>
-                    <phase>package</phase>
-                    <goals>
-                      <goal>copy-dependencies</goal>
-                    </goals>
-                    <configuration>
-                      <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                      <overWriteReleases>false</overWriteReleases>
-                      <overWriteSnapshots>true</overWriteSnapshots>
-                    </configuration>
-                  </execution>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
                 </executions>
-              </plugin>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.poi</groupId>
-      <artifactId>poi</artifactId>
-      <version>3.7</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.poi</groupId>
-      <artifactId>poi-ooxml</artifactId>
-      <version>3.7</version>
-      <exclusions>
-          <exclusion>
-              <groupId>org.apache.poi</groupId>
-              <artifactId>poi-ooxml-schemas</artifactId>
-          </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-        <groupId>org.apache.poi</groupId>
-        <artifactId>ooxml-schemas</artifactId>
-        <version>1.1</version>
-    </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi-ooxml-schemas</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>ooxml-schemas</artifactId>
+            <version>1.1</version>
+        </dependency>
     </dependencies>
 </project>
 
