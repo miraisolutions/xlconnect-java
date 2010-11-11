@@ -51,16 +51,40 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/NOTICE</include>
+                        <include>**/xlconnect/*.*</include>
+                        <include>**/xlconnect/data/*.*</include>
+                        <include>**/xlconnect/utils/*.*</include>
+                        <include>**/xlconnect/integration/${integration.package}/*.*</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>2.3.2</version>
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
                     <includes>
-                        <include>**/xlconnect/*.java</include>
-                        <include>**/xlconnect/data/*.java</include>
-                        <include>**/xlconnect/utils/*.java</include>
-                        <include>**/xlconnect/integration/${integration.package}/*.java</include>
+                        <include>**/NOTICE</include>
+                        <include>**/xlconnect/*.*</include>
+                        <include>**/xlconnect/data/*.*</include>
+                        <include>**/xlconnect/utils/*.*</include>
+                        <include>**/xlconnect/integration/${integration.package}/*.*</include>
                     </includes>
                 </configuration>
             </plugin>
@@ -69,10 +93,10 @@
                 <artifactId>proguard-maven-plugin</artifactId>
                 <version>2.0.4</version>
                 <executions>
-                   <execution>
-                       <phase>package</phase>
-                       <goals><goal>proguard</goal></goals>
-                   </execution>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>proguard</goal></goals>
+                    </execution>
                 </executions>
                 <configuration>
                     <options>

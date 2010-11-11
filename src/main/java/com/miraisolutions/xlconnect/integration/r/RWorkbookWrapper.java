@@ -203,6 +203,14 @@ public final class RWorkbookWrapper {
         workbook.setStyleNamePrefix(prefix);
     }
 
+    public void setCellStyle(String sheetName, int row, int col, RCellStyleWrapper cellStyle) {
+        workbook.setCellStyle(sheetName, row, col, cellStyle.cellStyle);
+    }
+
+    public void setCellStyle(int sheetIndex, int row, int col, RCellStyleWrapper cellStyle) {
+        workbook.setCellStyle(sheetIndex, row, col, cellStyle.cellStyle);
+    }
+
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
         workbook.setColumnWidth(sheetIndex, columnIndex, width);
     }

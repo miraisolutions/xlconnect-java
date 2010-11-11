@@ -41,9 +41,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
 /**
- * Microsoft Excel Workbook Entity
- *
- * This is the main entity when working with XLConnect
+ * Class representing a Microsoft Excel Workbook for XLConnect
  * 
  * @author Martin Studer, Mirai Solutions GmbH
  */
@@ -79,10 +77,6 @@ public final class Workbook {
     private final Map<String, Map<String, CellStyle>> stylesMap =
             new HashMap<String, Map<String, CellStyle>>(10);
 
-
-    /**
-     * CONSTRUCTORS
-     */
 
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
         this.workbook = WorkbookFactory.create(in);
@@ -1043,9 +1037,19 @@ public final class Workbook {
         
         CellReference[] crefs = aref.getAllReferencedCells();
         for(CellReference cref : crefs) {
-            Cell c = sheet.getRow(cref.getRow()).getCell(cref.getCol());
+            Cell c = getCell(sheet, cref.getRow(), cref.getCol());
             setCellStyle(c, cs);
         }
+    }
+
+    public void setCellStyle(int sheetIndex, int row, int col, CellStyle cs) {
+        Cell c = getCell(workbook.getSheetAt(sheetIndex), row, col);
+        setCellStyle(c, cs);
+    }
+
+    public void setCellStyle(String sheetName, int row, int col, CellStyle cs) {
+        Cell c = getCell(workbook.getSheet(sheetName), row, col);
+        setCellStyle(c, cs);
     }
 
     /**
@@ -1159,10 +1163,6 @@ public final class Workbook {
 
         return cstyles;
     }
-
-    /***
-     * FACTORY METHODS
-     */
 
     /**
      * Get the workbook from a Microsoft Excel file.
