@@ -1114,7 +1114,7 @@ public final class Workbook {
                         if(cs == null) {
                             logger.log(Level.INFO, "No header style for column '" + data.getColumnName(i) +
                                     "' (specified by column name) found.");
-                            cs = getCellStyle(prefix + SEP + i);
+                            cs = getCellStyle(prefix + SEP + (i + 1));
                         }
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER>
                         if(cs == null) {
@@ -1139,7 +1139,7 @@ public final class Workbook {
                     if(cs == null) {
                         logger.log(Level.INFO, "No column style for column '" + data.getColumnName(i) +
                                 "' (specified by column name) found.");
-                        cs = getCellStyle(prefix + SEP + i);
+                        cs = getCellStyle(prefix + SEP + (i + 1));
                     }
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><DATA_TYPE>
                     if(cs == null) {
