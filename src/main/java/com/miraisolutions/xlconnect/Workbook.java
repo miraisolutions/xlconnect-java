@@ -423,6 +423,11 @@ public final class Workbook {
             // Collection to hold actual values
             Vector<CellValue> values = new Vector<CellValue>(nrows);
 
+            // Helper collection to store CellValue's that are dates
+            // This is needed as a CellValue doesn't store the information whether it is
+            // a date or not - dates are just numerics
+            Vector<CellValue> isDate = new Vector<CellValue>();
+
             // Loop over rows
             for(int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
@@ -454,6 +459,8 @@ public final class Workbook {
                             if(DateUtil.isCellDateFormatted(cell)) {
                                 logger.log(Level.FINEST, "Found data type datetime");
                                 detectedTypes.add(DataType.DateTime);
+                                // Also add corresponding CellValue to helper collection
+                                isDate.add(cv);
                             } else {
                                 logger.log(Level.FINEST, "Found data type numeric");
                                 detectedTypes.add(DataType.Numeric);
@@ -534,8 +541,18 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Missing value detected");
                             numericValues.add(null);
                         } else {
-                            logger.log(Level.FINEST, "Reading numeric value '" + cv.getNumberValue() + "'");
-                            numericValues.add(cv.getNumberValue());
+                            Double d = null;
+                            switch(cv.getCellType()) {
+                                case Cell.CELL_TYPE_BLANK:
+                                    break;
+                                case Cell.CELL_TYPE_BOOLEAN:
+                                    d = cv.getBooleanValue() ? 1.0 : 0.0;
+                                    break;
+                                default:
+                                    d = cv.getNumberValue();
+                            }
+                            logger.log(Level.FINEST, "Reading numeric value '" + d + "'");
+                            numericValues.add(d);
                         }
                     }
                     data.addColumn(columnHeader, columnType, numericValues);
@@ -552,8 +569,24 @@ public final class Workbook {
                             logger.log(Level.FINEST, "Missing value detected");
                             stringValues.add(null);
                         } else {
-                            logger.log(Level.FINEST, "Reading string value '" + cv.getStringValue() + "'");
-                            stringValues.add(cv.getStringValue());
+                            String s = null;
+                            switch(cv.getCellType()) {
+                                case Cell.CELL_TYPE_BLANK:
+                                    break;
+                                case Cell.CELL_TYPE_BOOLEAN:
+                                    s = String.valueOf(cv.getBooleanValue());
+                                    break;
+                                case Cell.CELL_TYPE_NUMERIC:
+                                    if(isDate.contains(cv))
+                                        s = DateUtil.getJavaDate(cv.getNumberValue()).toString();
+                                    else
+                                        s = String.valueOf(cv.getNumberValue());
+                                    break;
+                                default:
+                                    s = cv.getStringValue();
+                            }
+                            logger.log(Level.FINEST, "Reading string value '" + s + "'");
+                            stringValues.add(s);
                         }
                     }
                     data.addColumn(columnHeader, columnType, stringValues);

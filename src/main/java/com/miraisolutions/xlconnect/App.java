@@ -95,11 +95,11 @@ public class App
 //        if(1 == 1) return;
 
 
-//        File f = new File("C:/Users/mstuder/Documents/testWorkbookReferenceFormula.xlsx");
-//        Workbook wb = Workbook.getWorkbook(f, false);
-//        System.out.println(wb.getReferenceFormula("SecondName"));
-//
-//        if(1 == 1) return;
+        File f = new File("C:/Users/mstuder/Documents/typetest.xlsx");
+        Workbook wb = Workbook.getWorkbook(f, false);
+        DataFrame dftest = wb.readNamedRegion("Test", true);
+
+        if(1 == 1) return;
 
         String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",
             "THICK_HORZ_BANDS", "THICK_VERT_BANDS", "THICK_BACKWARD_DIAG", "THICK_FORWARD_DIAG", "BIG_SPOTS",
