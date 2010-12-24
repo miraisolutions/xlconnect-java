@@ -60,7 +60,10 @@ public class XCellStyle implements CellStyle {
     }
 
     private CTXf getCoreXf() {
-        return workbook.getStylesSource().getCellXfAt(xfId);
+        if(xfId < 0)
+            return workbook.getStylesSource().getCellXfAt(0);
+        else
+            return workbook.getStylesSource().getCellXfAt(xfId);
     }
 
     private CTXf getStyleXf() {
@@ -69,7 +72,7 @@ public class XCellStyle implements CellStyle {
 
     private CTXf getXf() {
         if(styleXfId > -1) return workbook.getStylesSource().getCellStyleXfAt(styleXfId);
-        else return workbook.getStylesSource().getCellXfAt(xfId);
+        else return getCoreXf();
     }
 
     private CTBorder getCTBorder(){

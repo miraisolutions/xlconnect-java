@@ -58,6 +58,10 @@ public final class Workbook {
     // Default style names
     private final static String XLCONNECT_STYLE = "XLCONNECT_STYLE";
 
+    private final static String XLCONNECT_HEADER_STYLE_NAME = "XLConnect.Header";
+    private final static String XLCONNECT_GENERAL_STYLE_NAME = "XLConnect.General";
+    private final static String XLCONNECT_DATE_STYLE_NAME = "XLConnect.Date";
+
     // Style types
     private final static String HEADER_STYLE = "Header";
     private final static String NUMERIC_STYLE = "Numeric";
@@ -111,18 +115,29 @@ public final class Workbook {
                 new HashMap<String, CellStyle>(5);
 
         // Header style
-        CellStyle headerStyle = createCellStyle("XLConnect.Header");
+        CellStyle headerStyle = getCellStyle(XLCONNECT_HEADER_STYLE_NAME);
+        if(headerStyle == null)
+            headerStyle = createCellStyle(XLCONNECT_HEADER_STYLE_NAME);
+
         headerStyle.setDataFormat("General");
         headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
         headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex()); 
         // headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
         headerStyle.setWrapText(true);
+
         // String / boolean / numeric style
-        CellStyle style = createCellStyle("XLConnect.General");
+        CellStyle style = getCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
+        if(style == null)
+            style = createCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
+
         style.setDataFormat("General");
         style.setWrapText(true);
+
         // Date style
-        CellStyle dateStyle = createCellStyle("XLConnect.Date");
+        CellStyle dateStyle = getCellStyle(XLCONNECT_DATE_STYLE_NAME);
+        if(dateStyle == null)
+            dateStyle = createCellStyle(XLCONNECT_DATE_STYLE_NAME);
+        
         dateStyle.setDataFormat("mm/dd/yyyy hh:mm:ss");
         dateStyle.setWrapText(true);
 
@@ -217,8 +232,6 @@ public final class Workbook {
     }
     
     public void createName(String name, String formula, boolean overwrite) {
-        AreaReference areaReference = new AreaReference(formula);
-        String sheetName = areaReference.getFirstCell().getSheetName();
 
         if(existsName(name)) {
             logger.log(Level.INFO, "Name already exists");
@@ -233,8 +246,6 @@ public final class Workbook {
                 throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
             }
         }
-
-        createSheet(sheetName);
 
         Name cname = workbook.createName();
         try {

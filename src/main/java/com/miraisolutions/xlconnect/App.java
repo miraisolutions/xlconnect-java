@@ -95,9 +95,9 @@ public class App
 //        if(1 == 1) return;
 
 
-        File f = new File("C:/Users/mstuder/Documents/typetest.xlsx");
-        Workbook wb = Workbook.getWorkbook(f, false);
-        DataFrame dftest = wb.readNamedRegion("Test", true);
+        File f = new File("C:/Users/mstuder/Documents/Projects/Internal/XLConnect_Workspace/R/XLConnect/BugRepro.xlsx");
+        Workbook wb = Workbook.getWorkbook(f, true);
+        wb.createName("sss", "SUMME(Tabelle1!$A$4:$F$23)", true);
 
         if(1 == 1) return;
 
