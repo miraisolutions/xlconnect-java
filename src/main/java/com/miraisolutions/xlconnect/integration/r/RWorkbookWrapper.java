@@ -188,6 +188,14 @@ public final class RWorkbookWrapper {
         return new RCellStyleWrapper(cs);
     }
 
+    public RCellStyleWrapper getCellStyle(String name) {
+        CellStyle cs = workbook.getCellStyle(name);
+        if(cs != null) {
+            return new RCellStyleWrapper(cs);
+        }
+        throw new IllegalArgumentException("Cell style " + name + " does not exist");
+    }
+    
     public void setStyleAction(String action) {
         if("XLCONNECT".equals(action))
             workbook.setStyleAction(StyleAction.XLCONNECT);
