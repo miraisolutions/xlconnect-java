@@ -252,14 +252,14 @@ public final class Workbook {
             logger.log(Level.INFO, "Creating name '" + name + "' refering to formula '" + formula + "'");
             cname.setNameName(name);
             cname.setRefersToFormula(formula);
-        } catch(IllegalArgumentException e) {
+        } catch(Exception e) {
             logger.log(Level.SEVERE, "Failed creating name '" + name + "'. Cleaning up.");
             // --> Clean up (= remove) name
             // Need to set dummy name in order to be able to remove it ...
             String dummyNameName = "XLConnectDummyName";
             cname.setNameName(dummyNameName);
             removeName(dummyNameName);
-            throw e;
+            throw new IllegalArgumentException(e);
         }
     }
 

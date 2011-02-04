@@ -95,9 +95,20 @@ public class App
 //        if(1 == 1) return;
 
 
-        File f = new File("C:/Users/mstuder/Documents/Projects/Internal/XLConnect_Workspace/R/XLConnect/BugRepro.xlsx");
+//        File f = new File("C:/Users/mstuder/Documents/Projects/Internal/XLConnect_Workspace/R/XLConnect/Whatever.xlsx");
+//        Workbook wb = Workbook.getWorkbook(f, true);
+//        wb.createSheet("test");
+//        wb.hideSheet("test", false);
+
+        File f = new File("test.xlsx");
+        f.delete();
         Workbook wb = Workbook.getWorkbook(f, true);
-        wb.createName("sss", "SUMME(Tabelle1!$A$4:$F$23)", true);
+        wb.createSheet("MySheet");
+        try {
+            wb.createName("aName", "MySheet!A1B1", false);
+        }
+        catch(Exception e) {}
+        wb.createName("aName", "MySheet!A1", false);
 
         if(1 == 1) return;
 
