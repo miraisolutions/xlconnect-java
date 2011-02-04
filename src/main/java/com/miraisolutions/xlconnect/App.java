@@ -100,16 +100,10 @@ public class App
 //        wb.createSheet("test");
 //        wb.hideSheet("test", false);
 
-        File f = new File("test.xlsx");
-        f.delete();
-        Workbook wb = Workbook.getWorkbook(f, true);
-        wb.createSheet("MySheet");
-        try {
-            wb.createName("aName", "MySheet!A1B1", false);
-        }
-        catch(Exception e) {}
-        wb.createName("aName", "MySheet!A1", false);
-
+        File f = new File("C:/Users/mstuder/Documents/Templ.xlsx");
+        Workbook wb = Workbook.getWorkbook(f, false);
+        wb.setStyleAction(StyleAction.NONE);
+        wb.createName("mtcars", "", true);
         if(1 == 1) return;
 
         String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",

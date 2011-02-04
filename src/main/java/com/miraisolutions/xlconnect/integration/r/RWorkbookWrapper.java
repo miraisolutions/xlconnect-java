@@ -199,6 +199,8 @@ public final class RWorkbookWrapper {
     public void setStyleAction(String action) {
         if("XLCONNECT".equals(action))
             workbook.setStyleAction(StyleAction.XLCONNECT);
+        else if("NONE".equals(action))
+            workbook.setStyleAction(StyleAction.NONE);
         else if("PREDEFINED".equals(action))
             workbook.setStyleAction(StyleAction.PREDEFINED);
         else if("STYLE_NAME_PREFIX".equals(action))

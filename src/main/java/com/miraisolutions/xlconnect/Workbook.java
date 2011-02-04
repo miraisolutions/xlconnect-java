@@ -1065,12 +1065,14 @@ public final class Workbook {
     }
 
     public void setCellStyle(Cell c, CellStyle cs) {
-        if(cs instanceof HCellStyle) {
-            HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
-        } else if(cs instanceof XCellStyle) {
-            XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
-        } else {
-            SSCellStyle.set(c, (SSCellStyle) cs);
+        if(cs != null) {
+            if(cs instanceof HCellStyle) {
+                HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
+            } else if(cs instanceof XCellStyle) {
+                XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
+            } else {
+                SSCellStyle.set(c, (SSCellStyle) cs);
+            }
         }
     }
     
@@ -1134,6 +1136,8 @@ public final class Workbook {
                             throw new IllegalArgumentException("Unknown column type detected!");
                     }
                 }
+                break;
+            case NONE:
                 break;
             case PREDEFINED:
                 // In case of a header, determine header styles
