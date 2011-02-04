@@ -615,6 +615,7 @@ public final class Workbook {
     public void writeNamedRegion(DataFrame data, String name, boolean header) {
         logger.log(Level.INFO, "Writing named region '" + name + "' ...");
         Name cname = getName(name);
+        checkName(cname);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
@@ -952,7 +953,8 @@ public final class Workbook {
             logger.log(Level.SEVERE, "Name '" + name + "' does not exist!");
             throw new IllegalArgumentException("Name '" + name + "' does not exist!");
     }
-    
+
+    // Checks only if the reference as such is valid
     private boolean isValidReference(String reference) {
         return reference != null && !reference.startsWith("#REF!") && !reference.startsWith("#NULL!");
     }
@@ -961,6 +963,11 @@ public final class Workbook {
         if(!isValidReference(name.getRefersToFormula())) {
             logger.log(Level.SEVERE, "Name '" + name.getNameName() + "' has invalid reference!");
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' has invalid reference!");
+        }
+        else if(!existsSheet(name.getSheetName())) {
+            // The reference as such is valid but it doesn't point to a (existing) sheet ...
+            logger.log(Level.SEVERE, "Name '" + name.getNameName() + "' does not refer to a valid sheet!");
+            throw new IllegalArgumentException("Name '" + name.getNameName() + "' does not refer to a valid sheet!");
         }
     }
 

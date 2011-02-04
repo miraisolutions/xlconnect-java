@@ -100,10 +100,18 @@ public class App
 //        wb.createSheet("test");
 //        wb.hideSheet("test", false);
 
-        File f = new File("C:/Users/mstuder/Documents/Templ.xlsx");
-        Workbook wb = Workbook.getWorkbook(f, false);
-        wb.setStyleAction(StyleAction.NONE);
-        wb.createName("mtcars", "", true);
+        File f = new File("C:/Users/mstuder/Documents/outch.xlsx");
+        f.delete();
+        Workbook wb = Workbook.getWorkbook(f, true);
+        wb.createName("yeah", "NonExisting!A1", false);
+        DataFrame dfx = new DataFrame();
+        Vector a = new Vector();
+        a.add("1"); a.add("2");
+        Vector b = new Vector();
+        b.add("1"); b.add("2");
+        dfx.addColumn("A", DataType.String, a);
+        dfx.addColumn("B", DataType.String, b);
+        wb.writeNamedRegion(dfx, "yeah", false);
         if(1 == 1) return;
 
         String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",
