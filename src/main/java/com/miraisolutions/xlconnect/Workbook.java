@@ -116,30 +116,29 @@ public final class Workbook {
 
         // Header style
         CellStyle headerStyle = getCellStyle(XLCONNECT_HEADER_STYLE_NAME);
-        if(headerStyle == null)
+        if(headerStyle == null) {
             headerStyle = createCellStyle(XLCONNECT_HEADER_STYLE_NAME);
-
-        headerStyle.setDataFormat("General");
-        headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
-        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex()); 
-        // headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
-        headerStyle.setWrapText(true);
+            headerStyle.setDataFormat("General");
+            headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setWrapText(true);
+        }
 
         // String / boolean / numeric style
         CellStyle style = getCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
-        if(style == null)
+        if(style == null) {
             style = createCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
-
-        style.setDataFormat("General");
-        style.setWrapText(true);
+            style.setDataFormat("General");
+            style.setWrapText(true);
+        }
 
         // Date style
         CellStyle dateStyle = getCellStyle(XLCONNECT_DATE_STYLE_NAME);
-        if(dateStyle == null)
+        if(dateStyle == null) {
             dateStyle = createCellStyle(XLCONNECT_DATE_STYLE_NAME);
-        
-        dateStyle.setDataFormat("mm/dd/yyyy hh:mm:ss");
-        dateStyle.setWrapText(true);
+            dateStyle.setDataFormat("mm/dd/yyyy hh:mm:ss");
+            dateStyle.setWrapText(true);
+        }
 
         xlconnectDefaults.put(HEADER_STYLE, headerStyle);
         xlconnectDefaults.put(STRING_STYLE, style);
