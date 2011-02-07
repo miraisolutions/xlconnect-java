@@ -400,7 +400,7 @@ public class XCellStyle implements CellStyle {
                 if(ctCellStyle.getName().equals(name)) {
                     int styleXfId = (int) ctCellStyle.getXfId();
 
-                    return new XCellStyle(workbook, -1, styleXfId);
+                    return new XCellStyle(workbook, i, styleXfId);
                 }
             }
         }

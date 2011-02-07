@@ -34,9 +34,11 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Name;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.WorkbookUtil;
@@ -100,18 +102,46 @@ public class App
 //        wb.createSheet("test");
 //        wb.hideSheet("test", false);
 
-        File f = new File("C:/Users/mstuder/Documents/outch.xlsx");
-        f.delete();
-        Workbook wb = Workbook.getWorkbook(f, true);
-        wb.createName("yeah", "NonExisting!A1", false);
-        DataFrame dfx = new DataFrame();
-        Vector a = new Vector();
-        a.add("1"); a.add("2");
-        Vector b = new Vector();
-        b.add("1"); b.add("2");
-        dfx.addColumn("A", DataType.String, a);
-        dfx.addColumn("B", DataType.String, b);
-        wb.writeNamedRegion(dfx, "yeah", false);
+        File f = new File("C:/Users/mstuder/Documents/bugrepro.xlsx");
+        Workbook wb = Workbook.getWorkbook(f, false);
+        DataFrame dfx = wb.readNamedRegion("dfRegion", true);
+        printDataFrame(dfx);
+
+        /*
+        org.apache.poi.ss.usermodel.Workbook wbOut = new XSSFWorkbook();
+        Sheet sheetOut = wbOut.createSheet("mysheet");
+
+        Row rowOut = sheetOut.createRow(0);
+        Cell cellOut = rowOut.createCell(0);
+        cellOut.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cellOut.setCellValue(3.14159);
+        cellOut = rowOut.createCell(1);
+        cellOut.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cellOut.setCellValue(new Date());
+
+        FileOutputStream fileOut = new FileOutputStream("C:/Users/mstuder/Documents/zzzz.xlsx");
+        wbOut.write(fileOut);
+        fileOut.close();
+
+        org.apache.poi.ss.usermodel.Workbook wbIn = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/zzzz.xlsx"));
+        Sheet sheetIn = wbIn.getSheetAt(0);
+        Row rowIn = sheetIn.getRow(0);
+        Cell cellIn = rowIn.getCell(0);
+        System.out.println(DateUtil.isCellDateFormatted(cellIn));
+        cellIn = rowIn.getCell(1);
+        System.out.println(DateUtil.isCellDateFormatted(cellIn));
+         *
+         */
+
+        /*
+        org.apache.poi.ss.usermodel.Workbook wbIn = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/bugrepro.xlsx"));
+        Sheet sheetIn = wbIn.getSheetAt(0);
+        Row rowIn = sheetIn.getRow(1);
+        Cell cellIn = rowIn.getCell(0);
+        System.out.println(DateUtil.isCellDateFormatted(cellIn));
+         *
+         */
+
         if(1 == 1) return;
 
         String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",
