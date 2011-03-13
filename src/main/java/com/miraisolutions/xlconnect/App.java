@@ -30,6 +30,7 @@ import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Vector;
 import java.util.logging.Level;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
@@ -102,10 +103,16 @@ public class App
 //        wb.createSheet("test");
 //        wb.hideSheet("test", false);
 
-        File f = new File("C:/Users/mstuder/Documents/bugrepro.xlsx");
+        File f = new File("C:/Users/mstuder/Documents/template.xlsx");
         Workbook wb = Workbook.getWorkbook(f, false);
-        DataFrame dfx = wb.readNamedRegion("dfRegion", true);
-        printDataFrame(dfx);
+        DataFrame dfx = new DataFrame();
+        Vector data = new Vector();
+        data.add("foo");
+        dfx.addColumn("X.foo.", DataType.String, data);
+        wb.writeWorksheet(dfx, 0, 0, 0, true);
+        // CellStyle csx = wb.getCellStyle("Schlecht");
+        // wb.setCellStyle(0, 0, 0, csx);
+        // wb.save();
 
         /*
         org.apache.poi.ss.usermodel.Workbook wbOut = new XSSFWorkbook();

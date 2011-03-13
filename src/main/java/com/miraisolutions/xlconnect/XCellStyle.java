@@ -387,8 +387,7 @@ public class XCellStyle implements CellStyle {
      *
      * @param workbook
      * @param name
-     * @return          XCellStyle with core xf id = 0 and id of
-     *                  corresponding (named) style xf
+     * @return          XCellStyle with corresponding (named) style xf
      */
     public static XCellStyle get(XSSFWorkbook workbook, String name) {
         StylesTable stylesSource = workbook.getStylesSource();
@@ -400,7 +399,7 @@ public class XCellStyle implements CellStyle {
                 if(ctCellStyle.getName().equals(name)) {
                     int styleXfId = (int) ctCellStyle.getXfId();
 
-                    return new XCellStyle(workbook, i, styleXfId);
+                    return new XCellStyle(workbook, -1, styleXfId);
                 }
             }
         }
@@ -426,8 +425,12 @@ public class XCellStyle implements CellStyle {
                     cs.workbook.getStylesSource(), cs.workbook.getTheme()));
         } else if(cs.styleXfId < 0) {
             // It's an unnamed cell style - only the core xf is of interest
-
-            c.setCellStyle(new XSSFCellStyle(cs.xfId, 0, cs.workbook.getStylesSource(),
+            
+            int styleXfId = 0;
+            int id = (int) cs.workbook.getStylesSource().getCellXfAt(cs.xfId).getXfId();
+            if(id > 0) styleXfId = id;
+            
+            c.setCellStyle(new XSSFCellStyle(cs.xfId, styleXfId, cs.workbook.getStylesSource(),
                     cs.workbook.getTheme()));
         } else
             c.setCellStyle(new XSSFCellStyle(cs.xfId, cs.styleXfId,

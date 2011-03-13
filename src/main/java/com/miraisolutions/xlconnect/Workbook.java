@@ -1070,6 +1070,10 @@ public final class Workbook {
         return null;
     }
 
+    private CellStyle getCellStyle(Cell cell) {
+        return new SSCellStyle(workbook, cell.getCellStyle());
+    }
+
     public void setCellStyle(Cell c, CellStyle cs) {
         if(cs != null) {
             if(cs instanceof HCellStyle) {
@@ -1149,13 +1153,13 @@ public final class Workbook {
                 // In case of a header, determine header styles
                 if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++) {
-                        cstyles.put(HEADER + i, new SSCellStyle(workbook, getCell(sheet, startRow, startCol + i).getCellStyle()));
+                        cstyles.put(HEADER + i, getCellStyle(getCell(sheet, startRow, startCol + i)));
                     }
                 }
                 int styleRow = startRow + (data.hasColumnHeader() ? 1 : 0);
                 for(int i = 0; i < data.columns(); i++) {
                     Cell cell = getCell(sheet, styleRow, startCol + i);
-                    cstyles.put(COLUMN + i, new SSCellStyle(workbook, cell.getCellStyle()));
+                    cstyles.put(COLUMN + i, getCellStyle(cell));
                 }
                 break;
             case STYLE_NAME_PREFIX:
