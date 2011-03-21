@@ -80,11 +80,14 @@ public final class Workbook {
     // Cell style map
     private final Map<String, Map<String, CellStyle>> stylesMap =
             new HashMap<String, Map<String, CellStyle>>(10);
+    // Data format map
+    private final Map<DataType, String> dataFormatMap = new HashMap<DataType, String>(DataType.values().length);
 
 
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
         this.workbook = WorkbookFactory.create(in);
         this.excelFile = null;
+        initDefaultDataFormats();
         initDefaultStyles();
     }
 
@@ -107,6 +110,7 @@ public final class Workbook {
         }
 
         this.excelFile = excelFile;
+        initDefaultDataFormats();
         initDefaultStyles();
     }
 
@@ -118,7 +122,7 @@ public final class Workbook {
         CellStyle headerStyle = getCellStyle(XLCONNECT_HEADER_STYLE_NAME);
         if(headerStyle == null) {
             headerStyle = createCellStyle(XLCONNECT_HEADER_STYLE_NAME);
-            headerStyle.setDataFormat("General");
+            headerStyle.setDataFormat(dataFormatMap.get(DataType.String));
             headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
             headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             headerStyle.setWrapText(true);
@@ -128,7 +132,7 @@ public final class Workbook {
         CellStyle style = getCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
         if(style == null) {
             style = createCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
-            style.setDataFormat("General");
+            style.setDataFormat(dataFormatMap.get(DataType.String));
             style.setWrapText(true);
         }
 
@@ -136,7 +140,7 @@ public final class Workbook {
         CellStyle dateStyle = getCellStyle(XLCONNECT_DATE_STYLE_NAME);
         if(dateStyle == null) {
             dateStyle = createCellStyle(XLCONNECT_DATE_STYLE_NAME);
-            dateStyle.setDataFormat("mm/dd/yyyy hh:mm:ss");
+            dateStyle.setDataFormat(dataFormatMap.get(DataType.DateTime));
             dateStyle.setWrapText(true);
         }
 
@@ -148,6 +152,21 @@ public final class Workbook {
 
         // Add style definitions to style map
         stylesMap.put(XLCONNECT_STYLE, xlconnectDefaults);
+    }
+
+    private void initDefaultDataFormats() {
+        dataFormatMap.put(DataType.Boolean, "General");
+        dataFormatMap.put(DataType.DateTime, "mm/dd/yyyy hh:mm:ss");
+        dataFormatMap.put(DataType.Numeric, "General");
+        dataFormatMap.put(DataType.String, "General");
+    }
+
+    public void setDataFormat(DataType type, String format) {
+        dataFormatMap.put(type, format);
+    }
+
+    public String getDataFormat(DataType type) {
+        return dataFormatMap.get(type);
     }
 
     public StyleAction getStyleAction() {
@@ -228,6 +247,14 @@ public final class Workbook {
     public void removeSheet(String name) {
         logger.log(Level.INFO, "Removing sheet '" + name + "'");
         removeSheet(workbook.getSheetIndex(name));
+    }
+
+    public void renameSheet(int sheetIndex, String newName) {
+        workbook.setSheetName(sheetIndex, newName);
+    }
+
+    public void renameSheet(String name, String newName) {
+        workbook.setSheetName(workbook.getSheetIndex(name), newName);
     }
     
     public void createName(String name, String formula, boolean overwrite) {
@@ -1080,6 +1107,26 @@ public final class Workbook {
                 HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
             } else if(cs instanceof XCellStyle) {
                 XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
+            } else if(cs instanceof DataFormatOnlyCellStyle) {
+                CellStyle csx = getCellStyle(c);
+                switch(c.getCellType()) {
+                    case Cell.CELL_TYPE_NUMERIC:
+                        if(DateUtil.isCellDateFormatted(c))
+                            csx.setDataFormat(dataFormatMap.get(DataType.DateTime));
+                        else
+                            csx.setDataFormat(dataFormatMap.get(DataType.Numeric));
+                        break;
+                    case Cell.CELL_TYPE_STRING:
+                        csx.setDataFormat(dataFormatMap.get(DataType.String));
+                        break;
+                    case Cell.CELL_TYPE_BOOLEAN:
+                        csx.setDataFormat(dataFormatMap.get(DataType.Boolean));
+                        break;
+                    default:
+                        logger.log(Level.SEVERE, "Unexpected cell type detected!");
+                        throw new IllegalArgumentException("Unexpected cell type detected!");
+                }
+                SSCellStyle.set(c, (SSCellStyle) csx);
             } else {
                 SSCellStyle.set(c, (SSCellStyle) cs);
             }
@@ -1211,6 +1258,17 @@ public final class Workbook {
                         cs =  new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
                     }
 
+                    cstyles.put(COLUMN + i, cs);
+                }
+                break;
+            case DATA_FORMAT_ONLY:
+                 CellStyle cs = new DataFormatOnlyCellStyle();
+                if(data.hasColumnHeader()) {
+                    for(int i = 0; i < data.columns(); i++) {
+                        cstyles.put(HEADER + i, cs);
+                    }
+                }
+                for(int i = 0; i < data.columns(); i++) {
                     cstyles.put(COLUMN + i, cs);
                 }
                 break;

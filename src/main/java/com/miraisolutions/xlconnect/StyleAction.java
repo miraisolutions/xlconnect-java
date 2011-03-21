@@ -25,5 +25,5 @@ package com.miraisolutions.xlconnect;
  * @author Martin Studer, Mirai Solutions GmbH
  */
 public enum StyleAction {
-    XLCONNECT, NONE, PREDEFINED, STYLE_NAME_PREFIX;
+    XLCONNECT, NONE, PREDEFINED, STYLE_NAME_PREFIX, DATA_FORMAT_ONLY;
 }

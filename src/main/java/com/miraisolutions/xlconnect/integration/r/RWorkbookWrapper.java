@@ -24,6 +24,7 @@ import com.miraisolutions.xlconnect.CellStyle;
 import com.miraisolutions.xlconnect.StyleAction;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
+import com.miraisolutions.xlconnect.data.DataType;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -70,6 +71,14 @@ public final class RWorkbookWrapper {
 
     public void removeSheet(int sheetIndex) {
         workbook.removeSheet(sheetIndex);
+    }
+
+    public void renameSheet(String name, String newName) {
+        workbook.renameSheet(name, newName);
+    }
+
+    public void renameSheet(int sheetIndex, String newName) {
+        workbook.renameSheet(sheetIndex, newName);
     }
 
     public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header) {
@@ -195,6 +204,19 @@ public final class RWorkbookWrapper {
         }
         throw new IllegalArgumentException("Cell style " + name + " does not exist");
     }
+
+    public void setDataFormat(String dataType, String format) {
+        if("BOOLEAN".equals(dataType))
+            workbook.setDataFormat(DataType.Boolean, format);
+        else if("NUMERIC".equals(dataType))
+            workbook.setDataFormat(DataType.Numeric, format);
+        else if("STRING".equals(dataType))
+            workbook.setDataFormat(DataType.String, format);
+        else if("DATETIME".equals(dataType))
+            workbook.setDataFormat(DataType.DateTime, format);
+        else
+            throw new IllegalArgumentException("Provided data type is not a valid data type!");
+    }
     
     public void setStyleAction(String action) {
         if("XLCONNECT".equals(action))
@@ -205,6 +227,8 @@ public final class RWorkbookWrapper {
             workbook.setStyleAction(StyleAction.PREDEFINED);
         else if("STYLE_NAME_PREFIX".equals(action))
             workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
+        else if("DATA_FORMAT_ONLY".equals(action))
+            workbook.setStyleAction(StyleAction.DATA_FORMAT_ONLY);
         else
             throw new IllegalArgumentException("Provided action is not a valid style action!");
     }
