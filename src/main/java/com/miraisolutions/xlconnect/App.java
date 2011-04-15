@@ -42,6 +42,8 @@ import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -103,13 +105,24 @@ public class App
 //        wb.createSheet("test");
 //        wb.hideSheet("test", false);
 
-        File f = new File("C:/Users/mstuder/Documents/template.xlsx");
-        Workbook wb = Workbook.getWorkbook(f, false);
-        DataFrame dfx = new DataFrame();
-        Vector data = new Vector();
-        data.add("foo");
-        dfx.addColumn("X.foo.", DataType.String, data);
-        wb.writeWorksheet(dfx, 0, 0, 0, true);
+        CellRangeAddress cra = CellRangeAddress.valueOf("$A$1:$B$5");
+        System.out.println(cra.getLastRow());
+
+        CellRangeAddress cra2 = new CellRangeAddress(1, 5, 3, 7);
+        System.out.println(cra2.formatAsString());
+
+        StringBuffer sb = new StringBuffer();
+        CellReference cellRefFrom = new CellReference(1, 3);
+        CellReference cellRefTo = new CellReference(5, 7);
+        sb.append(cellRefFrom.formatAsString());
+        //for a single-cell reference return A1 instead of A1:A1
+        if(!cellRefFrom.equals(cellRefTo)){
+            sb.append(':');
+            sb.append(cellRefTo.formatAsString());
+        }
+        System.out.println(sb.toString());
+
+        
         // CellStyle csx = wb.getCellStyle("Schlecht");
         // wb.setCellStyle(0, 0, 0, csx);
         // wb.save();

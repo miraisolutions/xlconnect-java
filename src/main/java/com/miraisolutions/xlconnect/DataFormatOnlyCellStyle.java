@@ -29,6 +29,8 @@ package com.miraisolutions.xlconnect;
  */
 public class DataFormatOnlyCellStyle implements CellStyle {
 
+    private static DataFormatOnlyCellStyle instance = null;
+
     public void setBorderBottom(short border) {
         throw new UnsupportedOperationException();
     }
@@ -81,4 +83,9 @@ public class DataFormatOnlyCellStyle implements CellStyle {
         throw new UnsupportedOperationException();
     }
 
+    public static DataFormatOnlyCellStyle get() {
+        if(instance == null)
+            instance = new DataFormatOnlyCellStyle();
+        return instance;
+    }
 }

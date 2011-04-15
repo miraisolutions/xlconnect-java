@@ -33,6 +33,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -77,6 +78,8 @@ public final class Workbook {
     private StyleAction styleAction = StyleAction.XLCONNECT;
     // Style name prefix
     private String styleNamePrefix = null;
+    // Missing value string (null means blank/empty cell)
+    private String missingValue = null;
     // Cell style map
     private final Map<String, Map<String, CellStyle>> stylesMap =
             new HashMap<String, Map<String, CellStyle>>(10);
@@ -1030,8 +1033,18 @@ public final class Workbook {
         return getCell(sheet, rowIndex, colIndex, true);
     }
 
+    public void setMissingValue(String value) {
+        missingValue = value;
+    }
+
     private void setMissing(Cell cell) {
-        cell.setCellType(Cell.CELL_TYPE_BLANK);
+        if(missingValue == null)
+            cell.setCellType(Cell.CELL_TYPE_BLANK);
+        else {
+            cell.setCellType(Cell.CELL_TYPE_STRING);
+            cell.setCellValue(missingValue);
+            setCellStyle(cell, DataFormatOnlyCellStyle.get());
+        }
     }
 
     private DataType determineColumnType(Vector<DataType> cellTypes) {
@@ -1262,7 +1275,7 @@ public final class Workbook {
                 }
                 break;
             case DATA_FORMAT_ONLY:
-                 CellStyle cs = new DataFormatOnlyCellStyle();
+                CellStyle cs = DataFormatOnlyCellStyle.get();
                 if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++) {
                         cstyles.put(HEADER + i, cs);
@@ -1278,6 +1291,29 @@ public final class Workbook {
         }
 
         return cstyles;
+    }
+
+    public void mergeCells(int sheetIndex, String reference) {
+        workbook.getSheetAt(sheetIndex).addMergedRegion(CellRangeAddress.valueOf(reference));
+    }
+
+    public void mergeCells(String sheetName, String reference) {
+        workbook.getSheet(sheetName).addMergedRegion(CellRangeAddress.valueOf(reference));
+    }
+
+    public void unmergeCells(int sheetIndex, String reference) {
+        Sheet sheet = workbook.getSheetAt(sheetIndex);
+        for(int i = 0; i < sheet.getNumMergedRegions(); i++) {
+            CellRangeAddress cra = sheet.getMergedRegion(i);
+            if(cra.formatAsString().equals(reference)) {
+                sheet.removeMergedRegion(i);
+                break;
+            }
+        }
+    }
+
+    public void unmergeCells(String sheetName, String reference) {
+        unmergeCells(workbook.getSheetIndex(sheetName), reference);
     }
 
     /**

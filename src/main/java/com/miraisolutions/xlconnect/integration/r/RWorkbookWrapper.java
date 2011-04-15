@@ -205,6 +205,10 @@ public final class RWorkbookWrapper {
         throw new IllegalArgumentException("Cell style " + name + " does not exist");
     }
 
+    public void setMissingValue(String value) {
+        workbook.setMissingValue(value);
+    }
+
     public void setDataFormat(String dataType, String format) {
         if("BOOLEAN".equals(dataType))
             workbook.setDataFormat(DataType.Boolean, format);

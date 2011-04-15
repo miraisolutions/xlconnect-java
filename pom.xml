@@ -155,12 +155,12 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.7</version>
+            <version>3.8-beta2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.7</version>
+            <version>3.8-beta2</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.poi</groupId>
