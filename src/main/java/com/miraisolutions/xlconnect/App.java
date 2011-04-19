@@ -100,27 +100,28 @@ public class App
 //        if(1 == 1) return;
 
 
-//        File f = new File("C:/Users/mstuder/Documents/Projects/Internal/XLConnect_Workspace/R/XLConnect/Whatever.xlsx");
-//        Workbook wb = Workbook.getWorkbook(f, true);
-//        wb.createSheet("test");
-//        wb.hideSheet("test", false);
+        File f = new File("C:/Users/mstuder/Documents/Test.xlsx");
+        Workbook wb = Workbook.getWorkbook(f, false);
+        DataFrame dfx = wb.readNamedRegion("Test", false);
+        printDataFrame(dfx);
 
-        CellRangeAddress cra = CellRangeAddress.valueOf("$A$1:$B$5");
-        System.out.println(cra.getLastRow());
 
-        CellRangeAddress cra2 = new CellRangeAddress(1, 5, 3, 7);
-        System.out.println(cra2.formatAsString());
-
-        StringBuffer sb = new StringBuffer();
-        CellReference cellRefFrom = new CellReference(1, 3);
-        CellReference cellRefTo = new CellReference(5, 7);
-        sb.append(cellRefFrom.formatAsString());
-        //for a single-cell reference return A1 instead of A1:A1
-        if(!cellRefFrom.equals(cellRefTo)){
-            sb.append(':');
-            sb.append(cellRefTo.formatAsString());
-        }
-        System.out.println(sb.toString());
+//        CellRangeAddress cra = CellRangeAddress.valueOf("$A$1:$B$5");
+//        System.out.println(cra.getLastRow());
+//
+//        CellRangeAddress cra2 = new CellRangeAddress(1, 5, 3, 7);
+//        System.out.println(cra2.formatAsString());
+//
+//        StringBuffer sb = new StringBuffer();
+//        CellReference cellRefFrom = new CellReference(1, 3);
+//        CellReference cellRefTo = new CellReference(5, 7);
+//        sb.append(cellRefFrom.formatAsString());
+//        //for a single-cell reference return A1 instead of A1:A1
+//        if(!cellRefFrom.equals(cellRefTo)){
+//            sb.append(':');
+//            sb.append(cellRefTo.formatAsString());
+//        }
+//        System.out.println(sb.toString());
 
         
         // CellStyle csx = wb.getCellStyle("Schlecht");

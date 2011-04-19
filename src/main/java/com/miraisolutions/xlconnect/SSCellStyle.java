@@ -27,7 +27,7 @@ import org.apache.poi.ss.usermodel.DataFormat;
  *
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public class SSCellStyle implements CellStyle {
+public class SSCellStyle extends Common implements CellStyle {
 
     org.apache.poi.ss.usermodel.Workbook workbook;
     org.apache.poi.ss.usermodel.CellStyle cellStyle;

@@ -47,7 +47,7 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
  * 
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public class XCellStyle implements CellStyle {
+public class XCellStyle extends Common implements CellStyle {
 
     private final XSSFWorkbook workbook;
     private final int xfId, styleXfId;

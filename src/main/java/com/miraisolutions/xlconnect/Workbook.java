@@ -22,6 +22,7 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+import com.miraisolutions.xlconnect.utils.CellUtils;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
@@ -46,7 +47,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * 
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public final class Workbook {
+public final class Workbook extends Common {
     
     // Logger
     private final static Logger logger = Logger.getLogger("com.miraisolutions.xlconnect");
@@ -85,6 +86,10 @@ public final class Workbook {
             new HashMap<String, Map<String, CellStyle>>(10);
     // Data format map
     private final Map<DataType, String> dataFormatMap = new HashMap<DataType, String>(DataType.values().length);
+
+    // Behavior when detecting an error cell
+    // WARN means returning a missing value and registering a warning
+    private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
 
 
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
@@ -474,58 +479,78 @@ public final class Workbook {
                 logger.log(Level.FINER, "Reading row index " + rowIndex);
 
                 Cell cell = getCell(sheet, rowIndex, colIndex, false);
-                if((cell != null) && (cell.getCellType() != Cell.CELL_TYPE_BLANK) &&
-                        (cell.getCellType() != Cell.CELL_TYPE_ERROR)) {
-                    
-                    CellValue cv = evaluator.evaluate(cell);
-                    // Add value to collection
-                    values.add(cv);
-                    // If "empty" value, continue
-                    if(cv == null) {
-                        logger.log(Level.FINEST, "Cannot determine data type - assuming 'smallest' data type boolean");
-                        // We assume Boolean ("smallest" data type)
-                        detectedTypes.add(DataType.Boolean);
-                        continue;
-                    }
+                CellValue cv;
 
-                    // Determine cell data type
-                    switch(cv.getCellType()) {
-                        case Cell.CELL_TYPE_BLANK:
-                        case Cell.CELL_TYPE_BOOLEAN:
-                            logger.log(Level.FINEST, "Found data type boolean");
-                            detectedTypes.add(DataType.Boolean);
-                            break;
-                        case Cell.CELL_TYPE_NUMERIC:
-                            if(DateUtil.isCellDateFormatted(cell)) {
-                                logger.log(Level.FINEST, "Found data type datetime");
-                                detectedTypes.add(DataType.DateTime);
-                                // Also add corresponding CellValue to helper collection
-                                isDate.add(cv);
-                            } else {
-                                logger.log(Level.FINEST, "Found data type numeric");
-                                detectedTypes.add(DataType.Numeric);
-                            }
-                            break;
-                        case Cell.CELL_TYPE_STRING:
-                            logger.log(Level.FINEST, "Found data type string");
-                            detectedTypes.add(DataType.String);
-                            break;
-                        case Cell.CELL_TYPE_FORMULA:
-                            logger.log(Level.SEVERE, "Formula detected in already evaluated cell!");
-                            throw new IllegalArgumentException("Formula detected in already evaluated cell!");
-                        case Cell.CELL_TYPE_ERROR:
-                            logger.log(Level.SEVERE, "Cell of type ERROR detected! Invalid formula?");
-                            throw new IllegalArgumentException("Cell of type ERROR detected! Invalid formula?");
-                        default:
-                            logger.log(Level.SEVERE, "Unexpected cell type detected!");
-                            throw new IllegalArgumentException("Unexpected cell type detected!");
-                    }
-                } else {
+                if(cell == null || (cv = evaluator.evaluate(cell)) == null ) {
                     logger.log(Level.FINEST, "Cannot determine data type - assuming 'smallest' data type boolean");
                     // Add "missing" to collection
                     values.add(null);
                     // assume "smallest" data type
                     detectedTypes.add(DataType.Boolean);
+                    continue;
+                }
+
+                // Holds a potential warning message
+                String msg = null;
+
+                // Determine cell data type
+                switch(cv.getCellType()) {
+                    case Cell.CELL_TYPE_BLANK:
+                        logger.log(Level.FINEST, "Blank cell. Cannot determine data type - assuming 'smallest' data type boolean");
+                        values.add(null);
+                        detectedTypes.add(DataType.Boolean);
+                        break;
+                    case Cell.CELL_TYPE_BOOLEAN:
+                        logger.log(Level.FINEST, "Found data type boolean");
+                        values.add(cv);
+                        detectedTypes.add(DataType.Boolean);
+                        break;
+                    case Cell.CELL_TYPE_NUMERIC:
+                        values.add(cv);
+                        if(DateUtil.isCellDateFormatted(cell)) {
+                            logger.log(Level.FINEST, "Found data type datetime");
+                            detectedTypes.add(DataType.DateTime);
+                            // Also add corresponding CellValue to helper collection
+                            isDate.add(cv);
+                        } else {
+                            logger.log(Level.FINEST, "Found data type numeric");
+                            detectedTypes.add(DataType.Numeric);
+                        }
+                        break;
+                    case Cell.CELL_TYPE_STRING:
+                        logger.log(Level.FINEST, "Found data type string");
+                        values.add(cv);
+                        detectedTypes.add(DataType.String);
+                        break;
+                    case Cell.CELL_TYPE_FORMULA:
+                        msg = "Formula detected in already evaluated cell (" + CellUtils.formatAsString(cell) + ")!";
+                        logger.log(Level.WARNING, msg);
+                        if(onErrorCell.equals(ErrorBehavior.WARN)) {
+                            values.add(null);
+                            detectedTypes.add(DataType.Boolean);
+                            addWarning(msg);
+                        } else
+                            throw new IllegalArgumentException(msg);
+                        break;
+                    case Cell.CELL_TYPE_ERROR:
+                        msg = "Error detected in cell (" + CellUtils.formatAsString(cell) + ") - " + FormulaError.forInt(cv.getErrorValue()).toString();
+                        logger.log(Level.WARNING, msg);
+                        if(onErrorCell.equals(ErrorBehavior.WARN)) {
+                            values.add(null);
+                            detectedTypes.add(DataType.Boolean);
+                            addWarning(msg);
+                        } else
+                            throw new IllegalArgumentException(msg);
+                        break;
+                    default:
+                        msg = "Unexpected cell type detected (" + CellUtils.formatAsString(cell) + ")!";
+                        logger.log(Level.WARNING, msg);
+                        if(onErrorCell.equals(ErrorBehavior.WARN)) {
+                            values.add(null);
+                            detectedTypes.add(DataType.Boolean);
+                            addWarning(msg);
+                        } else
+                            throw new IllegalArgumentException(msg);
                 }
             }
 
@@ -639,6 +664,10 @@ public final class Workbook {
         }
 
         return data;
+    }
+
+    public void onErrorCell(ErrorBehavior eb) {
+        this.onErrorCell = eb;
     }
 
     public void writeNamedRegion(DataFrame data, String name, boolean header) {
@@ -1315,6 +1344,7 @@ public final class Workbook {
     public void unmergeCells(String sheetName, String reference) {
         unmergeCells(workbook.getSheetIndex(sheetName), reference);
     }
+    
 
     /**
      * Get the workbook from a Microsoft Excel file.

@@ -29,7 +29,7 @@ import org.apache.poi.ss.usermodel.DataFormat;
  *
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public class HCellStyle implements CellStyle {
+public class HCellStyle extends Common implements CellStyle {
 
     private final HSSFWorkbook workbook;
     private final HSSFCellStyle cellStyle;

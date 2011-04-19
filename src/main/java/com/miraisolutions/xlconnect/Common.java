@@ -20,22 +20,27 @@
 
 package com.miraisolutions.xlconnect;
 
+import java.util.ArrayList;
+
 /**
+ * Common functionality
  *
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public interface CellStyle extends SupportsWarnings {
-    void setBorderBottom(short border);
-    void setBorderLeft(short border);
-    void setBorderRight(short border);
-    void setBorderTop(short border);
-    void setBottomBorderColor(short color);
-    void setLeftBorderColor(short color);
-    void setRightBorderColor(short color);
-    void setTopBorderColor(short color);
-    void setDataFormat(String format);
-    void setFillBackgroundColor(short bg);
-    void setFillForegroundColor(short fp);
-    void setFillPattern(short bg);
-    void setWrapText(boolean wrap);
+public class Common implements SupportsWarnings {
+
+    /* Warnings -
+     * This is used to support the warnings mechanism on the R side
+     */
+    private final ArrayList<String> warnings = new ArrayList<String>();
+
+    public void addWarning(String warning) {
+        warnings.add(warning);
+    }
+
+    public String[] retrieveWarnings() {
+        String[] warn = warnings.toArray(new String[warnings.size()]);
+        warnings.clear();
+        return warn;
+    }
 }

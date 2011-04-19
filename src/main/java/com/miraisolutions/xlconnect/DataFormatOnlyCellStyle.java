@@ -27,7 +27,7 @@ package com.miraisolutions.xlconnect;
  * 
  * @author Martin Studer, Mirai Solutions GmbH
  */
-public class DataFormatOnlyCellStyle implements CellStyle {
+public class DataFormatOnlyCellStyle extends Common implements CellStyle {
 
     private static DataFormatOnlyCellStyle instance = null;
 

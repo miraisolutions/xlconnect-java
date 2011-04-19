@@ -75,4 +75,8 @@ public class RCellStyleWrapper {
     public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);
     }
+
+    public String[] retrieveWarnings() {
+        return cellStyle.retrieveWarnings();
+    }
 }

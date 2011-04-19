@@ -21,6 +21,7 @@
 package com.miraisolutions.xlconnect.integration.r;
 
 import com.miraisolutions.xlconnect.CellStyle;
+import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.StyleAction;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
@@ -263,6 +264,17 @@ public final class RWorkbookWrapper {
 
     public void setRowHeight(String sheetName, int rowIndex, double height) {
         workbook.setRowHeight(sheetName, rowIndex, (float) height);
+    }
+
+    public String[] retrieveWarnings() {
+        return workbook.retrieveWarnings();
+    }
+    
+    public void onErrorCell(String behavior) {
+        if("STOP".equals(behavior))
+            workbook.onErrorCell(ErrorBehavior.THROW_EXCEPTION);
+        else
+            workbook.onErrorCell(ErrorBehavior.WARN);
     }
 
     public void save() throws FileNotFoundException, IOException {
