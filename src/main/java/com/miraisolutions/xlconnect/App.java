@@ -55,7 +55,10 @@ public class App
     {
         Logging.withLevel(Level.INFO);
 
-        // org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/GP-CTRLPARA-RBC 09 Q2 B1-V8.xls"));
+//        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/repro.xlsx"));
+//        FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
+//        evaluator.evaluate(wb.getSheetAt(0).getRow(0).getCell(0));
+        
         // Name name = wb.getName("AM.input");
 
         // Workbook workbookx = Workbook.getWorkbook("C:/Users/mstuder/Documents/GP-CTRLPARA-RBC 09 Q2 B1-V8.xls", false);
@@ -100,9 +103,9 @@ public class App
 //        if(1 == 1) return;
 
 
-        File f = new File("C:/Users/mstuder/Documents/Test.xlsx");
+        File f = new File("C:/Users/mstuder/Documents/errorCell.xls");
         Workbook wb = Workbook.getWorkbook(f, false);
-        DataFrame dfx = wb.readNamedRegion("Test", false);
+        DataFrame dfx = wb.readNamedRegion("MyData", true);
         printDataFrame(dfx);
 
 

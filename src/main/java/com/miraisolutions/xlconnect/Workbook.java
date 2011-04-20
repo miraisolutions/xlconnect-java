@@ -435,6 +435,7 @@ public final class Workbook extends Common {
 
         // Formula evaluator
         FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+        evaluator.clearAllCachedResultValues();
 
         // Loop over columns
         for(int col = 0; col < ncols; col++) {
@@ -462,107 +463,98 @@ public final class Workbook extends Common {
                        columnHeader + "'");
             }
 
-            // Collection to hold detected data types for each value in a column
-            // --> will be used to determine actual final data type for column
-            Vector<DataType> detectedTypes = new Vector<DataType>(nrows);
-            // Collection to hold actual values
-            Vector<CellValue> values = new Vector<CellValue>(nrows);
-
-            // Helper collection to store CellValue's that are dates
-            // This is needed as a CellValue doesn't store the information whether it is
-            // a date or not - dates are just numerics
-            Vector<CellValue> isDate = new Vector<CellValue>();
-
+            ColumnBuilder cb = new ColumnBuilder(nrows);
             // Loop over rows
             for(int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
                 logger.log(Level.FINER, "Reading row index " + rowIndex);
 
                 Cell cell = getCell(sheet, rowIndex, colIndex, false);
-                CellValue cv;
+                String msg = null;
 
-                if(cell == null || (cv = evaluator.evaluate(cell)) == null ) {
-                    logger.log(Level.FINEST, "Cannot determine data type - assuming 'smallest' data type boolean");
-                    // Add "missing" to collection
-                    values.add(null);
-                    // assume "smallest" data type
-                    detectedTypes.add(DataType.Boolean);
+                // In case the cell does not exist ...
+                if(cell == null) {
+                    cb.addMissing();
                     continue;
                 }
 
-                // Holds a potential warning message
-                String msg = null;
+                /*
+                 * The following is to handle error cells (before they have been evaluated
+                 * to a CellValue) and cells which are formulas but have cached errors.
+                 */
+                if(
+                    cell.getCellType() == Cell.CELL_TYPE_ERROR ||
+                    (cell.getCellType() == Cell.CELL_TYPE_FORMULA && cell.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)
+                ) {
+                    msg = "Error detected in cell " + CellUtils.formatAsString(cell) + " - " + CellUtils.getErrorMessage(cell.getErrorCellValue());
+                    cb.addError(msg);
+                    continue;
+                }
 
-                // Determine cell data type
+                CellValue cv = null;
+                // Try to evaluate cell;
+                // report an error if this fails
+                try {
+                    cv = evaluator.evaluate(cell);
+                } catch(Exception e) {
+                    msg = "Error when trying to evaluate cell " + CellUtils.formatAsString(cell) + " - " + e.getMessage();
+                    cb.addError(msg);
+                    continue;
+                }
+
+                // Not sure if this case should ever happen;
+                // let's be sure anyway
+                if(cv == null){
+                    cb.addMissing();
+                    continue;
+                }
+
+                // Determine (evaluated) cell data type
                 switch(cv.getCellType()) {
                     case Cell.CELL_TYPE_BLANK:
                         logger.log(Level.FINEST, "Blank cell. Cannot determine data type - assuming 'smallest' data type boolean");
-                        values.add(null);
-                        detectedTypes.add(DataType.Boolean);
+                        cb.addMissing();
                         break;
                     case Cell.CELL_TYPE_BOOLEAN:
                         logger.log(Level.FINEST, "Found data type boolean");
-                        values.add(cv);
-                        detectedTypes.add(DataType.Boolean);
+                        cb.addValue(cv, DataType.Boolean);
                         break;
                     case Cell.CELL_TYPE_NUMERIC:
-                        values.add(cv);
                         if(DateUtil.isCellDateFormatted(cell)) {
                             logger.log(Level.FINEST, "Found data type datetime");
-                            detectedTypes.add(DataType.DateTime);
-                            // Also add corresponding CellValue to helper collection
-                            isDate.add(cv);
+                            cb.addValue(cv, DataType.DateTime);
                         } else {
                             logger.log(Level.FINEST, "Found data type numeric");
-                            detectedTypes.add(DataType.Numeric);
+                            cb.addValue(cv, DataType.Numeric);
                         }
                         break;
                     case Cell.CELL_TYPE_STRING:
                         logger.log(Level.FINEST, "Found data type string");
-                        values.add(cv);
-                        detectedTypes.add(DataType.String);
+                        cb.addValue(cv, DataType.String);
                         break;
                     case Cell.CELL_TYPE_FORMULA:
-                        msg = "Formula detected in already evaluated cell (" + CellUtils.formatAsString(cell) + ")!";
-                        logger.log(Level.WARNING, msg);
-                        if(onErrorCell.equals(ErrorBehavior.WARN)) {
-                            values.add(null);
-                            detectedTypes.add(DataType.Boolean);
-                            addWarning(msg);
-                        } else
-                            throw new IllegalArgumentException(msg);
+                        msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(cell) + "!";
+                        cb.addError(msg);
                         break;
                     case Cell.CELL_TYPE_ERROR:
-                        msg = "Error detected in cell (" + CellUtils.formatAsString(cell) + ") - " + FormulaError.forInt(cv.getErrorValue()).toString();
-                        logger.log(Level.WARNING, msg);
-                        if(onErrorCell.equals(ErrorBehavior.WARN)) {
-                            values.add(null);
-                            detectedTypes.add(DataType.Boolean);
-                            addWarning(msg);
-                        } else
-                            throw new IllegalArgumentException(msg);
+                        msg = "Error detected in cell " + CellUtils.formatAsString(cell) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
+                        cb.addError(msg);
                         break;
                     default:
-                        msg = "Unexpected cell type detected (" + CellUtils.formatAsString(cell) + ")!";
-                        logger.log(Level.WARNING, msg);
-                        if(onErrorCell.equals(ErrorBehavior.WARN)) {
-                            values.add(null);
-                            detectedTypes.add(DataType.Boolean);
-                            addWarning(msg);
-                        } else
-                            throw new IllegalArgumentException(msg);
+                        msg = "Unexpected cell type detected for cell " + CellUtils.formatAsString(cell) + "!";
+                        cb.addError(msg);
                 }
             }
 
             // Determine data type for column
             logger.log(Level.FINE, "Determining column type based on row types ...");
-            DataType columnType = determineColumnType(detectedTypes);
+            DataType columnType = determineColumnType(cb.detectedTypes);
             switch(columnType) {
                 case Boolean:
                 {
                     logger.log(Level.FINER, "Determined column " + col + " to be of data type boolean");
-                    Vector<Boolean> booleanValues = new Vector(values.size());
-                    Iterator<CellValue> it = values.iterator();
+                    Vector<Boolean> booleanValues = new Vector(cb.values.size());
+                    Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
                         if(cv == null)
@@ -580,8 +572,8 @@ public final class Workbook extends Common {
                 case DateTime:
                 {
                     logger.log(Level.FINER, "Determined column " + col + " to be of data type datetime");
-                    Vector<Date> dateValues = new Vector(values.size());
-                    Iterator<CellValue> it = values.iterator();
+                    Vector<Date> dateValues = new Vector(cb.values.size());
+                    Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
                         if(cv == null) {
@@ -598,8 +590,8 @@ public final class Workbook extends Common {
                 case Numeric:
                 {
                     logger.log(Level.FINER, "Determined column " + col + " to be of data type numeric");
-                    Vector<Double> numericValues = new Vector(values.size());
-                    Iterator<CellValue> it = values.iterator();
+                    Vector<Double> numericValues = new Vector(cb.values.size());
+                    Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
                         if(cv == null) {
@@ -626,8 +618,8 @@ public final class Workbook extends Common {
                 case String:
                 {
                     logger.log(Level.FINER, "Determined column " + col + " to be of data type string");
-                    Vector<String> stringValues = new Vector(values.size());
-                    Iterator<CellValue> it = values.iterator();
+                    Vector<String> stringValues = new Vector(cb.values.size());
+                    Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
                         if(cv == null) {
@@ -642,7 +634,7 @@ public final class Workbook extends Common {
                                     s = String.valueOf(cv.getBooleanValue());
                                     break;
                                 case Cell.CELL_TYPE_NUMERIC:
-                                    if(isDate.contains(cv))
+                                    if(cb.isDate.contains(cv))
                                         s = DateUtil.getJavaDate(cv.getNumberValue()).toString();
                                     else
                                         s = String.valueOf(cv.getNumberValue());
@@ -1389,5 +1381,59 @@ public final class Workbook extends Common {
 
     public static Workbook getWorkbook(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
         return Workbook.getWorkbook(new File(filename), create);
+    }
+
+    
+
+    /**
+     * Column Builder instance used by readData
+     */
+    public class ColumnBuilder {
+
+        int nrows;
+
+        // Collection to hold detected data types for each value in a column
+        // --> will be used to determine actual final data type for column
+        Vector<DataType> detectedTypes;
+        // Collection to hold actual values
+        Vector<CellValue> values;
+
+        // Helper collection to store CellValue's that are dates
+        // This is needed as a CellValue doesn't store the information whether it is
+        // a date or not - dates are just numerics
+        Vector<CellValue> isDate = new Vector<CellValue>();
+
+
+        public ColumnBuilder(int nrows) {
+            this.nrows = nrows;
+            this.detectedTypes = new Vector<DataType>(nrows);
+            this.values = new Vector<CellValue>(nrows);
+        }
+
+        public void addMissing() {
+            logger.log(Level.FINEST, "Cannot determine data type - assuming 'smallest' data type boolean");
+            // Add "missing" to collection
+            values.add(null);
+            // assume "smallest" data type
+            detectedTypes.add(DataType.Boolean);
+        }
+
+        private void addValue(CellValue cv, DataType dt) {
+            if(DataType.DateTime.equals(dt)) isDate.add(cv);
+            values.add(cv);
+            detectedTypes.add(dt);
+        }
+
+        private void addError(String msg) {
+            if(onErrorCell.equals(ErrorBehavior.WARN)) {
+                logger.log(Level.WARNING, msg);
+                values.add(null);
+                detectedTypes.add(DataType.Boolean);
+                addWarning(msg);
+            } else {
+                logger.log(Level.SEVERE, msg);
+                throw new IllegalArgumentException(msg);
+            }
+        }
     }
 }
