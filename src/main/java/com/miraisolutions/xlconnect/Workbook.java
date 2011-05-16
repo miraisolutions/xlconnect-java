@@ -207,6 +207,14 @@ public final class Workbook extends Common {
         return sheetNames;
     }
 
+    public int getSheetPos(String sheetName) {
+        return workbook.getSheetIndex(sheetName);
+    }
+
+    public void setSheetPos(String sheetName, int pos) {
+        workbook.setSheetOrder(sheetName, pos);
+    }
+
     public String[] getDefinedNames(boolean validOnly) {
         int count = workbook.getNumberOfNames();
         // String[] nameNames = new String[count];
@@ -263,6 +271,15 @@ public final class Workbook extends Common {
 
     public void renameSheet(String name, String newName) {
         workbook.setSheetName(workbook.getSheetIndex(name), newName);
+    }
+
+    public void cloneSheet(int index, String newName) {
+        Sheet sheet = workbook.cloneSheet(index);
+        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
+    }
+
+    public void cloneSheet(String name, String newName) {
+        cloneSheet(workbook.getSheetIndex(name), newName);
     }
     
     public void createName(String name, String formula, boolean overwrite) {

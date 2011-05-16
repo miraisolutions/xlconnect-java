@@ -46,6 +46,14 @@ public final class RWorkbookWrapper {
         return workbook.getSheets();
     }
 
+    public int getSheetPos(String sheetName) {
+        return workbook.getSheetPos(sheetName);
+    }
+
+    public void setSheetPos(String sheetName, int pos) {
+        workbook.setSheetPos(sheetName, pos);
+    }
+
     public String[] getDefinedNames(boolean validOnly) {
         return workbook.getDefinedNames(validOnly);
     }
@@ -80,6 +88,14 @@ public final class RWorkbookWrapper {
 
     public void renameSheet(int sheetIndex, String newName) {
         workbook.renameSheet(sheetIndex, newName);
+    }
+
+    public void cloneSheet(int index, String newName) {
+        workbook.cloneSheet(index, newName);
+    }
+
+    public void cloneSheet(String name, String newName) {
+        workbook.cloneSheet(name, newName);
     }
 
     public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header) {
