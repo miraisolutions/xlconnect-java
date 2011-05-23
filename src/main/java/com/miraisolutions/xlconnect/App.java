@@ -109,41 +109,33 @@ public class App
 //        printDataFrame(dfx);
 
 
-        Workbook wb = Workbook.getWorkbook("test.xlsx", true);
-        wb.createSheet("MySheet");
-        wb.createSheet("Tada");
-        wb.cloneSheet("MySheet", "Tada");
-        wb.save();
+//        File f = new File("C:/temp/test.xlsx");
+//        Workbook wb = Workbook.getWorkbook(f, true);
+//        wb.createSheet("MySheet");
+//        wb.createSheet("Tada");
+//        wb.save();
+//        f.delete();
+//        wb.save();
         
         // CellStyle csx = wb.getCellStyle("Schlecht");
         // wb.setCellStyle(0, 0, 0, csx);
         // wb.save();
 
-        /*
-        org.apache.poi.ss.usermodel.Workbook wbOut = new XSSFWorkbook();
-        Sheet sheetOut = wbOut.createSheet("mysheet");
 
-        Row rowOut = sheetOut.createRow(0);
-        Cell cellOut = rowOut.createCell(0);
-        cellOut.setCellType(Cell.CELL_TYPE_NUMERIC);
-        cellOut.setCellValue(3.14159);
-        cellOut = rowOut.createCell(1);
-        cellOut.setCellType(Cell.CELL_TYPE_NUMERIC);
-        cellOut.setCellValue(new Date());
+        File f = new File("C:/temp/test.xlsx");
 
-        FileOutputStream fileOut = new FileOutputStream("C:/Users/mstuder/Documents/zzzz.xlsx");
-        wbOut.write(fileOut);
-        fileOut.close();
+        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
+        Sheet s = wb.createSheet("MySheet");
+        
+        FileOutputStream fos1 = new FileOutputStream("C:/temp/test.xlsx", false);
+        wb.write(fos1);
+        fos1.close();
 
-        org.apache.poi.ss.usermodel.Workbook wbIn = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/zzzz.xlsx"));
-        Sheet sheetIn = wbIn.getSheetAt(0);
-        Row rowIn = sheetIn.getRow(0);
-        Cell cellIn = rowIn.getCell(0);
-        System.out.println(DateUtil.isCellDateFormatted(cellIn));
-        cellIn = rowIn.getCell(1);
-        System.out.println(DateUtil.isCellDateFormatted(cellIn));
-         *
-         */
+        f.delete();
+
+        FileOutputStream fos2 = new FileOutputStream("C:/temp/test.xlsx", false);
+        wb.write(fos2);
+        fos2.close();
 
         /*
         org.apache.poi.ss.usermodel.Workbook wbIn = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/bugrepro.xlsx"));

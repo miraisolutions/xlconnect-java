@@ -170,6 +170,7 @@ public final class Workbook extends Common {
     }
 
     public void setDataFormat(DataType type, String format) {
+        logger.log(Level.INFO, "Setting data format '" + format + "' for type " + type.toString());
         dataFormatMap.put(type, format);
     }
 
@@ -212,6 +213,7 @@ public final class Workbook extends Common {
     }
 
     public void setSheetPos(String sheetName, int pos) {
+        logger.log(Level.INFO, "Setting sheet '" + sheetName + "' to position " + pos);
         workbook.setSheetOrder(sheetName, pos);
     }
 
@@ -266,20 +268,22 @@ public final class Workbook extends Common {
     }
 
     public void renameSheet(int sheetIndex, String newName) {
-        workbook.setSheetName(sheetIndex, newName);
+        renameSheet(workbook.getSheetName(sheetIndex), newName);
     }
 
     public void renameSheet(String name, String newName) {
+        logger.log(Level.INFO, "Renaming sheet '" + name + "' to '" + newName + "'");
         workbook.setSheetName(workbook.getSheetIndex(name), newName);
     }
 
     public void cloneSheet(int index, String newName) {
-        Sheet sheet = workbook.cloneSheet(index);
-        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
+        cloneSheet(workbook.getSheetName(index), newName);
     }
 
     public void cloneSheet(String name, String newName) {
-        cloneSheet(workbook.getSheetIndex(name), newName);
+        logger.log(Level.INFO, "Cloning worksheet '" + name + "' to sheet '" + newName + "'");
+        Sheet sheet = workbook.cloneSheet(workbook.getSheetIndex(name));
+        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
     }
     
     public void createName(String name, String formula, boolean overwrite) {
@@ -676,6 +680,7 @@ public final class Workbook extends Common {
     }
 
     public void onErrorCell(ErrorBehavior eb) {
+        logger.log(Level.INFO, "Setting error cell behavior to " + eb.toString());
         this.onErrorCell = eb;
     }
 
@@ -1007,7 +1012,7 @@ public final class Workbook extends Common {
 
     public void save() throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Saving workbook to '" + excelFile.getCanonicalPath() + "'");
-        FileOutputStream fos = new FileOutputStream(excelFile);
+        FileOutputStream fos = new FileOutputStream(excelFile, false);
         workbook.write(fos);
         fos.close();
     }

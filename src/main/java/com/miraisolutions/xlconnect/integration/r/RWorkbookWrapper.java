@@ -282,6 +282,22 @@ public final class RWorkbookWrapper {
         workbook.setRowHeight(sheetName, rowIndex, (float) height);
     }
 
+    public void mergeCells(int sheetIndex, String reference) {
+        workbook.mergeCells(sheetIndex, reference);
+    }
+
+    public void mergeCells(String sheetName, String reference) {
+        workbook.mergeCells(sheetName, reference);
+    }
+
+    public void unmergeCells(int sheetIndex, String reference) {
+        workbook.unmergeCells(sheetIndex, reference);
+    }
+
+    public void unmergeCells(String sheetName, String reference) {
+        workbook.unmergeCells(sheetName, reference);
+    }
+
     public String[] retrieveWarnings() {
         return workbook.retrieveWarnings();
     }
