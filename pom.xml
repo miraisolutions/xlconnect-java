@@ -21,7 +21,7 @@
     <groupId>com.miraisolutions</groupId>
     <artifactId>XLConnect</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-4</version>
+    <version>0.1-5</version>
     <name>XLConnect</name>
     <url>http://www.mirai-solutions.com</url>
     <profiles>
@@ -155,12 +155,12 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.8-beta2</version>
+            <version>3.8-beta3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.8-beta2</version>
+            <version>3.8-beta3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.poi</groupId>

@@ -330,6 +330,21 @@ public final class Workbook extends Common {
         return getName(name).getRefersToFormula();
     }
 
+    
+    public int[] getReferenceCoordinates(String name) {
+        Name cname = getName(name);
+        AreaReference aref = new AreaReference(cname.getRefersToFormula());
+        // Get upper left corner
+	CellReference first = aref.getFirstCell();
+        // Get lower right corner
+	CellReference last = aref.getLastCell();
+	int top = first.getRow();
+	int bottom = last.getRow();
+	int left = first.getCol();
+	int right = last.getCol();
+        return new int[]{top,left,bottom,right};
+    }
+
     private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header) {
         logger.log(Level.INFO, "Writing data of dimension " + data.rows() + " rows & " + data.columns() + " columns" +
                 " to sheet '" + sheet.getSheetName() + "' starting at row " + startRow + " and column " + startCol);
@@ -1457,5 +1472,61 @@ public final class Workbook extends Common {
                 throw new IllegalArgumentException(msg);
             }
         }
+    }
+
+    public void setCellFormula(Cell c, String formula) {
+        c.setCellFormula(formula);
+    }
+    
+    public void setCellFormula(String formulaDest, String formulaString) {
+        AreaReference aref = new AreaReference(formulaDest);
+        String sheetName = aref.getFirstCell().getSheetName();
+        Sheet sheet = workbook.getSheet(sheetName);
+        
+        CellReference[] crefs = aref.getAllReferencedCells();
+        for(CellReference cref : crefs) {
+            Cell c = getCell(sheet, cref.getRow(), cref.getCol());
+            setCellFormula(c, formulaString);
+        }
+    }
+
+    public void setCellFormula(int sheetIndex, int row, int col, String formula) {
+        Cell c = getCell(workbook.getSheetAt(sheetIndex), row, col);
+        setCellFormula(c, formula);
+    }
+
+    public void setCellFormula(String sheetName, int row, int col, String formula) {
+        Cell c = getCell(workbook.getSheet(sheetName), row, col);
+        setCellFormula(c, formula);
+    }
+
+    public String getCellFormula(Cell c) {
+        return c.getCellFormula();
+    }
+    
+    public String getCellFormula(int sheetIndex, int row, int col) {
+        Cell c = getCell(workbook.getSheetAt(sheetIndex), row, col);
+        return getCellFormula(c);
+    }
+
+    public String getCellFormula(String sheetName, int row, int col) {
+        Cell c = getCell(workbook.getSheet(sheetName), row, col);
+        return getCellFormula(c);
+    }
+
+    public boolean getForceFormulaRecalculation(int sheetIndex) { 
+        return workbook.getSheetAt(sheetIndex).getForceFormulaRecalculation();
+    }
+
+    public boolean getForceFormulaRecalculation(String sheetName) { 
+        return workbook.getSheet(sheetName).getForceFormulaRecalculation();
+    }
+
+    public void setForceFormulaRecalculation(int sheetIndex, boolean value) { 
+        workbook.getSheetAt(sheetIndex).setForceFormulaRecalculation(value);
+    }
+
+    public void setForceFormulaRecalculation(String sheetName, boolean value) { 
+        workbook.getSheet(sheetName).setForceFormulaRecalculation(value);
     }
 }

@@ -312,4 +312,40 @@ public final class RWorkbookWrapper {
     public void save() throws FileNotFoundException, IOException {
         workbook.save();
     }
+
+    public void setCellFormula(String sheetName, int row, int col, String formula) {
+        workbook.setCellFormula(sheetName, row, col, formula);
+    }
+
+    public void setCellFormula(int sheetIndex, int row, int col, String formula) {
+        workbook.setCellFormula(sheetIndex, row, col, formula);
+    }
+
+    public String getCellFormula(int sheetIndex, int row, int col) {
+        return workbook.getCellFormula(sheetIndex,row,col);
+    }
+
+    public String getCellFormula(String sheetName, int row, int col) {
+        return workbook.getCellFormula(sheetName,row,col);
+    }
+
+    public int[] getReferenceCoordinates(String name) {
+	return workbook.getReferenceCoordinates(name);
+    }
+
+    public void setForceFormulaRecalculation(int sheetIndex, boolean value) {
+        workbook.setForceFormulaRecalculation(sheetIndex, value);
+    }
+
+    public void setForceFormulaRecalculation(String sheetName, boolean value) {
+        workbook.setForceFormulaRecalculation(sheetName, value);
+    }
+
+    public boolean getForceFormulaRecalculation(int sheetIndex) {
+        return workbook.getForceFormulaRecalculation(sheetIndex);
+    }
+
+    public boolean getForceFormulaRecalculation(String sheetName) {
+        return workbook.getForceFormulaRecalculation(sheetName);
+    }
 }
