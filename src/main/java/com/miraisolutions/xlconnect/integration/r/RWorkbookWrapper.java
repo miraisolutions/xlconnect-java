@@ -348,4 +348,12 @@ public final class RWorkbookWrapper {
     public boolean getForceFormulaRecalculation(String sheetName) {
         return workbook.getForceFormulaRecalculation(sheetName);
     }
+
+    public void setAutoFilter(int sheetIndex, String reference) {
+        workbook.setAutoFilter(sheetIndex, reference);
+    }
+
+    public void setAutoFilter(String sheetName, String reference) {
+        workbook.setAutoFilter(sheetName, reference);
+    }
 }

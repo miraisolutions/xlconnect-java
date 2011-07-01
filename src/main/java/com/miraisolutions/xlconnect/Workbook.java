@@ -1002,7 +1002,7 @@ public final class Workbook extends Common {
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
         logger.log(Level.INFO, "Setting width of column " + columnIndex + " on sheet " +
                 sheetIndex + " to " + width + " (in units of 1/256th of a character width)");
-        workbook.getSheetAt(sheetIndex).setColumnWidth(columnIndex, width);
+        getSheet(sheetIndex).setColumnWidth(columnIndex, width);
     }
 
     public void setColumnWidth(String sheetName, int columnIndex, int width) {
@@ -1010,10 +1010,10 @@ public final class Workbook extends Common {
     }
 
     public void setRowHeight(int sheetIndex, int rowIndex, float height) {
-        Row r = workbook.getSheetAt(sheetIndex).getRow(rowIndex);
+        Row r = getSheet(sheetIndex).getRow(rowIndex);
         if(r == null) {
             logger.log(Level.INFO, "Row does not exist - creating it.");
-            r = workbook.getSheetAt(sheetIndex).createRow(rowIndex);
+            r = getSheet(sheetIndex).createRow(rowIndex);
         }
 
         logger.log(Level.INFO, "Setting row " + rowIndex + " of sheet " + sheetIndex +
@@ -1089,6 +1089,25 @@ public final class Workbook extends Common {
 
     private Cell getCell(Sheet sheet, int rowIndex, int colIndex) {
         return getCell(sheet, rowIndex, colIndex, true);
+    }
+
+    private Sheet getSheet(int sheetIndex) {
+        if(sheetIndex < 0 || sheetIndex >= workbook.getNumberOfSheets()) {
+            String msg = "Sheet with index " + sheetIndex + " does not exist!";
+            logger.log(Level.SEVERE, msg);
+            throw new IllegalArgumentException(msg);
+        }
+        return workbook.getSheetAt(sheetIndex);
+    }
+
+    private Sheet getSheet(String sheetName) {
+        Sheet sheet = workbook.getSheet(sheetName);
+        if(sheet == null) {
+            String msg = "Sheet with name '" + sheetName + "' does not exist!";
+            logger.log(Level.SEVERE, msg);
+            throw new IllegalArgumentException(msg);
+        }
+        return sheet;
     }
 
     public void setMissingValue(String value) {
@@ -1207,7 +1226,7 @@ public final class Workbook extends Common {
     public void setCellStyle(String formula, CellStyle cs) {
         AreaReference aref = new AreaReference(formula);
         String sheetName = aref.getFirstCell().getSheetName();
-        Sheet sheet = workbook.getSheet(sheetName);
+        Sheet sheet = getSheet(sheetName);
         
         CellReference[] crefs = aref.getAllReferencedCells();
         for(CellReference cref : crefs) {
@@ -1217,12 +1236,12 @@ public final class Workbook extends Common {
     }
 
     public void setCellStyle(int sheetIndex, int row, int col, CellStyle cs) {
-        Cell c = getCell(workbook.getSheetAt(sheetIndex), row, col);
+        Cell c = getCell(getSheet(sheetIndex), row, col);
         setCellStyle(c, cs);
     }
 
     public void setCellStyle(String sheetName, int row, int col, CellStyle cs) {
-        Cell c = getCell(workbook.getSheet(sheetName), row, col);
+        Cell c = getCell(getSheet(sheetName), row, col);
         setCellStyle(c, cs);
     }
 
@@ -1352,15 +1371,15 @@ public final class Workbook extends Common {
     }
 
     public void mergeCells(int sheetIndex, String reference) {
-        workbook.getSheetAt(sheetIndex).addMergedRegion(CellRangeAddress.valueOf(reference));
+        getSheet(sheetIndex).addMergedRegion(CellRangeAddress.valueOf(reference));
     }
 
     public void mergeCells(String sheetName, String reference) {
-        workbook.getSheet(sheetName).addMergedRegion(CellRangeAddress.valueOf(reference));
+        getSheet(sheetName).addMergedRegion(CellRangeAddress.valueOf(reference));
     }
 
     public void unmergeCells(int sheetIndex, String reference) {
-        Sheet sheet = workbook.getSheetAt(sheetIndex);
+        Sheet sheet = getSheet(sheetIndex);
         for(int i = 0; i < sheet.getNumMergedRegions(); i++) {
             CellRangeAddress cra = sheet.getMergedRegion(i);
             if(cra.formatAsString().equals(reference)) {
@@ -1481,7 +1500,7 @@ public final class Workbook extends Common {
     public void setCellFormula(String formulaDest, String formulaString) {
         AreaReference aref = new AreaReference(formulaDest);
         String sheetName = aref.getFirstCell().getSheetName();
-        Sheet sheet = workbook.getSheet(sheetName);
+        Sheet sheet = getSheet(sheetName);
         
         CellReference[] crefs = aref.getAllReferencedCells();
         for(CellReference cref : crefs) {
@@ -1491,12 +1510,12 @@ public final class Workbook extends Common {
     }
 
     public void setCellFormula(int sheetIndex, int row, int col, String formula) {
-        Cell c = getCell(workbook.getSheetAt(sheetIndex), row, col);
+        Cell c = getCell(getSheet(sheetIndex), row, col);
         setCellFormula(c, formula);
     }
 
     public void setCellFormula(String sheetName, int row, int col, String formula) {
-        Cell c = getCell(workbook.getSheet(sheetName), row, col);
+        Cell c = getCell(getSheet(sheetName), row, col);
         setCellFormula(c, formula);
     }
 
@@ -1505,28 +1524,36 @@ public final class Workbook extends Common {
     }
     
     public String getCellFormula(int sheetIndex, int row, int col) {
-        Cell c = getCell(workbook.getSheetAt(sheetIndex), row, col);
+        Cell c = getCell(getSheet(sheetIndex), row, col);
         return getCellFormula(c);
     }
 
     public String getCellFormula(String sheetName, int row, int col) {
-        Cell c = getCell(workbook.getSheet(sheetName), row, col);
+        Cell c = getCell(getSheet(sheetName), row, col);
         return getCellFormula(c);
     }
 
     public boolean getForceFormulaRecalculation(int sheetIndex) { 
-        return workbook.getSheetAt(sheetIndex).getForceFormulaRecalculation();
+        return getSheet(sheetIndex).getForceFormulaRecalculation();
     }
 
     public boolean getForceFormulaRecalculation(String sheetName) { 
-        return workbook.getSheet(sheetName).getForceFormulaRecalculation();
+        return getSheet(sheetName).getForceFormulaRecalculation();
     }
 
     public void setForceFormulaRecalculation(int sheetIndex, boolean value) { 
-        workbook.getSheetAt(sheetIndex).setForceFormulaRecalculation(value);
+        getSheet(sheetIndex).setForceFormulaRecalculation(value);
     }
 
     public void setForceFormulaRecalculation(String sheetName, boolean value) { 
-        workbook.getSheet(sheetName).setForceFormulaRecalculation(value);
+        getSheet(sheetName).setForceFormulaRecalculation(value);
+    }
+
+    public void setAutoFilter(int sheetIndex, String reference) {
+        getSheet(sheetIndex).setAutoFilter(CellRangeAddress.valueOf(reference));
+    }
+
+    public void setAutoFilter(String sheetName, String reference) {
+        getSheet(sheetName).setAutoFilter(CellRangeAddress.valueOf(reference));
     }
 }

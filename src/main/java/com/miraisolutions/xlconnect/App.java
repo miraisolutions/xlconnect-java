@@ -26,25 +26,33 @@ import com.miraisolutions.xlconnect.utils.Logging;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Vector;
 import java.util.logging.Level;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.AreaReference;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Name;
+import org.apache.poi.ss.usermodel.Picture;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.WorkbookUtil;
+import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -122,20 +130,47 @@ public class App
         // wb.save();
 
 
-        File f = new File("C:/temp/test.xlsx");
+        File f1 = new File("repro.xls");
+        File f2 = new File("earthquake.jpg");
 
-        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
-        Sheet s = wb.createSheet("MySheet");
-        
-        FileOutputStream fos1 = new FileOutputStream("C:/temp/test.xlsx", false);
-        wb.write(fos1);
-        fos1.close();
+        HSSFWorkbook wb = new HSSFWorkbook(new FileInputStream(f1));
+        InputStream is = new FileInputStream(f2);
+        byte[] bytes = IOUtils.toByteArray(is);
+        int imageIndex = wb.addPicture(bytes, org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG);
+        is.close();
 
-        f.delete();
+        Name cname = wb.getName("Test");
+        Sheet sheet = wb.getSheet(cname.getSheetName());
 
-        FileOutputStream fos2 = new FileOutputStream("C:/temp/test.xlsx", false);
-        wb.write(fos2);
-        fos2.close();
+        AreaReference aref = new AreaReference(cname.getRefersToFormula());
+        CellReference topLeft = aref.getFirstCell();
+        CellReference bottomRight = aref.getLastCell();
+
+        Drawing drawing = null;
+        drawing = ((HSSFSheet)sheet).getDrawingPatriarch();
+        if(drawing == null) {
+            drawing = sheet.createDrawingPatriarch();
+        }
+
+        CreationHelper helper = wb.getCreationHelper();
+        ClientAnchor anchor = helper.createClientAnchor();
+        anchor.setRow1(topLeft.getRow());
+        anchor.setCol1(topLeft.getCol());
+        anchor.setRow2(bottomRight.getRow() + 1);
+        anchor.setCol2(bottomRight.getCol() + 1);
+        anchor.setAnchorType(ClientAnchor.DONT_MOVE_AND_RESIZE);
+
+        drawing.createPicture(anchor, imageIndex);
+
+        FileOutputStream fos = new FileOutputStream(f1, false);
+        wb.write(fos);
+        fos.close();
+
+        /*
+        Workbook wb = Workbook.getWorkbook(f1, false);
+        wb.addImage(f2, "Test", false);
+        wb.save();
+         */
 
         /*
         org.apache.poi.ss.usermodel.Workbook wbIn = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/bugrepro.xlsx"));
