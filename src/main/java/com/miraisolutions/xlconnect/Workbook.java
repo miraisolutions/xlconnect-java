@@ -715,7 +715,7 @@ public final class Workbook extends Common {
 
         // Compute bottom right cell coordinates
         int bottomRightRow = topLeft.getRow() + data.rows() - 1;
-        if(data.hasColumnHeader()) ++bottomRightRow;
+        if(header) ++bottomRightRow;
         int bottomRightCol = topLeft.getCol() + data.columns() - 1;
         // Create bottom right cell reference
         CellReference bottomRight = new CellReference(sheet.getSheetName(), bottomRightRow,
