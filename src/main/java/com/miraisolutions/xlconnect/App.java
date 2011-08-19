@@ -129,43 +129,38 @@ public class App
         // wb.setCellStyle(0, 0, 0, csx);
         // wb.save();
 
+        File f = new File("C:/Users/mstuder/Downloads/test.xls");
+        DataFrame dfx = new DataFrame();
+        Vector<Double> v = new Vector<Double>(10);
+        for(double i = 0; i < 10; i++) {
+            v.add(i + 1);
+        }
+        dfx.addColumn("A", DataType.Numeric, v);
 
-        File f1 = new File("repro.xls");
-        File f2 = new File("earthquake.jpg");
+        Workbook wb = Workbook.getWorkbook(f, false);
+        wb.writeNamedRegion(dfx, "Test", false);
+        wb.save();
 
-        HSSFWorkbook wb = new HSSFWorkbook(new FileInputStream(f1));
-        InputStream is = new FileInputStream(f2);
-        byte[] bytes = IOUtils.toByteArray(is);
-        int imageIndex = wb.addPicture(bytes, org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG);
-        is.close();
+        /** Performance test
+        File f = new File("C:/Users/mstuder/Documents/perf.xlsx");
+        if(f.exists()) f.delete();
 
-        Name cname = wb.getName("Test");
-        Sheet sheet = wb.getSheet(cname.getSheetName());
+        DataFrame dfx = new DataFrame();
+        for(int i = 0; i < 10; i++) {
+            Vector<Double> v = new Vector<Double>(100000);
+            for(int j = 0; j < 100000; j++)
+                v.add(Math.random());
 
-        AreaReference aref = new AreaReference(cname.getRefersToFormula());
-        CellReference topLeft = aref.getFirstCell();
-        CellReference bottomRight = aref.getLastCell();
-
-        Drawing drawing = null;
-        drawing = ((HSSFSheet)sheet).getDrawingPatriarch();
-        if(drawing == null) {
-            drawing = sheet.createDrawingPatriarch();
+            dfx.addColumn(Integer.toString(i), DataType.Numeric, v);
         }
 
-        CreationHelper helper = wb.getCreationHelper();
-        ClientAnchor anchor = helper.createClientAnchor();
-        anchor.setRow1(topLeft.getRow());
-        anchor.setCol1(topLeft.getCol());
-        anchor.setRow2(bottomRight.getRow() + 1);
-        anchor.setCol2(bottomRight.getCol() + 1);
-        anchor.setAnchorType(ClientAnchor.DONT_MOVE_AND_RESIZE);
+        Workbook wb = Workbook.getWorkbook(f, true);
+        wb.createSheet("MyData");
+        wb.writeWorksheet(dfx, "MyData", true);
+        wb.save();
+         **/
 
-        drawing.createPicture(anchor, imageIndex);
-
-        FileOutputStream fos = new FileOutputStream(f1, false);
-        wb.write(fos);
-        fos.close();
-
+        
         /*
         Workbook wb = Workbook.getWorkbook(f1, false);
         wb.addImage(f2, "Test", false);

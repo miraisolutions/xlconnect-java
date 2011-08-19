@@ -788,7 +788,7 @@ public final class Workbook extends Common {
      * - If start row < 0: get first row on sheet
      * - If end row < 0: get last row on sheet
      * - If start column < 0: get column of first (non-null) cell in start row
-     * - If end column < 0: get column of last (non-null) cell in end row
+     * - If end column < 0: get max column between start row and end row
      *
      * @param worksheetIndex    Worksheet index
      * @param startRow          Start row
@@ -816,21 +816,21 @@ public final class Workbook extends Common {
         }
 
         if(endRow < 0) endRow = sheet.getLastRowNum();
-        if(endRow < 0) {
-            logger.log(Level.SEVERE, "End row cannot be determined!");
-            throw new IllegalArgumentException("End row cannot be determined!");
-        }
 
         if(startCol < 0) startCol = sheet.getRow(startRow).getFirstCellNum();
         if(startCol < 0) {
             logger.log(Level.SEVERE, "Start column cannot be determined!");
             throw new IllegalArgumentException("Start column cannot be determined!");
         }
-        // NOTE: getLastCellNum is 1-based!
-        if(endCol < 0) endCol = sheet.getRow(endRow).getLastCellNum() - 1;
+        
         if(endCol < 0) {
-            logger.log(Level.SEVERE, "End column cannot be determined!");
-            throw new IllegalArgumentException("End column cannot be determined!");
+            endCol = startCol;
+            for(int i = startRow; i <= endRow; i++) {
+                Row r = sheet.getRow(i);
+                // NOTE: getLastCellNum is 1-based!
+                if(r != null && (r.getLastCellNum() - 1) > endCol)
+                    endCol = r.getLastCellNum() - 1;
+            }
         }
 
         return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header);

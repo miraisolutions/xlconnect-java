@@ -21,9 +21,16 @@
     <groupId>com.miraisolutions</groupId>
     <artifactId>XLConnect</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-5</version>
+    <version>0.1-6</version>
     <name>XLConnect</name>
     <url>http://www.mirai-solutions.com</url>
+    <repositories>
+        <repository>
+            <id>FuseSource</id>
+            <name>FuseSource Repository</name>
+            <url>http://repo.fusesource.com/nexus/content/groups/public/</url>
+        </repository>
+    </repositories>
     <profiles>
         <profile>
             <id>R</id>
@@ -166,12 +173,21 @@
                     <groupId>org.apache.poi</groupId>
                     <artifactId>poi-ooxml-schemas</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.xmlbeans</groupId>
+                    <artifactId>xmlbeans</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>ooxml-schemas</artifactId>
             <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlbeans</groupId>
+            <artifactId>xmlbeans</artifactId>
+            <version>2.5.0</version>
         </dependency>
     </dependencies>
 </project>
