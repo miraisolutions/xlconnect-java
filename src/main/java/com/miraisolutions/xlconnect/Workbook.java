@@ -817,7 +817,14 @@ public final class Workbook extends Common {
 
         if(endRow < 0) endRow = sheet.getLastRowNum();
 
-        if(startCol < 0) startCol = sheet.getRow(startRow).getFirstCellNum();
+        if(startCol < 0) {
+            startCol = sheet.getRow(startRow).getFirstCellNum();
+            for(int i = startRow; i <= endRow; i++) {
+                Row r = sheet.getRow(i);
+                if(r != null && r.getFirstCellNum() < startCol)
+                    startCol = r.getFirstCellNum();
+            }
+        }
         if(startCol < 0) {
             logger.log(Level.SEVERE, "Start column cannot be determined!");
             throw new IllegalArgumentException("Start column cannot be determined!");
@@ -1025,11 +1032,19 @@ public final class Workbook extends Common {
         setRowHeight(workbook.getSheetIndex(sheetName), rowIndex, height);
     }
 
-    public void save() throws FileNotFoundException, IOException {
-        logger.log(Level.INFO, "Saving workbook to '" + excelFile.getCanonicalPath() + "'");
-        FileOutputStream fos = new FileOutputStream(excelFile, false);
+    public void save(File f) throws FileNotFoundException, IOException {
+        logger.log(Level.INFO, "Saving workbook to '" + f.getCanonicalPath() + "'");
+        FileOutputStream fos = new FileOutputStream(f, false);
         workbook.write(fos);
         fos.close();
+    }
+
+    public void save(String file) throws FileNotFoundException, IOException {
+        save(new File(file));
+    }
+
+    public void save() throws FileNotFoundException, IOException {
+        save(excelFile);
     }
 
     private Name getName(String name) {

@@ -309,6 +309,10 @@ public final class RWorkbookWrapper {
             workbook.onErrorCell(ErrorBehavior.WARN);
     }
 
+    public void save(String file) throws FileNotFoundException, IOException {
+        workbook.save(file);
+    }
+
     public void save() throws FileNotFoundException, IOException {
         workbook.save();
     }
