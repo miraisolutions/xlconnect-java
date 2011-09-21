@@ -222,7 +222,7 @@ public final class RWorkbookWrapper {
         throw new IllegalArgumentException("Cell style " + name + " does not exist");
     }
 
-    public void setMissingValue(String value) {
+    public void setMissingValue(String[] value) {
         workbook.setMissingValue(value);
     }
 
@@ -359,5 +359,13 @@ public final class RWorkbookWrapper {
 
     public void setAutoFilter(String sheetName, String reference) {
         workbook.setAutoFilter(sheetName, reference);
+    }
+
+    public int getLastRow(int sheetIndex) {
+        return workbook.getLastRow(sheetIndex);
+    }
+
+    public int getLastRow(String sheetName) {
+        return workbook.getLastRow(sheetName);
     }
 }

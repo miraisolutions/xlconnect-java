@@ -79,8 +79,11 @@ public final class Workbook extends Common {
     private StyleAction styleAction = StyleAction.XLCONNECT;
     // Style name prefix
     private String styleNamePrefix = null;
-    // Missing value string (null means blank/empty cell)
-    private String missingValue = null;
+    /* Missing value strings;
+       first element is used as missing value string when writing data
+       (null means blank/empty cell)
+     */
+    private String[] missingValue = new String[] { null };
     // Cell style map
     private final Map<String, Map<String, CellStyle>> stylesMap =
             new HashMap<String, Map<String, CellStyle>>(10);
@@ -566,7 +569,17 @@ public final class Workbook extends Common {
                         break;
                     case Cell.CELL_TYPE_STRING:
                         logger.log(Level.FINEST, "Found data type string");
-                        cb.addValue(cv, DataType.String);
+                        boolean missing = false;
+                        for(int i = 0; i < missingValue.length; i++) {
+                            if(cv.getStringValue() == null || cv.getStringValue().equals(missingValue[i])) {
+                                missing = true;
+                                break;
+                            }
+                        }
+                        if(missing)
+                            cb.addMissing();
+                        else
+                            cb.addValue(cv, DataType.String);
                         break;
                     case Cell.CELL_TYPE_FORMULA:
                         msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(cell) + "!";
@@ -1034,6 +1047,7 @@ public final class Workbook extends Common {
 
     public void save(File f) throws FileNotFoundException, IOException {
         logger.log(Level.INFO, "Saving workbook to '" + f.getCanonicalPath() + "'");
+        this.excelFile = f;
         FileOutputStream fos = new FileOutputStream(f, false);
         workbook.write(fos);
         fos.close();
@@ -1125,16 +1139,16 @@ public final class Workbook extends Common {
         return sheet;
     }
 
-    public void setMissingValue(String value) {
-        missingValue = value;
+    public void setMissingValue(String[] values) {
+        missingValue = values;
     }
 
     private void setMissing(Cell cell) {
-        if(missingValue == null)
+        if(missingValue.length < 1 || missingValue[0] == null)
             cell.setCellType(Cell.CELL_TYPE_BLANK);
         else {
             cell.setCellType(Cell.CELL_TYPE_STRING);
-            cell.setCellValue(missingValue);
+            cell.setCellValue(missingValue[0]);
             setCellStyle(cell, DataFormatOnlyCellStyle.get());
         }
     }
@@ -1570,5 +1584,13 @@ public final class Workbook extends Common {
 
     public void setAutoFilter(String sheetName, String reference) {
         getSheet(sheetName).setAutoFilter(CellRangeAddress.valueOf(reference));
+    }
+
+    public int getLastRow(int sheetIndex) {
+        return getSheet(sheetIndex).getLastRowNum();
+    }
+
+    public int getLastRow(String sheetName) {
+        return getSheet(sheetName).getLastRowNum();
     }
 }
