@@ -1020,9 +1020,18 @@ public final class Workbook extends Common {
     }
     
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
-        logger.log(Level.INFO, "Setting width of column " + columnIndex + " on sheet " +
-                sheetIndex + " to " + width + " (in units of 1/256th of a character width)");
-        getSheet(sheetIndex).setColumnWidth(columnIndex, width);
+        Sheet sheet = getSheet(sheetIndex);
+        if(width >= 0) {
+            logger.log(Level.INFO, "Setting width of column " + columnIndex + " on sheet " +
+                    sheetIndex + " to " + width + " (in units of 1/256th of a character width)");
+            sheet.setColumnWidth(columnIndex, width);
+        } else if(width == -1) {
+            logger.log(Level.INFO, "Auto-sizing column " + columnIndex + " on sheet " + sheetIndex);
+            sheet.autoSizeColumn(columnIndex);
+        } else {
+            logger.log(Level.INFO, "Setting column " + columnIndex + " to default column width");
+            sheet.setColumnWidth(columnIndex, sheet.getDefaultColumnWidth() * 256);
+        }
     }
 
     public void setColumnWidth(String sheetName, int columnIndex, int width) {
@@ -1030,15 +1039,21 @@ public final class Workbook extends Common {
     }
 
     public void setRowHeight(int sheetIndex, int rowIndex, float height) {
-        Row r = getSheet(sheetIndex).getRow(rowIndex);
+        Sheet sheet = getSheet(sheetIndex);
+        Row r = sheet.getRow(rowIndex);
         if(r == null) {
             logger.log(Level.INFO, "Row does not exist - creating it.");
             r = getSheet(sheetIndex).createRow(rowIndex);
         }
 
-        logger.log(Level.INFO, "Setting row " + rowIndex + " of sheet " + sheetIndex +
-                " to height " + height + " (in points)");
-        r.setHeightInPoints(height);
+        if(height >= 0) {
+            logger.log(Level.INFO, "Setting row " + rowIndex + " of sheet " + sheetIndex +
+                    " to height " + height + " (in points)");
+            r.setHeightInPoints(height);
+        } else {
+            logger.log(Level.INFO, "Setting row " + rowIndex + " to default row height");
+            r.setHeightInPoints(sheet.getDefaultRowHeightInPoints());
+        }
     }
 
     public void setRowHeight(String sheetName, int rowIndex, float height) {
