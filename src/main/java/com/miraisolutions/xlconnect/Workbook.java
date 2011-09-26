@@ -1608,4 +1608,35 @@ public final class Workbook extends Common {
     public int getLastRow(String sheetName) {
         return getSheet(sheetName).getLastRowNum();
     }
+
+    public void appendNamedRegion(DataFrame data, String name, boolean header) {
+        Sheet sheet = workbook.getSheet(getName(name).getSheetName());
+        // top, left, bottom, right
+        int[] coord = getReferenceCoordinates(name);
+        writeData(data, sheet, coord[2] + 1, coord[1], header);
+        int bottom = coord[2] + data.rows();
+        int right = coord[1] + data.columns() - 1;
+        CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
+        String formula = cra.formatAsString(sheet.getSheetName(), true);
+        createName(name, formula, true);
+    }
+
+    public void appendWorksheet(DataFrame data, int worksheetIndex, boolean header) {
+        Sheet sheet = getSheet(worksheetIndex);
+        int lastRow = getLastRow(worksheetIndex);
+        int firstCol = Integer.MAX_VALUE;
+        for(int i = 0; i < lastRow && firstCol > 0; i++) {
+            Row row = sheet.getRow(i);
+            if(row != null && row.getFirstCellNum() < firstCol)
+                firstCol = row.getFirstCellNum();
+        }
+        if(firstCol == Integer.MAX_VALUE)
+            firstCol = 0;
+
+        writeWorksheet(data, worksheetIndex, getLastRow(worksheetIndex) + 1, firstCol, header);
+    }
+
+    public void appendWorksheet(DataFrame data, String worksheetName, boolean header) {
+        appendWorksheet(data, workbook.getSheetIndex(worksheetName), header);
+    }
 }

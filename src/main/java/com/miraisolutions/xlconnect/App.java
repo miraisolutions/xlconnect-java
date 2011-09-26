@@ -63,119 +63,55 @@ public class App
     {
         Logging.withLevel(Level.INFO);
 
-//        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/repro.xlsx"));
-//        FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
-//        evaluator.evaluate(wb.getSheetAt(0).getRow(0).getCell(0));
-        
-        // Name name = wb.getName("AM.input");
+        /* Performance measurements */
+        /*
+        int nrows = 10000, ncols = 100;
 
-        // Workbook workbookx = Workbook.getWorkbook("C:/Users/mstuder/Documents/GP-CTRLPARA-RBC 09 Q2 B1-V8.xls", false);
-        // workbookx.getDefinedNames(true);
-        
-//        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook();
-//        Sheet sheet = wb.createSheet();
-//        Cell c = sheet.createRow(0).createCell(0);
-//        org.apache.poi.ss.usermodel.CellStyle cs = wb.createCellStyle();
-//        cs.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-//        cs.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
-//        c.setCellStyle(cs);
-//        wb.write(new FileOutputStream("C:/temp/repro.xlsx"));
-//
-//        if(1 == 1) return;
-
-
-//        XSSFWorkbook wb = new XSSFWorkbook();
-//        wb.createSheet("asdf");
-//
-//        DataFormat dataFormat = wb.createDataFormat();
-//
-//        // Header style
-//        CellStyle headerStyle = wb.createCellStyle();
-//        headerStyle.setDataFormat(dataFormat.getFormat("General"));
-//        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-//        headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
-//        headerStyle.setWrapText(true);
-//        // String / boolean / numeric style
-//        CellStyle style = wb.createCellStyle();
-//        style.setDataFormat(dataFormat.getFormat("General"));
-//        style.setWrapText(true);
-//        // Date style
-//        CellStyle dateStyle = wb.createCellStyle();
-//        dateStyle.setDataFormat(dataFormat.getFormat("mm/dd/yyyy hh:mm:ss"));
-//        dateStyle.setWrapText(true);
-//
-//        FileOutputStream fos = new FileOutputStream("C:/temp/test.xlsx");
-//        wb.write(fos);
-//        fos.close();
-//
-//        if(1 == 1) return;
-
-
-//        File f = new File("C:/Users/mstuder/Documents/errorCell.xls");
-//        Workbook wb = Workbook.getWorkbook(f, false);
-//        DataFrame dfx = wb.readNamedRegion("MyData", true);
-//        printDataFrame(dfx);
-
-
-//        File f = new File("C:/temp/test.xlsx");
-//        Workbook wb = Workbook.getWorkbook(f, true);
-//        wb.createSheet("MySheet");
-//        wb.createSheet("Tada");
-//        wb.save();
-//        f.delete();
-//        wb.save();
-        
-        // CellStyle csx = wb.getCellStyle("Schlecht");
-        // wb.setCellStyle(0, 0, 0, csx);
-        // wb.save();
-
-        File f = new File("C:/Users/mstuder/Downloads/test.xls");
-        DataFrame dfx = new DataFrame();
-        Vector<Double> v = new Vector<Double>(10);
-        for(double i = 0; i < 10; i++) {
-            v.add(i + 1);
-        }
-        dfx.addColumn("A", DataType.Numeric, v);
-
-        Workbook wb = Workbook.getWorkbook(f, false);
-        wb.writeNamedRegion(dfx, "Test", false);
-        wb.save();
-
-        /** Performance test
         File f = new File("C:/Users/mstuder/Documents/perf.xlsx");
         if(f.exists()) f.delete();
 
+        long start = System.currentTimeMillis();
+
         DataFrame dfx = new DataFrame();
-        for(int i = 0; i < 10; i++) {
-            Vector<Double> v = new Vector<Double>(100000);
-            for(int j = 0; j < 100000; j++)
+        for(int i = 0; i < ncols; i++) {
+            Vector<Double> v = new Vector<Double>(nrows);
+            for(int j = 0; j < nrows; j++)
                 v.add(Math.random());
 
             dfx.addColumn(Integer.toString(i), DataType.Numeric, v);
         }
 
+        long end = System.currentTimeMillis();
+        System.out.println("Data creation: " + (end - start));
+
         Workbook wb = Workbook.getWorkbook(f, true);
         wb.createSheet("MyData");
+        start = System.currentTimeMillis();
         wb.writeWorksheet(dfx, "MyData", true);
+        end = System.currentTimeMillis();
+        System.out.println("Write worksheet: " + (end - start));
+        start = System.currentTimeMillis();
         wb.save();
-         **/
+        end = System.currentTimeMillis();
+        System.out.println("Save: " + (end - start));
+         * 
+         */
 
+        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Desktop/mtcars.xlsx"));
+        Name n = wb.getName("mtcars");
+        System.out.println(n.getSheetName());
+        System.out.println(n.getSheetIndex());
         
         /*
-        Workbook wb = Workbook.getWorkbook(f1, false);
-        wb.addImage(f2, "Test", false);
-        wb.save();
-         */
-
-        /*
-        org.apache.poi.ss.usermodel.Workbook wbIn = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Documents/bugrepro.xlsx"));
-        Sheet sheetIn = wbIn.getSheetAt(0);
-        Row rowIn = sheetIn.getRow(1);
-        Cell cellIn = rowIn.getCell(0);
-        System.out.println(DateUtil.isCellDateFormatted(cellIn));
-         *
-         */
-
+        Workbook wb = Workbook.getWorkbook("C:/Users/mstuder/Desktop/mtcars.xlsx", false);
+        DataFrame dfx = new DataFrame();
+        Vector<Double> v = new Vector<Double>(10);
+        for(int i = 0; i < 10; i++) v.add(new Double(i));
+        dfx.addColumn("A", DataType.Numeric, v);
+        dfx.addColumn("B", DataType.Numeric, v);
+        wb.appendNamedRegion(dfx, "mtcars", false);
+         * */
+        
         if(1 == 1) return;
 
         String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",

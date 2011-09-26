@@ -368,4 +368,16 @@ public final class RWorkbookWrapper {
     public int getLastRow(String sheetName) {
         return workbook.getLastRow(sheetName);
     }
+
+    public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header) {
+        workbook.appendNamedRegion(data.dataFrame, name, header);
+    }
+
+    public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header) {
+        workbook.appendWorksheet(data.dataFrame, worksheetIndex, header);
+    }
+
+    public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header) {
+        workbook.appendWorksheet(data.dataFrame, worksheetName, header);
+    }
 }
