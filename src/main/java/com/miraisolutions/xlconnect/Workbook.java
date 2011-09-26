@@ -1615,7 +1615,7 @@ public final class Workbook extends Common {
         int[] coord = getReferenceCoordinates(name);
         writeData(data, sheet, coord[2] + 1, coord[1], header);
         int bottom = coord[2] + data.rows();
-        int right = coord[1] + data.columns() - 1;
+        int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
         CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
         String formula = cra.formatAsString(sheet.getSheetName(), true);
         createName(name, formula, true);
