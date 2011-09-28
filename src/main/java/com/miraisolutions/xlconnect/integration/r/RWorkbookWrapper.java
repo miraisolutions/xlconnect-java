@@ -380,4 +380,12 @@ public final class RWorkbookWrapper {
     public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header) {
         workbook.appendWorksheet(data.dataFrame, worksheetName, header);
     }
+    
+    public void clearSheet(int sheetIndex) {
+        workbook.clearSheet(sheetIndex);
+    }
+
+    public void clearSheet(String sheetName) {
+        workbook.clearSheet(sheetName);
+    }
 }

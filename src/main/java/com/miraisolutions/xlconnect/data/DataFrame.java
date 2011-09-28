@@ -20,7 +20,7 @@
 
 package com.miraisolutions.xlconnect.data;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *
@@ -28,14 +28,14 @@ import java.util.Vector;
  */
 public class DataFrame {
     
-    protected Vector<String> columnNames;
-    protected Vector<DataType> columnTypes;
-    protected Vector<Vector> columns;
+    protected ArrayList<String> columnNames;
+    protected ArrayList<DataType> columnTypes;
+    protected ArrayList<ArrayList> columns;
 
     public DataFrame() {
-        this.columnNames = new Vector<String>();
-        this.columnTypes = new Vector<DataType>();
-        this.columns = new Vector<Vector>();
+        this.columnNames = new ArrayList<String>();
+        this.columnTypes = new ArrayList<DataType>();
+        this.columns = new ArrayList<ArrayList>();
     }
 
     public int columns() {
@@ -66,7 +66,7 @@ public class DataFrame {
     }
 
     
-    public void addColumn(String name, DataType type, Vector column) {
+    public void addColumn(String name, DataType type, ArrayList column) {
         if(isEmpty() || (column.size() == rows())) {
             columnNames.add(name);
             columnTypes.add(type);
@@ -84,28 +84,15 @@ public class DataFrame {
         return columnTypes.get(index);
     }
 
-    public Vector getColumn(int index) {
+    public ArrayList getColumn(int index) {
         return columns.get(index);
     }
 
-    public Vector<String> getColumnNames() {
+    public ArrayList<String> getColumnNames() {
         return columnNames;
     }
 
-    public Vector<DataType> getColumnTypes() {
+    public ArrayList<DataType> getColumnTypes() {
         return columnTypes;
     }
-
-    /*
-    public Vector getColumn(String name) {
-        int index = columnNames.indexOf(name);
-        if(index >= 0)
-            return getColumn(index);
-        else
-            throw new IllegalArgumentException("No column '" + name + "' available!");
-
-    }
-     *
-     */
-
 }

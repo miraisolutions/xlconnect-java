@@ -25,8 +25,6 @@ import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.utils.CellUtils;
 import java.io.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -48,9 +46,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * @author Martin Studer, Mirai Solutions GmbH
  */
 public final class Workbook extends Common {
-    
-    // Logger
-    private final static Logger logger = Logger.getLogger("com.miraisolutions.xlconnect");
 
     // Prefix
     private final static String HEADER = "Header";
@@ -88,7 +83,7 @@ public final class Workbook extends Common {
     private final Map<String, Map<String, CellStyle>> stylesMap =
             new HashMap<String, Map<String, CellStyle>>(10);
     // Data format map
-    private final Map<DataType, String> dataFormatMap = new HashMap<DataType, String>(DataType.values().length);
+    private final Map<DataType, String> dataFormatMap = new EnumMap(DataType.class);
 
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
@@ -116,7 +111,6 @@ public final class Workbook extends Common {
                 this.workbook = new XSSFWorkbook();
                 break;
             default:
-                logger.log(Level.SEVERE, "File '" + excelFile.getName() + "': Spreadsheet version not supported!");
                 throw new IllegalArgumentException("Spreadsheet version not supported!");
         }
 
@@ -173,7 +167,6 @@ public final class Workbook extends Common {
     }
 
     public void setDataFormat(DataType type, String format) {
-        logger.log(Level.INFO, "Setting data format '" + format + "' for type " + type.toString());
         dataFormatMap.put(type, format);
     }
 
@@ -186,7 +179,6 @@ public final class Workbook extends Common {
     }
 
     public void setStyleAction(StyleAction styleAction) {
-        logger.log(Level.INFO, "Setting style action to '" + styleAction.toString() + "'");
         this.styleAction = styleAction;
     }
 
@@ -195,7 +187,6 @@ public final class Workbook extends Common {
     }
 
     public void setStyleNamePrefix(String styleNamePrefix) {
-        logger.log(Level.INFO, "Setting style name prefix to '" + styleNamePrefix + "'");
         this.styleNamePrefix = styleNamePrefix;
     }
     
@@ -203,10 +194,8 @@ public final class Workbook extends Common {
         int count = workbook.getNumberOfSheets();
         String[] sheetNames = new String[count];
 
-        for(int i = 0; i < count; i++) {
-            logger.log(Level.FINE, "Found worksheet '" + workbook.getSheetName(i) + "'");
+        for(int i = 0; i < count; i++)
             sheetNames[i] = workbook.getSheetName(i);
-        }
 
         return sheetNames;
     }
@@ -216,7 +205,6 @@ public final class Workbook extends Common {
     }
 
     public void setSheetPos(String sheetName, int pos) {
-        logger.log(Level.INFO, "Setting sheet '" + sheetName + "' to position " + pos);
         workbook.setSheetOrder(sheetName, pos);
     }
 
@@ -229,8 +217,6 @@ public final class Workbook extends Common {
             Name namedRegion = workbook.getNameAt(i);
             // if valid only, check corresponding reference formula validity
             if(validOnly && !isValidReference(namedRegion.getRefersToFormula())) continue;
-
-            logger.log(Level.FINE, "Found name '" + namedRegion.getNameName() + "'");
             nameNames.add(namedRegion.getNameName());
         }
 
@@ -246,27 +232,21 @@ public final class Workbook extends Common {
     }
 
     public void createSheet(String name) {
-        if(name.length() > 31) {
-            logger.log(Level.SEVERE, "Sheet names are not allowed to contain more than 31 characters!");
+        if(name.length() > 31)
             throw new IllegalArgumentException("Sheet names are not allowed to contain more than 31 characters!");
-        }
 
-        if(workbook.getSheetIndex(name) < 0) {
-            logger.log(Level.INFO, "Creating non-existing sheet '" + name + "'");
+        if(workbook.getSheetIndex(name) < 0)
             workbook.createSheet(name);
-        }
     }
 
     public void removeSheet(int sheetIndex) {
         if(sheetIndex > -1 && sheetIndex < workbook.getNumberOfSheets()) {
             setAlternativeActiveSheet(sheetIndex);
-            logger.log(Level.INFO, "Removing sheet " + sheetIndex);
             workbook.removeSheetAt(sheetIndex);
         }
     }
 
     public void removeSheet(String name) {
-        logger.log(Level.INFO, "Removing sheet '" + name + "'");
         removeSheet(workbook.getSheetIndex(name));
     }
 
@@ -275,7 +255,6 @@ public final class Workbook extends Common {
     }
 
     public void renameSheet(String name, String newName) {
-        logger.log(Level.INFO, "Renaming sheet '" + name + "' to '" + newName + "'");
         workbook.setSheetName(workbook.getSheetIndex(name), newName);
     }
 
@@ -284,34 +263,26 @@ public final class Workbook extends Common {
     }
 
     public void cloneSheet(String name, String newName) {
-        logger.log(Level.INFO, "Cloning worksheet '" + name + "' to sheet '" + newName + "'");
         Sheet sheet = workbook.cloneSheet(workbook.getSheetIndex(name));
         workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
     }
     
     public void createName(String name, String formula, boolean overwrite) {
-
         if(existsName(name)) {
-            logger.log(Level.INFO, "Name already exists");
             if(overwrite) {
                 // Name already exists but we overwrite --> remove
-                logger.log(Level.INFO, "Specified to overwrite name if already existing, " +
-                        "therefore remove existing name");
                 removeName(name);
             } else {
                 // Name already exists but we don't want to overwrite --> error
-                logger.log(Level.SEVERE, "Specified name already exists - specified to not overwrite");
                 throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
             }
         }
 
         Name cname = workbook.createName();
         try {
-            logger.log(Level.INFO, "Creating name '" + name + "' refering to formula '" + formula + "'");
             cname.setNameName(name);
             cname.setRefersToFormula(formula);
         } catch(Exception e) {
-            logger.log(Level.SEVERE, "Failed creating name '" + name + "'. Cleaning up.");
             // --> Clean up (= remove) name
             // Need to set dummy name in order to be able to remove it ...
             String dummyNameName = "XLConnectDummyName";
@@ -323,10 +294,8 @@ public final class Workbook extends Common {
 
     public void removeName(String name) {
         Name cname = workbook.getName(name);
-        if(cname != null) {
-            logger.log(Level.INFO, "Removing name '" + name + "'");
+        if(cname != null)
             workbook.removeName(name);
-        }
     }
 
     public String getReferenceFormula(String name) {
@@ -349,9 +318,6 @@ public final class Workbook extends Common {
     }
 
     private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header) {
-        logger.log(Level.INFO, "Writing data of dimension " + data.rows() + " rows & " + data.columns() + " columns" +
-                " to sheet '" + sheet.getSheetName() + "' starting at row " + startRow + " and column " + startCol);
-
         // Get styles
         Map<String, CellStyle> styles = getStyles(data, sheet, startRow, startCol);
 
@@ -363,7 +329,6 @@ public final class Workbook extends Common {
         if(header && data.hasColumnHeader()) {
             // For each column write corresponding column name
             for(int i = 0; i < data.columns(); i++) {
-                logger.log(Level.FINER, "Writing header '" + data.getColumnName(i) + "'");
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
                 cell.setCellType(Cell.CELL_TYPE_STRING);
                 cell.setCellValue(data.getColumnName(i));
@@ -380,17 +345,13 @@ public final class Workbook extends Common {
             // Depending on column type ...
             switch(data.getColumnType(i)) {
                 case Numeric:
-                    logger.log(Level.FINE, "Writing numeric column " + i);
-                    Vector<Double> numericValues = data.getColumn(i);
+                    ArrayList<Double> numericValues = data.getColumn(i);
                     for(int j = 0; j < data.rows(); j++) {
-                        logger.log(Level.FINER, "Writing row " + j);
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         Double d = numericValues.get(j);
-                        if(d == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(d == null)
                             setMissing(cell);
-                        } else {
-                            logger.log(Level.FINEST, "Writing double value '" + d.doubleValue() + "'");
+                        else {
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             cell.setCellValue(d.doubleValue());
                             setCellStyle(cell, cs);
@@ -398,17 +359,13 @@ public final class Workbook extends Common {
                     }
                     break;
                 case String:
-                    logger.log(Level.FINE, "Writing string column " + i);
-                    Vector<String> stringValues = data.getColumn(i);
+                    ArrayList<String> stringValues = data.getColumn(i);
                     for(int j = 0; j < data.rows(); j++) {
-                        logger.log(Level.FINER, "Writing row " + j);
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         String s = stringValues.get(j);
-                        if(s == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(s == null)
                             setMissing(cell);
-                        } else {
-                            logger.log(Level.FINEST, "Writing string value '" + stringValues.get(j) + "'");
+                        else {
                             cell.setCellType(Cell.CELL_TYPE_STRING);
                             cell.setCellValue(stringValues.get(j));
                             setCellStyle(cell, cs);
@@ -416,17 +373,13 @@ public final class Workbook extends Common {
                     }
                     break;
                 case Boolean:
-                    logger.log(Level.FINE, "Writing boolean column " + i);
-                    Vector<Boolean> booleanValues = data.getColumn(i);
+                    ArrayList<Boolean> booleanValues = data.getColumn(i);
                     for(int j = 0; j < data.rows(); j++) {
-                        logger.log(Level.FINER, "Writing row " + j);
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         Boolean b = booleanValues.get(j);
-                        if(b == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(b == null)
                             setMissing(cell);
-                        } else {
-                            logger.log(Level.FINEST, "Writing boolean value '" + booleanValues.get(j).booleanValue() + "'");
+                        else {
                             cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             cell.setCellValue(booleanValues.get(j).booleanValue());
                             setCellStyle(cell, cs);
@@ -434,26 +387,20 @@ public final class Workbook extends Common {
                     }
                     break;
                 case DateTime:
-                    logger.log(Level.FINE, "Writing datetime column " + i);
-                    Vector<Date> dateValues = data.getColumn(i);
+                    ArrayList<Date> dateValues = data.getColumn(i);
                     for(int j = 0; j < data.rows(); j++) {
-                        logger.log(Level.FINER, "Writing row " + j);
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         Date d = dateValues.get(j);
-                        if(d == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(d == null)
                             setMissing(cell);
-                        } else {
-                            logger.log(Level.FINEST, "Writing datetime value '" + dateValues.get(j).toString() + "'");
+                        else {
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
-                            // TODO: date formatting
                             cell.setCellValue(d);
                             setCellStyle(cell, cs);
                         }
                     }
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Column " + i + ": Unknown column type detected!");
                     throw new IllegalArgumentException("Unknown column type detected!");
             }
 
@@ -467,9 +414,6 @@ public final class Workbook extends Common {
     }
 
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header) {
-        logger.log(Level.INFO, "Reading data on sheet '" + sheet.getSheetName() + "', start row = " + startRow +
-                ", start column = " + startCol + ", #rows = " + nrows + ", #columns = " + ncols + ", header = " + header);
-        
         DataFrame data = new DataFrame();
 
         // Formula evaluator
@@ -478,8 +422,6 @@ public final class Workbook extends Common {
 
         // Loop over columns
         for(int col = 0; col < ncols; col++) {
-            logger.log(Level.FINE, "Reading column " + col);
-
             int colIndex = startCol + col;
             // Determine column header
             String columnHeader = null;
@@ -488,25 +430,19 @@ public final class Workbook extends Common {
                 // Check if there actually is a cell ...
                 if(cell != null) {
                     CellValue cv = evaluator.evaluate(cell);
-                    if(cv != null) {
+                    if(cv != null)
                         columnHeader = cv.getStringValue();
-                        logger.log(Level.FINE, "Found column header '" + columnHeader + "'");
-                    }
                 }
             }
             // If it was specified that there is a header but an empty(/non-existing)
             // cell or cell value is found, then use a default column name
-            if(columnHeader == null) {
+            if(columnHeader == null)
                 columnHeader = "Col" + col;
-                logger.log(Level.FINE, "Specified to read column headers but no header found - assuming '" +
-                       columnHeader + "'");
-            }
 
             ColumnBuilder cb = new ColumnBuilder(nrows);
             // Loop over rows
             for(int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
-                logger.log(Level.FINER, "Reading row index " + rowIndex);
 
                 Cell cell = getCell(sheet, rowIndex, colIndex, false);
                 String msg = null;
@@ -551,24 +487,18 @@ public final class Workbook extends Common {
                 // Determine (evaluated) cell data type
                 switch(cv.getCellType()) {
                     case Cell.CELL_TYPE_BLANK:
-                        logger.log(Level.FINEST, "Blank cell. Cannot determine data type - assuming 'smallest' data type boolean");
                         cb.addMissing();
                         break;
                     case Cell.CELL_TYPE_BOOLEAN:
-                        logger.log(Level.FINEST, "Found data type boolean");
                         cb.addValue(cv, DataType.Boolean);
                         break;
                     case Cell.CELL_TYPE_NUMERIC:
-                        if(DateUtil.isCellDateFormatted(cell)) {
-                            logger.log(Level.FINEST, "Found data type datetime");
+                        if(DateUtil.isCellDateFormatted(cell))
                             cb.addValue(cv, DataType.DateTime);
-                        } else {
-                            logger.log(Level.FINEST, "Found data type numeric");
+                        else
                             cb.addValue(cv, DataType.Numeric);
-                        }
                         break;
                     case Cell.CELL_TYPE_STRING:
-                        logger.log(Level.FINEST, "Found data type string");
                         boolean missing = false;
                         for(int i = 0; i < missingValue.length; i++) {
                             if(cv.getStringValue() == null || cv.getStringValue().equals(missingValue[i])) {
@@ -596,57 +526,45 @@ public final class Workbook extends Common {
             }
 
             // Determine data type for column
-            logger.log(Level.FINE, "Determining column type based on row types ...");
             DataType columnType = determineColumnType(cb.detectedTypes);
             switch(columnType) {
                 case Boolean:
                 {
-                    logger.log(Level.FINER, "Determined column " + col + " to be of data type boolean");
-                    Vector<Boolean> booleanValues = new Vector(cb.values.size());
+                    ArrayList<Boolean> booleanValues = new ArrayList(cb.values.size());
                     Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
                         if(cv == null)
-                        {
-                            logger.log(Level.FINEST, "Missing value detected");
                             booleanValues.add(null);
-                        } else {
-                            logger.log(Level.FINEST, "Reading boolean value '" + cv.getBooleanValue() + "'");
+                        else
                             booleanValues.add(cv.getBooleanValue());
-                        }
                     }
                     data.addColumn(columnHeader, columnType, booleanValues);
                     break;
                 }
                 case DateTime:
                 {
-                    logger.log(Level.FINER, "Determined column " + col + " to be of data type datetime");
-                    Vector<Date> dateValues = new Vector(cb.values.size());
+                    ArrayList<Date> dateValues = new ArrayList(cb.values.size());
                     Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
-                        if(cv == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(cv == null)
                             dateValues.add(null);
-                        } else {
-                            logger.log(Level.FINEST, "Reading datetime value '" + DateUtil.getJavaDate(cv.getNumberValue()) + "'");
+                        else
                             dateValues.add(DateUtil.getJavaDate(cv.getNumberValue()));
-                        }
                     }
                     data.addColumn(columnHeader, columnType, dateValues);
                     break;
                 }
                 case Numeric:
                 {
-                    logger.log(Level.FINER, "Determined column " + col + " to be of data type numeric");
-                    Vector<Double> numericValues = new Vector(cb.values.size());
+                    ArrayList<Double> numericValues = new ArrayList(cb.values.size());
                     Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
-                        if(cv == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(cv == null)
                             numericValues.add(null);
-                        } else {
+                        else {
                             Double d = null;
                             switch(cv.getCellType()) {
                                 case Cell.CELL_TYPE_BLANK:
@@ -657,7 +575,6 @@ public final class Workbook extends Common {
                                 default:
                                     d = cv.getNumberValue();
                             }
-                            logger.log(Level.FINEST, "Reading numeric value '" + d + "'");
                             numericValues.add(d);
                         }
                     }
@@ -666,15 +583,13 @@ public final class Workbook extends Common {
                 }
                 case String:
                 {
-                    logger.log(Level.FINER, "Determined column " + col + " to be of data type string");
-                    Vector<String> stringValues = new Vector(cb.values.size());
+                    ArrayList<String> stringValues = new ArrayList(cb.values.size());
                     Iterator<CellValue> it = cb.values.iterator();
                     while(it.hasNext()) {
                         CellValue cv = it.next();
-                        if(cv == null) {
-                            logger.log(Level.FINEST, "Missing value detected");
+                        if(cv == null)
                             stringValues.add(null);
-                        } else {
+                        else {
                             String s = null;
                             switch(cv.getCellType()) {
                                 case Cell.CELL_TYPE_BLANK:
@@ -691,7 +606,6 @@ public final class Workbook extends Common {
                                 default:
                                     s = cv.getStringValue();
                             }
-                            logger.log(Level.FINEST, "Reading string value '" + s + "'");
                             stringValues.add(s);
                         }
                     }
@@ -699,7 +613,6 @@ public final class Workbook extends Common {
                     break;
                 }
                 default:
-                    logger.log(Level.SEVERE, "Could not determine column type for column " + col);
                     throw new IllegalArgumentException("Unknown column type detected!");
             }
         }
@@ -708,19 +621,15 @@ public final class Workbook extends Common {
     }
 
     public void onErrorCell(ErrorBehavior eb) {
-        logger.log(Level.INFO, "Setting error cell behavior to " + eb.toString());
         this.onErrorCell = eb;
     }
 
     public void writeNamedRegion(DataFrame data, String name, boolean header) {
-        logger.log(Level.INFO, "Writing named region '" + name + "' ...");
         Name cname = getName(name);
         checkName(cname);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
-        logger.log(Level.FINE, "Found named region '" + name + "' on sheet '" + sheet.getSheetName() + "'");
-        logger.log(Level.FINE, "Named region refers to formula '" + cname.getRefersToFormula() + "'");
 
         AreaReference aref = new AreaReference(cname.getRefersToFormula());
         // Get upper left corner
@@ -743,14 +652,11 @@ public final class Workbook extends Common {
     }
 
     public DataFrame readNamedRegion(String name, boolean header) {
-        logger.log(Level.INFO, "Reading named region '" + name + "' ... (header = " + header + ")");
         Name cname = getName(name);
         checkName(cname);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
-        logger.log(Level.FINE, "Found named region '" + name + "' on sheet '" + sheet.getSheetName() + "'");
-        logger.log(Level.FINE, "Named region refers to formula '" + cname.getRefersToFormula() + "'");
 
         AreaReference aref = new AreaReference(cname.getRefersToFormula());
         // Get name corners (top left, bottom right)
@@ -774,14 +680,11 @@ public final class Workbook extends Common {
      * @param header            If true, column headers are written, otherwise not
      */
     public void writeWorksheet(DataFrame data, int worksheetIndex, int startRow, int startCol, boolean header) {
-        logger.log(Level.INFO, "Writing data to worksheet index " + worksheetIndex + ", start row = " + startRow +
-                ", start column = " + startCol);
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
         writeData(data, sheet, startRow, startCol, header);
     }
 
     public void writeWorksheet(DataFrame data, String worksheetName, int startRow, int startCol, boolean header) {
-        logger.log(Level.INFO, "Writing data to worksheet '" + worksheetName + "'");
         writeWorksheet(data, workbook.getSheetIndex(worksheetName), startRow, startCol, header);
     }
 
@@ -812,21 +715,15 @@ public final class Workbook extends Common {
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        logger.log(Level.INFO, "Reading worksheet " + worksheetIndex + ", start row = " + startRow + ", start column = " +
-                startCol + ", end row = " + endRow + ", end column = " + endCol + ", header = " + header);
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
 
         if(startRow < 0) startRow = sheet.getFirstRowNum();
-        if(startRow < 0) {
-            logger.log(Level.SEVERE, "Start row cannot be determined!");
+        if(startRow < 0)
             throw new IllegalArgumentException("Start row cannot be determined!");
-        }
 
         // Check that the start row actually exists
-        if(sheet.getRow(startRow) == null) {
-            logger.log(Level.SEVERE, "Specified sheet contains no data!");
+        if(sheet.getRow(startRow) == null)
             throw new IllegalArgumentException("Specified sheet does not contain any data!");
-        }
 
         if(endRow < 0) endRow = sheet.getLastRowNum();
 
@@ -838,10 +735,8 @@ public final class Workbook extends Common {
                     startCol = r.getFirstCellNum();
             }
         }
-        if(startCol < 0) {
-            logger.log(Level.SEVERE, "Start column cannot be determined!");
+        if(startCol < 0)
             throw new IllegalArgumentException("Start column cannot be determined!");
-        }
         
         if(endCol < 0) {
             endCol = startCol;
@@ -861,7 +756,6 @@ public final class Workbook extends Common {
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        logger.log(Level.INFO, "Reading worksheet '" + worksheetName + "'");
         return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header);
     }
 
@@ -870,13 +764,10 @@ public final class Workbook extends Common {
     }
 
     public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
-        logger.log(Level.INFO, "Adding image '" + imageFile.getName() + "', original size = " + originalSize);
         Name cname = getName(name);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
-        logger.log(Level.FINE, "Found named region '" + name + "' on sheet '" + sheet.getSheetName() + "'");
-        logger.log(Level.FINE, "Named region refers to formula '" + cname.getRefersToFormula() + "'");
         
         AreaReference aref = new AreaReference(cname.getRefersToFormula());
         // Get name corners (top left, bottom right)
@@ -898,10 +789,8 @@ public final class Workbook extends Common {
             imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
         } else if(filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
             imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
-        } else {
-            logger.log(Level.SEVERE, "Image type not supported!");
+        } else
             throw new IllegalArgumentException("Image type not supported!");
-        }
 
         InputStream is = new FileInputStream(imageFile);
         byte[] bytes = IOUtils.toByteArray(is);
@@ -945,10 +834,8 @@ public final class Workbook extends Common {
                 return XCellStyle.create((XSSFWorkbook) workbook, name);
             }
             return null;
-        } else {
-            logger.log(Level.SEVERE, "Cell style with name '" + name + "' already exists!");
+        } else
             throw new IllegalArgumentException("Cell style with name '" + name + "' already exists!");
-        }
     }
 
     public CellStyle createCellStyle() {
@@ -970,36 +857,30 @@ public final class Workbook extends Common {
     }
 
     public void setActiveSheet(int sheetIndex) {
-        logger.log(Level.INFO, "Setting active sheet index: " + sheetIndex);
         workbook.setActiveSheet(sheetIndex);
     }
 
     public void setActiveSheet(String sheetName) {
-        logger.log(Level.INFO, "Setting active sheet: " + sheetName);
         int sheetIndex  = workbook.getSheetIndex(sheetName);
         setActiveSheet(sheetIndex);
     }
 
     public void hideSheet(int sheetIndex, boolean veryHidden) {
         setAlternativeActiveSheet(sheetIndex);
-        logger.log(Level.INFO, (veryHidden ? "Very hiding" : "Hiding") + " sheet with index " + sheetIndex);
         workbook.setSheetHidden(sheetIndex, veryHidden ? 
             org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_VERY_HIDDEN :
             org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_HIDDEN);
     }
 
     public void hideSheet(String sheetName, boolean veryHidden) {
-        logger.log(Level.INFO, (veryHidden ? "Very hiding" : "Hiding") + " sheet '" + sheetName + "'");
         hideSheet(workbook.getSheetIndex(sheetName), veryHidden);
     }
 
     public void unhideSheet(int sheetIndex) {
-        logger.log(Level.INFO, "Unhiding sheet " + sheetIndex);
         workbook.setSheetHidden(sheetIndex, org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_VISIBLE);
     }
 
     public void unhideSheet(String sheetName) {
-        logger.log(Level.INFO, "Unhiding sheet '" + sheetName + "'");
         unhideSheet(workbook.getSheetIndex(sheetName));
     }
 
@@ -1021,17 +902,12 @@ public final class Workbook extends Common {
     
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
         Sheet sheet = getSheet(sheetIndex);
-        if(width >= 0) {
-            logger.log(Level.INFO, "Setting width of column " + columnIndex + " on sheet " +
-                    sheetIndex + " to " + width + " (in units of 1/256th of a character width)");
+        if(width >= 0)
             sheet.setColumnWidth(columnIndex, width);
-        } else if(width == -1) {
-            logger.log(Level.INFO, "Auto-sizing column " + columnIndex + " on sheet " + sheetIndex);
+        else if(width == -1)
             sheet.autoSizeColumn(columnIndex);
-        } else {
-            logger.log(Level.INFO, "Setting column " + columnIndex + " to default column width");
+        else
             sheet.setColumnWidth(columnIndex, sheet.getDefaultColumnWidth() * 256);
-        }
     }
 
     public void setColumnWidth(String sheetName, int columnIndex, int width) {
@@ -1041,19 +917,13 @@ public final class Workbook extends Common {
     public void setRowHeight(int sheetIndex, int rowIndex, float height) {
         Sheet sheet = getSheet(sheetIndex);
         Row r = sheet.getRow(rowIndex);
-        if(r == null) {
-            logger.log(Level.INFO, "Row does not exist - creating it.");
+        if(r == null)
             r = getSheet(sheetIndex).createRow(rowIndex);
-        }
 
-        if(height >= 0) {
-            logger.log(Level.INFO, "Setting row " + rowIndex + " of sheet " + sheetIndex +
-                    " to height " + height + " (in points)");
+        if(height >= 0)
             r.setHeightInPoints(height);
-        } else {
-            logger.log(Level.INFO, "Setting row " + rowIndex + " to default row height");
+        else
             r.setHeightInPoints(sheet.getDefaultRowHeightInPoints());
-        }
     }
 
     public void setRowHeight(String sheetName, int rowIndex, float height) {
@@ -1061,7 +931,6 @@ public final class Workbook extends Common {
     }
 
     public void save(File f) throws FileNotFoundException, IOException {
-        logger.log(Level.INFO, "Saving workbook to '" + f.getCanonicalPath() + "'");
         this.excelFile = f;
         FileOutputStream fos = new FileOutputStream(f, false);
         workbook.write(fos);
@@ -1081,7 +950,6 @@ public final class Workbook extends Common {
         if(cname != null)
             return cname;
         else
-            logger.log(Level.SEVERE, "Name '" + name + "' does not exist!");
             throw new IllegalArgumentException("Name '" + name + "' does not exist!");
     }
 
@@ -1091,13 +959,10 @@ public final class Workbook extends Common {
     }
 
     private void checkName(Name name) {
-        if(!isValidReference(name.getRefersToFormula())) {
-            logger.log(Level.SEVERE, "Name '" + name.getNameName() + "' has invalid reference!");
+        if(!isValidReference(name.getRefersToFormula()))
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' has invalid reference!");
-        }
         else if(!existsSheet(name.getSheetName())) {
             // The reference as such is valid but it doesn't point to a (existing) sheet ...
-            logger.log(Level.SEVERE, "Name '" + name.getNameName() + "' does not refer to a valid sheet!");
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' does not refer to a valid sheet!");
         }
     }
@@ -1136,21 +1001,15 @@ public final class Workbook extends Common {
     }
 
     private Sheet getSheet(int sheetIndex) {
-        if(sheetIndex < 0 || sheetIndex >= workbook.getNumberOfSheets()) {
-            String msg = "Sheet with index " + sheetIndex + " does not exist!";
-            logger.log(Level.SEVERE, msg);
-            throw new IllegalArgumentException(msg);
-        }
+        if(sheetIndex < 0 || sheetIndex >= workbook.getNumberOfSheets())
+            throw new IllegalArgumentException("Sheet with index " + sheetIndex + " does not exist!");
         return workbook.getSheetAt(sheetIndex);
     }
 
     private Sheet getSheet(String sheetName) {
         Sheet sheet = workbook.getSheet(sheetName);
-        if(sheet == null) {
-            String msg = "Sheet with name '" + sheetName + "' does not exist!";
-            logger.log(Level.SEVERE, msg);
-            throw new IllegalArgumentException(msg);
-        }
+        if(sheet == null)
+            throw new IllegalArgumentException("Sheet with name '" + sheetName + "' does not exist!");
         return sheet;
     }
 
@@ -1168,7 +1027,7 @@ public final class Workbook extends Common {
         }
     }
 
-    private DataType determineColumnType(Vector<DataType> cellTypes) {
+    private DataType determineColumnType(ArrayList<DataType> cellTypes) {
         DataType columnType = DataType.Boolean;
 
         // Iterate over cell types; as soon as String is detecte we can stop
@@ -1196,8 +1055,6 @@ public final class Workbook extends Common {
      */
     private void setAlternativeActiveSheet(int sheetIndex) {
         if(sheetIndex == getActiveSheetIndex()) {
-            logger.log(Level.INFO, "Sheet to hide or remove is the currently active sheet in the workbook. " +
-                    "Relocating active sheet.");
             // Set active sheet to be first non-hidden/non-very-hidden sheet
             // in the workbook; if there are no such sheets left,
             // then throw an exception
@@ -1257,7 +1114,6 @@ public final class Workbook extends Common {
                         csx.setDataFormat(dataFormatMap.get(DataType.Boolean));
                         break;
                     default:
-                        logger.log(Level.SEVERE, "Unexpected cell type detected!");
                         throw new IllegalArgumentException("Unexpected cell type detected!");
                 }
                 SSCellStyle.set(c, (SSCellStyle) csx);
@@ -1323,7 +1179,6 @@ public final class Workbook extends Common {
                             cstyles.put(COLUMN + i, xlconnectStyles.get(STRING_STYLE));
                             break;
                         default:
-                            logger.log(Level.SEVERE, "Unknown column type detected!");
                             throw new IllegalArgumentException("Unknown column type detected!");
                     }
                 }
@@ -1350,22 +1205,13 @@ public final class Workbook extends Common {
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER><SEP><COLUMN_NAME>
                         CellStyle cs = getCellStyle(prefix + SEP + data.getColumnName(i));
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER><SEP><COLUMN_INDEX>
-                        if(cs == null) {
-                            logger.log(Level.INFO, "No header style for column '" + data.getColumnName(i) +
-                                    "' (specified by column name) found.");
+                        if(cs == null)
                             cs = getCellStyle(prefix + SEP + (i + 1));
-                        }
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER>
-                        if(cs == null) {
-                            logger.log(Level.INFO, "No header style for column '" + data.getColumnName(i) +
-                                    "' (specified by index) found.");
+                        if(cs == null)
                             cs = getCellStyle(prefix);
-                        }
-                        if(cs == null) {
-                            logger.log(Level.WARNING, "No header style found for header '" +
-                                    data.getColumnName(i) + "' - taking default");
+                        if(cs == null)
                             cs = new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
-                        }
                         
                         cstyles.put(HEADER + i, cs);
                     }
@@ -1375,22 +1221,13 @@ public final class Workbook extends Common {
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><COLUMN_NAME>
                     CellStyle cs = getCellStyle(prefix + SEP + data.getColumnName(i));
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><COLUMN_INDEX>
-                    if(cs == null) {
-                        logger.log(Level.INFO, "No column style for column '" + data.getColumnName(i) +
-                                "' (specified by column name) found.");
+                    if(cs == null)
                         cs = getCellStyle(prefix + SEP + (i + 1));
-                    }
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><DATA_TYPE>
-                    if(cs == null) {
-                        logger.log(Level.INFO, "No column style for column '" + data.getColumnName(i) +
-                                "' (specified by index) found.");
+                    if(cs == null)
                         cs = getCellStyle(prefix + SEP + data.getColumnType(i).toString());
-                    }
-                    if(cs == null) {
-                        logger.log(Level.WARNING, "No column style found for column '" +
-                                data.getColumnName(i) + "' - taking default");
+                    if(cs == null)
                         cs =  new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
-                    }
 
                     cstyles.put(COLUMN + i, cs);
                 }
@@ -1407,7 +1244,6 @@ public final class Workbook extends Common {
                 }
                 break;
             default:
-                logger.log(Level.SEVERE, "Style action not supported!");
                 throw new IllegalArgumentException("Style action not supported!");
         }
 
@@ -1452,30 +1288,21 @@ public final class Workbook extends Common {
     public static Workbook getWorkbook(File excelFile, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
         Workbook wb;
 
-        if(excelFile.exists()) {
-            logger.log(Level.INFO, "Creating XLConnect workbook instance for existing file '" + excelFile.getCanonicalPath() + "'");
+        if(excelFile.exists())
             wb = new Workbook(excelFile);
-        } else {
+        else {
             if(create) {
-                logger.log(Level.INFO, "Creating XLConnect workbook instance for new file '" + excelFile.getCanonicalPath() + "'");
                 String filename = excelFile.getName().toLowerCase();
                 if(filename.endsWith(".xls")) {
                     wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL97);
                 } else if(filename.endsWith(".xlsx")) {
                     wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL2007);
-                } else {
-                    logger.log(Level.SEVERE, "File extension not supported! Only *.xls and *.xlsx are allowed!");
+                } else
                     throw new IllegalArgumentException("File extension not supported! Only *.xls and *.xlsx are allowed!");
-                }
-            } else {
-                logger.log(Level.SEVERE, "File '" + excelFile.getName() + "' could not be found - " +
-                        "you may specify to automatically create the file if not existing.");
+            } else
                 throw new FileNotFoundException("File '" + excelFile.getName() + "' could not be found - " +
                         "you may specify to automatically create the file if not existing.");
-            }
         }
-
-        logger.log(Level.INFO, "Excel version: " + (wb.isHSSF() ? SpreadsheetVersion.EXCEL97.toString() : SpreadsheetVersion.EXCEL2007.toString()));
         return wb;
     }
 
@@ -1494,24 +1321,23 @@ public final class Workbook extends Common {
 
         // Collection to hold detected data types for each value in a column
         // --> will be used to determine actual final data type for column
-        Vector<DataType> detectedTypes;
+        ArrayList<DataType> detectedTypes;
         // Collection to hold actual values
-        Vector<CellValue> values;
+        ArrayList<CellValue> values;
 
         // Helper collection to store CellValue's that are dates
         // This is needed as a CellValue doesn't store the information whether it is
         // a date or not - dates are just numerics
-        Vector<CellValue> isDate = new Vector<CellValue>();
+        ArrayList<CellValue> isDate = new ArrayList<CellValue>();
 
 
         public ColumnBuilder(int nrows) {
             this.nrows = nrows;
-            this.detectedTypes = new Vector<DataType>(nrows);
-            this.values = new Vector<CellValue>(nrows);
+            this.detectedTypes = new ArrayList<DataType>(nrows);
+            this.values = new ArrayList<CellValue>(nrows);
         }
 
         public void addMissing() {
-            logger.log(Level.FINEST, "Cannot determine data type - assuming 'smallest' data type boolean");
             // Add "missing" to collection
             values.add(null);
             // assume "smallest" data type
@@ -1526,14 +1352,11 @@ public final class Workbook extends Common {
 
         private void addError(String msg) {
             if(onErrorCell.equals(ErrorBehavior.WARN)) {
-                logger.log(Level.WARNING, msg);
                 values.add(null);
                 detectedTypes.add(DataType.Boolean);
                 addWarning(msg);
-            } else {
-                logger.log(Level.SEVERE, msg);
+            } else
                 throw new IllegalArgumentException(msg);
-            }
         }
     }
 
@@ -1638,5 +1461,16 @@ public final class Workbook extends Common {
 
     public void appendWorksheet(DataFrame data, String worksheetName, boolean header) {
         appendWorksheet(data, workbook.getSheetIndex(worksheetName), header);
+    }
+
+    public void clearSheet(int sheetIndex) {
+        Sheet sheet = getSheet(sheetIndex);
+        Iterator<Row> it = sheet.rowIterator();
+        while(it.hasNext())
+            sheet.removeRow(it.next());
+    }
+
+    public void clearSheet(String sheetName) {
+        clearSheet(workbook.getSheetIndex(sheetName));
     }
 }

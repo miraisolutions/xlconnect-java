@@ -22,14 +22,13 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
-import com.miraisolutions.xlconnect.utils.Logging;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Date;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -61,8 +60,6 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
-        Logging.withLevel(Level.INFO);
-
         /* Performance measurements */
         /*
         int nrows = 10000, ncols = 100;
@@ -74,7 +71,7 @@ public class App
 
         DataFrame dfx = new DataFrame();
         for(int i = 0; i < ncols; i++) {
-            Vector<Double> v = new Vector<Double>(nrows);
+            ArrayList<Double> v = new ArrayList<Double>(nrows);
             for(int j = 0; j < nrows; j++)
                 v.add(Math.random());
 
@@ -105,7 +102,7 @@ public class App
         /*
         Workbook wb = Workbook.getWorkbook("C:/Users/mstuder/Desktop/mtcars.xlsx", false);
         DataFrame dfx = new DataFrame();
-        Vector<Double> v = new Vector<Double>(10);
+        ArrayList<Double> v = new ArrayList<Double>(10);
         for(int i = 0; i < 10; i++) v.add(new Double(i));
         dfx.addColumn("A", DataType.Numeric, v);
         dfx.addColumn("B", DataType.Numeric, v);
@@ -131,24 +128,24 @@ public class App
         File excelFile = new File("C:/temp/test.xlsx");
         if(excelFile.exists()) excelFile.delete();
 
-        Vector<String> col1 = new Vector<String>(5);
+        ArrayList<String> col1 = new ArrayList<String>(5);
         col1.add("A");
         col1.add("B");
         col1.add("C");
         col1.add(null);
         col1.add("E");
 
-        Vector<Double> col2 = new Vector<Double>(5);
+        ArrayList<Double> col2 = new ArrayList<Double>(5);
         for(int i = 0; i < 5; i++) col2.add(new Double(i));
-        col2.setElementAt(null, 1);
+        col2.set(1, null);
 
-        Vector<Boolean> col3 = new Vector<Boolean>(5);
+        ArrayList<Boolean> col3 = new ArrayList<Boolean>(5);
         for(int i = 0; i < 5; i++) col3.add(i%2 == 0);
-        col3.setElementAt(null, 2);
+        col3.set(2, null);
 
-        Vector<Date> col4 = new Vector<Date>(5);
+        ArrayList<Date> col4 = new ArrayList<Date>(5);
         for(int i = 0; i < 5; i++) col4.add(new Date(System.currentTimeMillis()));
-        col4.setElementAt(null, 4);
+        col4.set(4, null);
 
         DataFrame df = new DataFrame();
         df.addColumn("Letter", DataType.String, col1);

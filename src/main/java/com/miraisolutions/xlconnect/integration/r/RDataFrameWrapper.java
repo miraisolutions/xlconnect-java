@@ -26,7 +26,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *
@@ -53,7 +53,7 @@ public final class RDataFrameWrapper {
             else
                 elements[i] = new Double(column[i]);
         }
-        Vector<Double> v = new Vector<Double>(Arrays.asList(elements));
+        ArrayList<Double> v = new ArrayList<Double>(Arrays.asList(elements));
         dataFrame.addColumn(name, DataType.Numeric, v);
     }
 
@@ -65,7 +65,7 @@ public final class RDataFrameWrapper {
             else
                 elements[i] = new Boolean(column[i]);
         }
-        Vector<Boolean> v = new Vector<Boolean>(Arrays.asList(elements));
+        ArrayList<Boolean> v = new ArrayList<Boolean>(Arrays.asList(elements));
         dataFrame.addColumn(name, DataType.Boolean, v);
     }
 
@@ -73,7 +73,7 @@ public final class RDataFrameWrapper {
         for(int i = 0; i < column.length; i++) {
             if(na[i]) column[i] = null;
         }
-        Vector<String> v = new Vector<String>(Arrays.asList(column));
+        ArrayList<String> v = new ArrayList<String>(Arrays.asList(column));
         dataFrame.addColumn(name, DataType.String, v);
     }
 
@@ -85,12 +85,12 @@ public final class RDataFrameWrapper {
             else 
                 elements[i] = dateTimeParser.parse(column[i]);
         }
-        Vector<Date> v = new Vector<Date>(Arrays.asList(elements));
+        ArrayList<Date> v = new ArrayList<Date>(Arrays.asList(elements));
         dataFrame.addColumn(name, DataType.DateTime, v);
     }
 
     public String[] getColumnTypes() {
-        Vector<DataType> columnTypes = dataFrame.getColumnTypes();
+        ArrayList<DataType> columnTypes = dataFrame.getColumnTypes();
         String[] dataTypes = new String[columnTypes.size()];
         for(int i = 0; i < columnTypes.size(); i++) {
             dataTypes[i] = columnTypes.get(i).toString();
@@ -99,12 +99,12 @@ public final class RDataFrameWrapper {
     }
 
     public String[] getColumnNames() {
-        Vector<String> columnNames = dataFrame.getColumnNames();
+        ArrayList<String> columnNames = dataFrame.getColumnNames();
         return columnNames.toArray(new String[columnNames.size()]);
     }
 
     public double[] getNumericColumn(int col) {
-        Vector<Double> v = dataFrame.getColumn(col);
+        ArrayList<Double> v = dataFrame.getColumn(col);
         double[] values = new double[v.size()];
 
         for(int i = 0; i < v.size(); i++) {
@@ -119,12 +119,12 @@ public final class RDataFrameWrapper {
     }
 
     public String[] getStringColumn(int col) {
-        Vector<String> v = dataFrame.getColumn(col);
+        ArrayList<String> v = dataFrame.getColumn(col);
         return v.toArray(new String[v.size()]);
     }
 
     public boolean[] getBooleanColumn(int col) {
-        Vector<Boolean> v = dataFrame.getColumn(col);
+        ArrayList<Boolean> v = dataFrame.getColumn(col);
         boolean[] values = new boolean[v.size()];
 
         for(int i = 0; i < v.size(); i++) {
@@ -139,7 +139,7 @@ public final class RDataFrameWrapper {
     }
 
     public String[] getDateTimeColumn(int col) {
-        Vector<Date> v = dataFrame.getColumn(col);
+        ArrayList<Date> v = dataFrame.getColumn(col);
         String[] values = new String[v.size()];
 
         for(int i = 0; i < v.size(); i++) {
@@ -154,7 +154,7 @@ public final class RDataFrameWrapper {
     }
 
     public boolean[] isMissing(int col) {
-        Vector v = dataFrame.getColumn(col);
+        ArrayList v = dataFrame.getColumn(col);
         boolean[] missing = new boolean[v.size()];
         for(int i = 0; i < v.size(); i++) {
             missing[i] = v.get(i) == null;
