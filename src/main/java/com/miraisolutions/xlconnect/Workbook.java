@@ -20,6 +20,7 @@
 
 package com.miraisolutions.xlconnect;
 
+import com.miraisolutions.xlconnect.data.ColumnBuilder;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.utils.CellUtils;
@@ -89,6 +90,9 @@ public final class Workbook extends Common {
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
 
+    // Boolean to determine if conversions between data types should be forced
+    // when reading in data from Excel
+    private boolean forceConversion = false;
 
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
         this.workbook = WorkbookFactory.create(in);
@@ -413,7 +417,9 @@ public final class Workbook extends Common {
         }
     }
 
-    private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header) {
+    private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
+            DataType[] colTypes) {
+
         DataFrame data = new DataFrame();
 
         // Formula evaluator
@@ -439,7 +445,7 @@ public final class Workbook extends Common {
             if(columnHeader == null)
                 columnHeader = "Col" + col;
 
-            ColumnBuilder cb = new ColumnBuilder(nrows);
+            ColumnBuilder cb = new ColumnBuilder(nrows, forceConversion);
             // Loop over rows
             for(int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
@@ -462,7 +468,7 @@ public final class Workbook extends Common {
                     (cell.getCellType() == Cell.CELL_TYPE_FORMULA && cell.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)
                 ) {
                     msg = "Error detected in cell " + CellUtils.formatAsString(cell) + " - " + CellUtils.getErrorMessage(cell.getErrorCellValue());
-                    cb.addError(msg);
+                    cellError(cb, msg);
                     continue;
                 }
 
@@ -473,7 +479,7 @@ public final class Workbook extends Common {
                     cv = evaluator.evaluate(cell);
                 } catch(Exception e) {
                     msg = "Error when trying to evaluate cell " + CellUtils.formatAsString(cell) + " - " + e.getMessage();
-                    cb.addError(msg);
+                    cellError(cb, msg);
                     continue;
                 }
 
@@ -490,13 +496,13 @@ public final class Workbook extends Common {
                         cb.addMissing();
                         break;
                     case Cell.CELL_TYPE_BOOLEAN:
-                        cb.addValue(cv, DataType.Boolean);
+                        cb.addValue(cell, cv, DataType.Boolean);
                         break;
                     case Cell.CELL_TYPE_NUMERIC:
                         if(DateUtil.isCellDateFormatted(cell))
-                            cb.addValue(cv, DataType.DateTime);
+                            cb.addValue(cell, cv, DataType.DateTime);
                         else
-                            cb.addValue(cv, DataType.Numeric);
+                            cb.addValue(cell, cv, DataType.Numeric);
                         break;
                     case Cell.CELL_TYPE_STRING:
                         boolean missing = false;
@@ -509,115 +515,40 @@ public final class Workbook extends Common {
                         if(missing)
                             cb.addMissing();
                         else
-                            cb.addValue(cv, DataType.String);
+                            cb.addValue(cell, cv, DataType.String);
                         break;
                     case Cell.CELL_TYPE_FORMULA:
                         msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(cell) + "!";
-                        cb.addError(msg);
+                        cellError(cb, msg);
                         break;
                     case Cell.CELL_TYPE_ERROR:
                         msg = "Error detected in cell " + CellUtils.formatAsString(cell) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
-                        cb.addError(msg);
+                        cellError(cb, msg);
                         break;
                     default:
                         msg = "Unexpected cell type detected for cell " + CellUtils.formatAsString(cell) + "!";
-                        cb.addError(msg);
+                        cellError(cb, msg);
                 }
             }
 
-            // Determine data type for column
-            DataType columnType = determineColumnType(cb.detectedTypes);
-            switch(columnType) {
-                case Boolean:
-                {
-                    ArrayList<Boolean> booleanValues = new ArrayList(cb.values.size());
-                    Iterator<CellValue> it = cb.values.iterator();
-                    while(it.hasNext()) {
-                        CellValue cv = it.next();
-                        if(cv == null)
-                            booleanValues.add(null);
-                        else
-                            booleanValues.add(cv.getBooleanValue());
-                    }
-                    data.addColumn(columnHeader, columnType, booleanValues);
-                    break;
-                }
-                case DateTime:
-                {
-                    ArrayList<Date> dateValues = new ArrayList(cb.values.size());
-                    Iterator<CellValue> it = cb.values.iterator();
-                    while(it.hasNext()) {
-                        CellValue cv = it.next();
-                        if(cv == null)
-                            dateValues.add(null);
-                        else
-                            dateValues.add(DateUtil.getJavaDate(cv.getNumberValue()));
-                    }
-                    data.addColumn(columnHeader, columnType, dateValues);
-                    break;
-                }
-                case Numeric:
-                {
-                    ArrayList<Double> numericValues = new ArrayList(cb.values.size());
-                    Iterator<CellValue> it = cb.values.iterator();
-                    while(it.hasNext()) {
-                        CellValue cv = it.next();
-                        if(cv == null)
-                            numericValues.add(null);
-                        else {
-                            Double d = null;
-                            switch(cv.getCellType()) {
-                                case Cell.CELL_TYPE_BLANK:
-                                    break;
-                                case Cell.CELL_TYPE_BOOLEAN:
-                                    d = cv.getBooleanValue() ? 1.0 : 0.0;
-                                    break;
-                                default:
-                                    d = cv.getNumberValue();
-                            }
-                            numericValues.add(d);
-                        }
-                    }
-                    data.addColumn(columnHeader, columnType, numericValues);
-                    break;
-                }
-                case String:
-                {
-                    ArrayList<String> stringValues = new ArrayList(cb.values.size());
-                    Iterator<CellValue> it = cb.values.iterator();
-                    while(it.hasNext()) {
-                        CellValue cv = it.next();
-                        if(cv == null)
-                            stringValues.add(null);
-                        else {
-                            String s = null;
-                            switch(cv.getCellType()) {
-                                case Cell.CELL_TYPE_BLANK:
-                                    break;
-                                case Cell.CELL_TYPE_BOOLEAN:
-                                    s = String.valueOf(cv.getBooleanValue());
-                                    break;
-                                case Cell.CELL_TYPE_NUMERIC:
-                                    if(cb.isDate.contains(cv))
-                                        s = DateUtil.getJavaDate(cv.getNumberValue()).toString();
-                                    else
-                                        s = String.valueOf(cv.getNumberValue());
-                                    break;
-                                default:
-                                    s = cv.getStringValue();
-                            }
-                            stringValues.add(s);
-                        }
-                    }
-                    data.addColumn(columnHeader, columnType, stringValues);
-                    break;
-                }
-                default:
-                    throw new IllegalArgumentException("Unknown column type detected!");
-            }
+            DataType columnType = ((colTypes != null) && (colTypes.length > 0)) ? colTypes[col % colTypes.length] :
+                cb.determineColumnType();
+            ArrayList columnValues = cb.build(columnType);
+            data.addColumn(columnHeader, columnType, columnValues);
+            // Copy warnings
+            for(String w : cb.retrieveWarnings())
+                this.addWarning(w);
         }
 
         return data;
+    }
+
+    private void cellError(ColumnBuilder cb, String msg) {
+        if(onErrorCell.equals(ErrorBehavior.WARN)) {
+            cb.addMissing();
+            addWarning(msg);
+        } else
+            throw new IllegalArgumentException(msg);
     }
 
     public void onErrorCell(ErrorBehavior eb) {
@@ -652,6 +583,10 @@ public final class Workbook extends Common {
     }
 
     public DataFrame readNamedRegion(String name, boolean header) {
+        return readNamedRegion(name, header, null);
+    }
+
+    public DataFrame readNamedRegion(String name, boolean header, DataType[] colTypes) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -667,7 +602,7 @@ public final class Workbook extends Common {
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
-        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header);
+        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes);
     }
 
     /**
@@ -712,9 +647,11 @@ public final class Workbook extends Common {
      * @param endRow            End row
      * @param endCol            End column
      * @param header            If true, assume header, otherwise not
+     * @param colTypes          Column data types
      * @return                  Data Frame
      */
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
+    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
+            DataType[] colTypes) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
 
         if(startRow < 0) startRow = sheet.getFirstRowNum();
@@ -748,19 +685,36 @@ public final class Workbook extends Common {
             }
         }
 
-        return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header);
+        return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header, colTypes);
+    }
+
+    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null);
+    }
+
+    public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes) {
+        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header);
+        return readWorksheet(worksheetIndex, header, null);
+    }
+
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
+            DataType[] colTypes) {
+        return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes);
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header);
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null);
+    }
+
+    public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header);
+        return readWorksheet(worksheetName, header, null);
     }
 
     public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
@@ -1025,22 +979,6 @@ public final class Workbook extends Common {
             cell.setCellValue(missingValue[0]);
             setCellStyle(cell, DataFormatOnlyCellStyle.get());
         }
-    }
-
-    private DataType determineColumnType(ArrayList<DataType> cellTypes) {
-        DataType columnType = DataType.Boolean;
-
-        // Iterate over cell types; as soon as String is detecte we can stop
-        Iterator<DataType> it = cellTypes.iterator();
-        while(it.hasNext() && !columnType.equals(DataType.String)) {
-            DataType dt = it.next();
-            // In case current data type ordinal is bigger than column data type ordinal
-            // then adapt column data type to be current data type;
-            // this assumes DataType enum to in order from "smallest" to "biggest" data type
-            if(dt.ordinal() > columnType.ordinal()) columnType = dt;
-        }
-
-        return columnType;
     }
 
     /**
@@ -1309,57 +1247,7 @@ public final class Workbook extends Common {
     public static Workbook getWorkbook(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
         return Workbook.getWorkbook(new File(filename), create);
     }
-
     
-
-    /**
-     * Column Builder instance used by readData
-     */
-    public class ColumnBuilder {
-
-        int nrows;
-
-        // Collection to hold detected data types for each value in a column
-        // --> will be used to determine actual final data type for column
-        ArrayList<DataType> detectedTypes;
-        // Collection to hold actual values
-        ArrayList<CellValue> values;
-
-        // Helper collection to store CellValue's that are dates
-        // This is needed as a CellValue doesn't store the information whether it is
-        // a date or not - dates are just numerics
-        ArrayList<CellValue> isDate = new ArrayList<CellValue>();
-
-
-        public ColumnBuilder(int nrows) {
-            this.nrows = nrows;
-            this.detectedTypes = new ArrayList<DataType>(nrows);
-            this.values = new ArrayList<CellValue>(nrows);
-        }
-
-        public void addMissing() {
-            // Add "missing" to collection
-            values.add(null);
-            // assume "smallest" data type
-            detectedTypes.add(DataType.Boolean);
-        }
-
-        private void addValue(CellValue cv, DataType dt) {
-            if(DataType.DateTime.equals(dt)) isDate.add(cv);
-            values.add(cv);
-            detectedTypes.add(dt);
-        }
-
-        private void addError(String msg) {
-            if(onErrorCell.equals(ErrorBehavior.WARN)) {
-                values.add(null);
-                detectedTypes.add(DataType.Boolean);
-                addWarning(msg);
-            } else
-                throw new IllegalArgumentException(msg);
-        }
-    }
-
     public void setCellFormula(Cell c, String formula) {
         c.setCellFormula(formula);
     }
@@ -1472,5 +1360,13 @@ public final class Workbook extends Common {
 
     public void clearSheet(String sheetName) {
         clearSheet(workbook.getSheetIndex(sheetName));
+    }
+
+    public void setForceConversion(boolean forceConversion) {
+        this.forceConversion = forceConversion;
+    }
+
+    public boolean getForceConversion() {
+        return forceConversion;
     }
 }

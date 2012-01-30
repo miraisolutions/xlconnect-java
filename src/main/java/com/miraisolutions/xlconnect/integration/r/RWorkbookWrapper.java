@@ -102,8 +102,18 @@ public final class RWorkbookWrapper {
         workbook.writeNamedRegion(dataFrame.dataFrame, name, header);
     }
 
-    public RDataFrameWrapper readNamedRegion(String name, boolean header) {
-        DataFrame dataFrame = workbook.readNamedRegion(name, header);
+    private static DataType[] fromString(String[] colTypes) {
+        DataType[] ctypes = null;
+        if(colTypes != null) {
+            ctypes = new DataType[colTypes.length];
+            for(int i = 0; i < colTypes.length; i++)
+                ctypes[i] = fromString(colTypes[i]);
+        }
+        return ctypes;
+    }
+
+    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes) {
+        DataFrame dataFrame = workbook.readNamedRegion(name, header, fromString(colTypes));
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -115,23 +125,27 @@ public final class RWorkbookWrapper {
         return workbook.existsSheet(name);
     }
 
-    public RDataFrameWrapper readWorksheet(int worksheetIndex, boolean header) {
-        DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, header);
+    public RDataFrameWrapper readWorksheet(int worksheetIndex, boolean header, String[] colTypes) {
+        DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, header, fromString(colTypes));
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public RDataFrameWrapper readWorksheet(String worksheetName, boolean header) {
-        DataFrame dataFrame = workbook.readWorksheet(worksheetName, header);
+    public RDataFrameWrapper readWorksheet(String worksheetName, boolean header, String[] colTypes) {
+        DataFrame dataFrame = workbook.readWorksheet(worksheetName, header, fromString(colTypes));
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header);
+    public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
+            boolean header, String[] colTypes) {
+        DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
+                fromString(colTypes));
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header);
+    public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
+            boolean header, String colTypes[]) {
+        DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
+                fromString(colTypes));
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -226,17 +240,21 @@ public final class RWorkbookWrapper {
         workbook.setMissingValue(value);
     }
 
-    public void setDataFormat(String dataType, String format) {
+    private static DataType fromString(String dataType) {
         if("BOOLEAN".equals(dataType))
-            workbook.setDataFormat(DataType.Boolean, format);
+            return DataType.Boolean;
         else if("NUMERIC".equals(dataType))
-            workbook.setDataFormat(DataType.Numeric, format);
+            return DataType.Numeric;
         else if("STRING".equals(dataType))
-            workbook.setDataFormat(DataType.String, format);
+            return DataType.String;
         else if("DATETIME".equals(dataType))
-            workbook.setDataFormat(DataType.DateTime, format);
+            return DataType.DateTime;
         else
             throw new IllegalArgumentException("Provided data type is not a valid data type!");
+    }
+
+    public void setDataFormat(String dataType, String format) {
+        workbook.setDataFormat(fromString(dataType), format);
     }
     
     public void setStyleAction(String action) {
@@ -387,5 +405,9 @@ public final class RWorkbookWrapper {
 
     public void clearSheet(String sheetName) {
         workbook.clearSheet(sheetName);
+    }
+
+    public void setForceConversion(boolean forceConversion) {
+        workbook.setForceConversion(forceConversion);
     }
 }

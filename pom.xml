@@ -21,7 +21,7 @@
     <groupId>com.miraisolutions</groupId>
     <artifactId>XLConnect</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-7</version>
+    <version>0.1-8</version>
     <name>XLConnect</name>
     <url>http://www.mirai-solutions.com</url>
     <repositories>
@@ -110,7 +110,6 @@
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RCellStyleWrapper { public *; }</option>
-                        <option>-keep public class com.miraisolutions.xlconnect.utils.Logging { public *; }</option>
                         <option>-optimizationpasses 3</option>
                         <option>-dontobfuscate</option>
                         <!--
@@ -162,12 +161,12 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.8-beta4</version>
+            <version>3.8-beta5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.8-beta4</version>
+            <version>3.8-beta5</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.poi</groupId>
@@ -191,9 +190,3 @@
         </dependency>
     </dependencies>
 </project>
-
-
-
-
-
-

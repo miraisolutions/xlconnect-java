@@ -22,14 +22,17 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+import com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper;
+import com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -60,11 +63,12 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
+        if(1 == 1) return;
+        
         /* Performance measurements */
-        /*
         int nrows = 10000, ncols = 100;
 
-        File f = new File("C:/Users/mstuder/Documents/perf.xlsx");
+        File f = new File("C:/Users/mstuder/Documents/perf.xls");
         if(f.exists()) f.delete();
 
         long start = System.currentTimeMillis();
@@ -91,13 +95,7 @@ public class App
         wb.save();
         end = System.currentTimeMillis();
         System.out.println("Save: " + (end - start));
-         * 
-         */
 
-        org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new FileInputStream("C:/Users/mstuder/Desktop/mtcars.xlsx"));
-        Name n = wb.getName("mtcars");
-        System.out.println(n.getSheetName());
-        System.out.println(n.getSheetIndex());
         
         /*
         Workbook wb = Workbook.getWorkbook("C:/Users/mstuder/Desktop/mtcars.xlsx", false);
