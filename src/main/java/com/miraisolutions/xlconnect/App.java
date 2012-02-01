@@ -24,6 +24,7 @@ import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper;
 import com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper;
+import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -63,6 +64,10 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
+        RPOSIXDateTimeFormatter formatter = new RPOSIXDateTimeFormatter();
+        System.out.println(formatter.format(new Date(), "%Y-%m-%d %H:%M:%S"));
+        System.out.println(formatter.parse("2012-02-01 15:44:22", "%Y-%m-%d %H:%M:%S"));
+        
         if(1 == 1) return;
         
         /* Performance measurements */

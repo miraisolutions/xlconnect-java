@@ -112,8 +112,10 @@ public final class RWorkbookWrapper {
         return ctypes;
     }
 
-    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes) {
-        DataFrame dataFrame = workbook.readNamedRegion(name, header, fromString(colTypes));
+    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
+            boolean forceConversion, String dateTimeFormat) {
+        DataFrame dataFrame = workbook.readNamedRegion(name, header, fromString(colTypes),
+                forceConversion, dateTimeFormat);
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -125,27 +127,17 @@ public final class RWorkbookWrapper {
         return workbook.existsSheet(name);
     }
 
-    public RDataFrameWrapper readWorksheet(int worksheetIndex, boolean header, String[] colTypes) {
-        DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, header, fromString(colTypes));
-        return new RDataFrameWrapper(dataFrame);
-    }
-
-    public RDataFrameWrapper readWorksheet(String worksheetName, boolean header, String[] colTypes) {
-        DataFrame dataFrame = workbook.readWorksheet(worksheetName, header, fromString(colTypes));
-        return new RDataFrameWrapper(dataFrame);
-    }
-
     public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String[] colTypes) {
+            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat) {
         DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes));
+                fromString(colTypes), forceConversion, dateTimeFormat);
         return new RDataFrameWrapper(dataFrame);
     }
 
     public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String colTypes[]) {
+            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat) {
         DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes));
+                fromString(colTypes), forceConversion, dateTimeFormat);
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -405,9 +397,5 @@ public final class RWorkbookWrapper {
 
     public void clearSheet(String sheetName) {
         workbook.clearSheet(sheetName);
-    }
-
-    public void setForceConversion(boolean forceConversion) {
-        workbook.setForceConversion(forceConversion);
     }
 }

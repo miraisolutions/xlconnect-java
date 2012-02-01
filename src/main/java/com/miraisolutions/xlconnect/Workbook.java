@@ -24,6 +24,8 @@ import com.miraisolutions.xlconnect.data.ColumnBuilder;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.utils.CellUtils;
+import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
+import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
 import java.util.*;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -67,6 +69,13 @@ public final class Workbook extends Common {
     private final static String BOOLEAN_STYLE = "Boolean";
     private final static String DATETIME_STYLE = "DateTime";
 
+    // Formatter
+    // NOTE: currently fixed to a RPOSIXDateTimeFormatter
+    public final static DateTimeFormatter dateTimeFormatter = new RPOSIXDateTimeFormatter();
+
+    // Internal date/time format
+    public final static String DATE_TIME_FORMAT = "%Y-%m-%d %H:%M:%S";
+
     // Apache POI workbook instance
     private final org.apache.poi.ss.usermodel.Workbook workbook;
     // Underlying file instance
@@ -89,10 +98,6 @@ public final class Workbook extends Common {
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
-
-    // Boolean to determine if conversions between data types should be forced
-    // when reading in data from Excel
-    private boolean forceConversion = false;
 
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
         this.workbook = WorkbookFactory.create(in);
@@ -418,7 +423,7 @@ public final class Workbook extends Common {
     }
 
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
-            DataType[] colTypes) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat) {
 
         DataFrame data = new DataFrame();
 
@@ -446,6 +451,8 @@ public final class Workbook extends Common {
                 columnHeader = "Col" + col;
 
             ColumnBuilder cb = new ColumnBuilder(nrows, forceConversion);
+            cb.setDateTimeFormat(dateTimeFormat);
+            
             // Loop over rows
             for(int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
@@ -583,10 +590,11 @@ public final class Workbook extends Common {
     }
 
     public DataFrame readNamedRegion(String name, boolean header) {
-        return readNamedRegion(name, header, null);
+        return readNamedRegion(name, header, null, false, "");
     }
 
-    public DataFrame readNamedRegion(String name, boolean header, DataType[] colTypes) {
+    public DataFrame readNamedRegion(String name, boolean header, DataType[] colTypes, boolean forceConversion,
+            String dateTimeFormat) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -602,7 +610,8 @@ public final class Workbook extends Common {
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
-        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes);
+        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes, forceConversion,
+                dateTimeFormat);
     }
 
     /**
@@ -648,10 +657,12 @@ public final class Workbook extends Common {
      * @param endCol            End column
      * @param header            If true, assume header, otherwise not
      * @param colTypes          Column data types
+     * @param forceConversion   Should conversion to a less generic data type be forced?
+     * @param dataTimeFormat    Date/time format used when converting between Date and String
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
 
         if(startRow < 0) startRow = sheet.getFirstRowNum();
@@ -685,36 +696,40 @@ public final class Workbook extends Common {
             }
         }
 
-        return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header, colTypes);
+        return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header, colTypes,
+                forceConversion, dateTimeFormat);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null);
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "");
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes);
+    public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes, boolean forceConversion,
+            String dateTimeFormat) {
+        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header) {
-        return readWorksheet(worksheetIndex, header, null);
+        return readWorksheet(worksheetIndex, header, null, false, "");
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes) {
-        return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes);
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat) {
+        return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes,
+                forceConversion, dateTimeFormat);
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null);
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "");
     }
 
-    public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes);
+    public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes, boolean forceConversion,
+            String dateTimeFormat) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header) {
-        return readWorksheet(worksheetName, header, null);
+        return readWorksheet(worksheetName, header, null, false, "");
     }
 
     public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
@@ -1360,13 +1375,5 @@ public final class Workbook extends Common {
 
     public void clearSheet(String sheetName) {
         clearSheet(workbook.getSheetIndex(sheetName));
-    }
-
-    public void setForceConversion(boolean forceConversion) {
-        this.forceConversion = forceConversion;
-    }
-
-    public boolean getForceConversion() {
-        return forceConversion;
     }
 }

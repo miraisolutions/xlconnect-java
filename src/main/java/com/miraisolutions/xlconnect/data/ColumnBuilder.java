@@ -6,10 +6,8 @@
 package com.miraisolutions.xlconnect.data;
 
 import com.miraisolutions.xlconnect.Common;
+import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.apache.poi.ss.usermodel.Cell;
@@ -28,15 +26,14 @@ public class ColumnBuilder extends Common {
     private ArrayList<Cell> cells;
     // Collection to hold actual values
     private ArrayList<CellValue> values;
-
-    // TODO: check this
-    DateFormat dateFormat = SimpleDateFormat.getDateTimeInstance();
+    // Date/time format used for conversion to and from strings
+    private String dateTimeFormat;
 
     // Helper collection to store CellValue's that are dates
     // This is needed as a CellValue doesn't store the information whether it is
     // a date or not - dates are just numerics
     private ArrayList<CellValue> isDate = new ArrayList<CellValue>();
-
+    // Should conversion to a less generic data type be forced?
     private boolean forceConversion;
 
     public ColumnBuilder(int nrows, boolean forceConversion) {
@@ -139,8 +136,8 @@ public class ColumnBuilder extends Common {
                            case String:
                                if(forceConversion) {
                                    try {
-                                       colValues.add(dateFormat.parse(cv.getStringValue()));
-                                   } catch(ParseException e) {
+                                       colValues.add(Workbook.dateTimeFormatter.parse(cv.getStringValue(), dateTimeFormat));
+                                    } catch(Exception e) {
                                        colValues.add(null);
                                        addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) +
                                            " cannot be converted from String to DateTime - returning NA");
@@ -197,7 +194,9 @@ public class ColumnBuilder extends Common {
                                colValues.add(cv.getStringValue());
                                break;
                            case DateTime:
-                               colValues.add(dateFormat.format(DateUtil.getJavaDate(cv.getNumberValue())));
+                               String s = Workbook.dateTimeFormatter.format(
+                                       DateUtil.getJavaDate(cv.getNumberValue()), dateTimeFormat);
+                               colValues.add(s);
                                break;
                            default:
                                throw new IllegalArgumentException("Unknown data type detected!");
@@ -211,5 +210,13 @@ public class ColumnBuilder extends Common {
         }
 
         return colValues;
+    }
+
+    public void setDateTimeFormat(String format) {
+        this.dateTimeFormat = format;
+    }
+
+    public String getDateTimeFormat() {
+        return this.dateTimeFormat;
     }
 }

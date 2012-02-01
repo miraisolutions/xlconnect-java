@@ -20,10 +20,9 @@
 
 package com.miraisolutions.xlconnect.integration.r;
 
+import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 public final class RDataFrameWrapper {
 
     final DataFrame dataFrame;
-    private final static SimpleDateFormat dateTimeParser = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public RDataFrameWrapper() {
         this.dataFrame = new DataFrame();
@@ -77,13 +75,13 @@ public final class RDataFrameWrapper {
         dataFrame.addColumn(name, DataType.String, v);
     }
 
-    public void addDateTimeColumn(String name, String[] column, boolean[] na) throws ParseException {
+    public void addDateTimeColumn(String name, String[] column, boolean[] na) {
         Date[] elements = new Date[column.length];
         for(int i = 0; i < column.length; i++) {
             if(na[i])
                 elements[i] = null;
             else 
-                elements[i] = dateTimeParser.parse(column[i]);
+                elements[i] = Workbook.dateTimeFormatter.parse(column[i], Workbook.DATE_TIME_FORMAT);
         }
         ArrayList<Date> v = new ArrayList<Date>(Arrays.asList(elements));
         dataFrame.addColumn(name, DataType.DateTime, v);
@@ -147,7 +145,7 @@ public final class RDataFrameWrapper {
             if(d == null)
                 values[i] = null;
             else
-                values[i] = dateTimeParser.format(d);
+                values[i] = Workbook.dateTimeFormatter.format(d, Workbook.DATE_TIME_FORMAT);
         }
 
         return values;
