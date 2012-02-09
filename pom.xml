@@ -112,21 +112,17 @@
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RCellStyleWrapper { public *; }</option>
                         <option>-optimizationpasses 3</option>
                         <option>-dontobfuscate</option>
-                        <!--
-                        <option>-overloadaggressively</option>
-                        <option>-allowaccessmodification</option>
-                        <option>-mergeinterfacesaggressively</option>
-                        -->
                     </options>
                     <libs>
                         <lib>${java.home}/lib/rt.jar</lib>
                     </libs>
                 </configuration>
                 <dependencies>
+                    <!-- Artifact may need to be installed manually -->
                     <dependency>
                         <groupId>net.sf.proguard</groupId>
                         <artifactId>proguard</artifactId>
-                        <version>4.4</version>
+                        <version>4.7</version>
                         <scope>runtime</scope>
                     </dependency>
                 </dependencies>
