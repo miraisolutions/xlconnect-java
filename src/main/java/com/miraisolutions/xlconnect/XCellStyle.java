@@ -418,6 +418,7 @@ public class XCellStyle extends Common implements CellStyle {
             xf.setFontId(styleXf.getFontId());
             xf.setFillId(styleXf.getFillId());
             xf.setBorderId(styleXf.getBorderId());
+            xf.setAlignment(styleXf.getAlignment());
             xf.setXfId(cs.styleXfId);
 
             int xfSize = cs.workbook.getStylesSource().putCellXf(xf);
