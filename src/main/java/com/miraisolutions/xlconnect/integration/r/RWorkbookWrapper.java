@@ -398,4 +398,36 @@ public final class RWorkbookWrapper {
     public void clearSheet(String sheetName) {
         workbook.clearSheet(sheetName);
     }
+
+    public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
+        workbook.createFreezePane(sheetIndex, colSplit, rowSplit, leftColumn, topRow);
+    }
+
+    public void createFreezePane(String sheetName, int colSplit, int rowSplit, int leftColumn, int topRow) {
+        workbook.createFreezePane(sheetName, colSplit, rowSplit, leftColumn, topRow);
+    }
+
+    public void createFreezePane(int sheetIndex, int colSplit, int rowSplit) {
+        workbook.createFreezePane(sheetIndex, colSplit, rowSplit);
+    }
+
+    public void createFreezePane(String sheetName, int colSplit, int rowSplit) {
+        workbook.createFreezePane(sheetName, colSplit, rowSplit);
+    }
+
+    public void createSplitPane(int sheetIndex, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
+        workbook.createSplitPane(sheetIndex, xSplitPos, ySplitPos, leftColumn, topRow);
+    }
+
+    public void createSplitPane(String sheetName, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
+        workbook.createSplitPane(sheetName, xSplitPos, ySplitPos, leftColumn, topRow);
+    }
+
+    public void removePane(int sheetIndex) {
+        workbook.removePane(sheetIndex);
+    }
+
+    public void removePane(String sheetName) {
+        workbook.removePane(sheetName);
+    }
 }

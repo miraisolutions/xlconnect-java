@@ -1376,4 +1376,39 @@ public final class Workbook extends Common {
     public void clearSheet(String sheetName) {
         clearSheet(workbook.getSheetIndex(sheetName));
     }
+
+    public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
+        if(leftColumn < 0 | topRow < 0)
+            getSheet(sheetIndex).createFreezePane(colSplit, rowSplit);
+        else
+            getSheet(sheetIndex).createFreezePane(colSplit, rowSplit, leftColumn, topRow);
+    }
+
+    public void createFreezePane(String sheetName, int colSplit, int rowSplit, int leftColumn, int topRow) {
+        createFreezePane(workbook.getSheetIndex(sheetName), colSplit, rowSplit, leftColumn, topRow);
+    }
+
+    public void createFreezePane(int sheetIndex, int colSplit, int rowSplit) {
+        createFreezePane(sheetIndex, colSplit, rowSplit, -1, -1);
+    }
+
+    public void createFreezePane(String sheetName, int colSplit, int rowSplit) {
+        createFreezePane(sheetName, colSplit, rowSplit, -1, -1);
+    }
+
+    public void createSplitPane(int sheetIndex, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
+        getSheet(sheetIndex).createSplitPane(xSplitPos, ySplitPos, leftColumn, topRow, Sheet.PANE_LOWER_RIGHT);
+    }
+
+    public void createSplitPane(String sheetName, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
+        createSplitPane(workbook.getSheetIndex(sheetName), xSplitPos, ySplitPos, leftColumn, topRow);
+    }
+
+    public void removePane(int sheetIndex) {
+        createFreezePane(sheetIndex, 0, 0);
+    }
+
+    public void removePane(String sheetName) {
+        createFreezePane(sheetName, 0, 0);
+    }
 }

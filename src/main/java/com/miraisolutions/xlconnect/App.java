@@ -64,9 +64,10 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
-        RPOSIXDateTimeFormatter formatter = new RPOSIXDateTimeFormatter();
-        System.out.println(formatter.format(new Date(), "%Y-%m-%d %H:%M:%S"));
-        System.out.println(formatter.parse("2012-02-01 15:44:22", "%Y-%m-%d %H:%M:%S"));
+        Workbook wbx = Workbook.getWorkbook("C:/Users/mstuder/split.xlsx", true);
+        wbx.createSheet("test");
+        wbx.createSplitPane("test", 5, 3, 5, 3);
+        wbx.save();
         
         if(1 == 1) return;
         
