@@ -671,7 +671,7 @@ public final class Workbook extends Common {
 
         // Check that the start row actually exists
         if(sheet.getRow(startRow) == null)
-            throw new IllegalArgumentException("Specified sheet does not contain any data!");
+            throw new IllegalArgumentException("Specified sheet (index = " + (worksheetIndex+1) + ", name = " + workbook.getSheetName(worksheetIndex) + ") does not contain any data!");
 
         if(endRow < 0) endRow = sheet.getLastRowNum();
 
@@ -759,7 +759,7 @@ public final class Workbook extends Common {
         } else if(filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
             imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
         } else
-            throw new IllegalArgumentException("Image type not supported!");
+            throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
 
         InputStream is = new FileInputStream(imageFile);
         byte[] bytes = IOUtils.toByteArray(is);
@@ -1251,7 +1251,7 @@ public final class Workbook extends Common {
                 } else if(filename.endsWith(".xlsx")) {
                     wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL2007);
                 } else
-                    throw new IllegalArgumentException("File extension not supported! Only *.xls and *.xlsx are allowed!");
+                    throw new IllegalArgumentException("File extension \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported! Only *.xls and *.xlsx are allowed!");
             } else
                 throw new FileNotFoundException("File '" + excelFile.getName() + "' could not be found - " +
                         "you may specify to automatically create the file if not existing.");
@@ -1410,5 +1410,23 @@ public final class Workbook extends Common {
 
     public void removePane(String sheetName) {
         createFreezePane(sheetName, 0, 0);
+    }
+    
+    public void setSheetColor(int sheetIndex, int color) {
+        if(isXSSF()) {
+            Sheet sheet = workbook.getSheetAt(sheetIndex);
+            ((XSSFSheet)sheet).setTabColor(color);
+        } else if(isHSSF()) {
+            
+        }      
+    }
+
+    public void setSheetColor(String sheetName, int color) {
+        if(isXSSF()) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            ((XSSFSheet)sheet).setTabColor(color);
+        } else if(isHSSF()) {
+            addWarning("Setting the sheet color for XLS files is not supported yet.");
+        }   
     }
 }

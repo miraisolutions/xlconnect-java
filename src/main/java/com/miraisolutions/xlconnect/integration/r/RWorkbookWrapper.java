@@ -430,4 +430,12 @@ public final class RWorkbookWrapper {
     public void removePane(String sheetName) {
         workbook.removePane(sheetName);
     }
+    
+    public void setSheetColor(int sheetIndex, int color) {
+        workbook.setSheetColor(sheetIndex, color);
+    }
+
+    public void setSheetColor(String sheetName, int color) {
+        workbook.setSheetColor(sheetName, color);
+    }
 }
