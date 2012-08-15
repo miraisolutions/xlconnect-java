@@ -339,8 +339,8 @@ public final class Workbook extends Common {
             // For each column write corresponding column name
             for(int i = 0; i < data.columns(); i++) {
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
-                cell.setCellType(Cell.CELL_TYPE_STRING);
                 cell.setCellValue(data.getColumnName(i));
+                cell.setCellType(Cell.CELL_TYPE_STRING);
                 setCellStyle(cell, styles.get(HEADER + i));
             }
 
@@ -361,8 +361,8 @@ public final class Workbook extends Common {
                         if(d == null)
                             setMissing(cell);
                         else {
-                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             cell.setCellValue(d.doubleValue());
+                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -375,8 +375,8 @@ public final class Workbook extends Common {
                         if(s == null)
                             setMissing(cell);
                         else {
-                            cell.setCellType(Cell.CELL_TYPE_STRING);
                             cell.setCellValue(stringValues.get(j));
+                            cell.setCellType(Cell.CELL_TYPE_STRING);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -389,8 +389,8 @@ public final class Workbook extends Common {
                         if(b == null)
                             setMissing(cell);
                         else {
-                            cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             cell.setCellValue(booleanValues.get(j).booleanValue());
+                            cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -403,8 +403,8 @@ public final class Workbook extends Common {
                         if(d == null)
                             setMissing(cell);
                         else {
-                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             cell.setCellValue(d);
+                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -990,8 +990,8 @@ public final class Workbook extends Common {
         if(missingValue.length < 1 || missingValue[0] == null)
             cell.setCellType(Cell.CELL_TYPE_BLANK);
         else {
-            cell.setCellType(Cell.CELL_TYPE_STRING);
             cell.setCellValue(missingValue[0]);
+            cell.setCellType(Cell.CELL_TYPE_STRING);
             setCellStyle(cell, DataFormatOnlyCellStyle.get());
         }
     }
@@ -1375,6 +1375,40 @@ public final class Workbook extends Common {
 
     public void clearSheet(String sheetName) {
         clearSheet(workbook.getSheetIndex(sheetName));
+    }
+    
+    // coords[] = { top, left, bottom, right }
+    public void clearRange(int sheetIndex, int[] coords) {
+        Sheet sheet = getSheet(sheetIndex);
+        for(int i = coords[0]; i <= coords[2]; i++) {
+            Row row = sheet.getRow(i);
+            if(row == null) continue;
+            for(int j = coords[1]; j <= coords[3]; j++) {
+                Cell cell = row.getCell(j);
+                if(cell != null)
+                    row.removeCell(cell);
+            }
+        }
+    }
+    
+    public void clearRange(String sheetName, int[] coords) {
+        clearRange(workbook.getSheetIndex(sheetName), coords);
+    }
+    
+    public void clearRange(String reference) {
+        AreaReference ref = new AreaReference(reference);
+        CellReference firstCell = ref.getFirstCell();
+        CellReference lastCell = ref.getLastCell();
+        String sheetName = firstCell.getSheetName();
+        int[] coords = { firstCell.getRow(), firstCell.getCol(), lastCell.getRow(),
+            lastCell.getCol() };
+        clearRange(sheetName, coords);
+    }
+    
+    public void clearNamedRegion(String name) {
+        int sheetIndex = getName(name).getSheetIndex();
+        int[] coords = getReferenceCoordinates(name);
+        clearRange(sheetIndex, coords);
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
