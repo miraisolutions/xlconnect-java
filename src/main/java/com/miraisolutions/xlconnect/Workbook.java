@@ -1371,7 +1371,9 @@ public final class Workbook extends Common {
         int firstRow = sheet.getFirstRowNum();
         int lastRow = sheet.getLastRowNum();
         for (int i=lastRow; i>=firstRow; i--) {
-            sheet.removeRow(sheet.getRow(i));
+            Row r = sheet.getRow(i);
+            if(r != null)
+                sheet.removeRow(r);
         }
     }
 
