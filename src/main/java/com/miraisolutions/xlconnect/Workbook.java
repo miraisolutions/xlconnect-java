@@ -1368,9 +1368,11 @@ public final class Workbook extends Common {
 
     public void clearSheet(int sheetIndex) {
         Sheet sheet = getSheet(sheetIndex);
-        Iterator<Row> it = sheet.rowIterator();
-        while(it.hasNext())
-            sheet.removeRow(it.next());
+        int firstRow = sheet.getFirstRowNum();
+        int lastRow = sheet.getLastRowNum();
+        for (int i=lastRow; i>=firstRow; i--) {
+            sheet.removeRow(sheet.getRow(i));
+        }
     }
 
     public void clearSheet(String sheetName) {
@@ -1395,7 +1397,7 @@ public final class Workbook extends Common {
         clearRange(workbook.getSheetIndex(sheetName), coords);
     }
     
-    public void clearRange(String reference) {
+    public void clearRangeFromReference(String reference) {
         AreaReference ref = new AreaReference(reference);
         CellReference firstCell = ref.getFirstCell();
         CellReference lastCell = ref.getLastCell();
@@ -1406,9 +1408,9 @@ public final class Workbook extends Common {
     }
     
     public void clearNamedRegion(String name) {
-        int sheetIndex = getName(name).getSheetIndex();
+        String sheetName = getName(name).getSheetName();
         int[] coords = getReferenceCoordinates(name);
-        clearRange(sheetIndex, coords);
+        clearRange(sheetName, coords);
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {

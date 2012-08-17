@@ -398,6 +398,22 @@ public final class RWorkbookWrapper {
     public void clearSheet(String sheetName) {
         workbook.clearSheet(sheetName);
     }
+    
+    public void clearRange(int sheetIndex, int[] coords) {
+        workbook.clearRange(sheetIndex, coords);
+    }
+
+    public void clearRange(String sheetName, int[] coords) {
+        workbook.clearRange(sheetName, coords);
+    }
+    
+    public void clearRangeFromReference(String reference) {
+        workbook.clearRangeFromReference(reference);
+    }
+    
+    public void clearNamedRegion(String name) {
+        workbook.clearNamedRegion(name);
+    }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
         workbook.createFreezePane(sheetIndex, colSplit, rowSplit, leftColumn, topRow);
