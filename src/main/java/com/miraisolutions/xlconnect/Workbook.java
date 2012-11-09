@@ -1377,6 +1377,29 @@ public final class Workbook extends Common {
         return getSheet(sheetName).getLastRowNum();
     }
 
+    public int getLastColumn(Sheet sheet) {
+        int lastRow = sheet.getLastRowNum();
+        int lastColumn = 1;
+        for(int i = 0 ; i < lastRow; ++i) {
+            Row row = sheet.getRow(i);
+            if(row != null) {
+                int col = row.getLastCellNum();
+                if(col > lastColumn) {
+                    lastColumn = col;
+                }
+            }
+        }
+        return lastColumn - 1;
+    }
+
+    public int getLastColumn(int sheetIndex) {
+        return getLastColumn(getSheet(sheetIndex));
+    }
+
+    public int getLastColumn(String sheetName) {
+        return getLastColumn(getSheet(sheetName));
+    }
+
     public void appendNamedRegion(DataFrame data, String name, boolean header) {
         Sheet sheet = workbook.getSheet(getName(name).getSheetName());
         // top, left, bottom, right

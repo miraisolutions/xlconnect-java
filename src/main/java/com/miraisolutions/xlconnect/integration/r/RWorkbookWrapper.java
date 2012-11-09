@@ -379,6 +379,15 @@ public final class RWorkbookWrapper {
         return workbook.getLastRow(sheetName);
     }
 
+    public int getLastColumn(int sheetIndex) {
+        return workbook.getLastColumn(sheetIndex);
+    }
+
+    public int getLastColumn(String sheetName) {
+        return workbook.getLastColumn(sheetName);
+    }
+
+
     public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header) {
         workbook.appendNamedRegion(data.dataFrame, name, header);
     }
