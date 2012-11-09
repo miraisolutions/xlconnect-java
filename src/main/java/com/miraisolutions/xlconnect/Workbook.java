@@ -422,8 +422,47 @@ public final class Workbook extends Common {
         }
     }
 
+    // extracts the cached value from a cell without re-evaluating
+    // the formula. returns null if the cell is blank.
+    private CellValue getCachedCellValue(Cell cell) {
+        int valueType = cell.getCellType();
+        if(valueType == Cell.CELL_TYPE_FORMULA) {
+            valueType = cell.getCachedFormulaResultType();
+        }
+
+        switch(valueType) {
+            case Cell.CELL_TYPE_BLANK:
+                return null;
+            case Cell.CELL_TYPE_BOOLEAN:
+                if(cell.getBooleanCellValue()) {
+                    return CellValue.TRUE;
+                } else {
+                    return CellValue.FALSE;
+                }
+            case Cell.CELL_TYPE_NUMERIC:
+                return new CellValue(cell.getNumericCellValue());
+            case Cell.CELL_TYPE_STRING:
+                return new CellValue(cell.getStringCellValue());
+            case Cell.CELL_TYPE_ERROR:
+                return CellValue.getError(cell.getErrorCellValue());
+            default:
+                String msg =  String.format("Could not extract value from cell with cached value type %d", valueType);
+                throw new RuntimeException(msg);
+        }
+    }
+
+    // extracts the value from a cell by either evaluating it or taking the
+    // cached value
+    private CellValue getCellValue(FormulaEvaluator ev, Cell cell, boolean takeCached) {
+        if(!takeCached) {
+            return ev.evaluate(cell);
+        } else {
+            return getCachedCellValue(cell);
+        }
+    }
+
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
 
         DataFrame data = new DataFrame();
 
@@ -440,9 +479,12 @@ public final class Workbook extends Common {
                 Cell cell = getCell(sheet, startRow, colIndex, false);
                 // Check if there actually is a cell ...
                 if(cell != null) {
-                    CellValue cv = evaluator.evaluate(cell);
-                    if(cv != null)
-                        columnHeader = cv.getStringValue();
+                    if(!takeCached) {
+                     CellValue cv = evaluator.evaluate(cell);
+                     columnHeader = cv.getStringValue();
+                    } else {
+                     columnHeader = cell.getStringCellValue();
+                    }
                 }
             }
             // If it was specified that there is a header but an empty(/non-existing)
@@ -483,7 +525,7 @@ public final class Workbook extends Common {
                 // Try to evaluate cell;
                 // report an error if this fails
                 try {
-                    cv = evaluator.evaluate(cell);
+                    cv = getCellValue(evaluator, cell, takeCached);
                 } catch(Exception e) {
                     msg = "Error when trying to evaluate cell " + CellUtils.formatAsString(cell) + " - " + e.getMessage();
                     cellError(cb, msg);
@@ -590,11 +632,11 @@ public final class Workbook extends Common {
     }
 
     public DataFrame readNamedRegion(String name, boolean header) {
-        return readNamedRegion(name, header, null, false, "");
+        return readNamedRegion(name, header, null, false, "", false);
     }
 
     public DataFrame readNamedRegion(String name, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat) {
+            String dateTimeFormat, boolean takeCached) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -611,7 +653,7 @@ public final class Workbook extends Common {
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
         return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes, forceConversion,
-                dateTimeFormat);
+                dateTimeFormat, takeCached);
     }
 
     /**
@@ -662,7 +704,7 @@ public final class Workbook extends Common {
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
 
         if(startRow < 0) startRow = sheet.getFirstRowNum();
@@ -697,16 +739,16 @@ public final class Workbook extends Common {
         }
 
         return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header, colTypes,
-                forceConversion, dateTimeFormat);
+                forceConversion, dateTimeFormat, takeCached);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "");
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes, boolean forceConversion,
             String dateTimeFormat) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat);
+        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header) {
@@ -714,18 +756,18 @@ public final class Workbook extends Common {
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
         return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes,
-                forceConversion, dateTimeFormat);
+                forceConversion, dateTimeFormat, takeCached);
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "");
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes, boolean forceConversion,
             String dateTimeFormat) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat);
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header) {

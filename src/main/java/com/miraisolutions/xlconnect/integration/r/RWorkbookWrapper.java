@@ -113,9 +113,9 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat) {
+            boolean forceConversion, String dateTimeFormat, boolean takeCached) {
         DataFrame dataFrame = workbook.readNamedRegion(name, header, fromString(colTypes),
-                forceConversion, dateTimeFormat);
+                forceConversion, dateTimeFormat, takeCached);
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -128,16 +128,16 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat) {
+            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
         DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat);
+                fromString(colTypes), forceConversion, dateTimeFormat, takeCached);
         return new RDataFrameWrapper(dataFrame);
     }
 
     public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat) {
+            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached) {
         DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat);
+                fromString(colTypes), forceConversion, dateTimeFormat, takeCached);
         return new RDataFrameWrapper(dataFrame);
     }
 
