@@ -113,9 +113,9 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached) {
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
         DataFrame dataFrame = workbook.readNamedRegion(name, header, fromString(colTypes),
-                forceConversion, dateTimeFormat, takeCached);
+                forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -128,16 +128,16 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
+            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
         DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat, takeCached);
+                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
 
     public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached) {
+            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
         DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat, takeCached);
+                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -462,5 +462,11 @@ public final class RWorkbookWrapper {
 
     public void setSheetColor(String sheetName, int color) {
         workbook.setSheetColor(sheetName, color);
+    }
+    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
+	return workbook.getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol);
+    }
+    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
+	return workbook.getBoundingBox(sheetName, startRow, startCol, endRow, endCol);
     }
 }

@@ -462,16 +462,28 @@ public final class Workbook extends Common {
     }
 
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
 
         DataFrame data = new DataFrame();
+        int [] colset;
+        
 
         // Formula evaluator
         FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
         evaluator.clearAllCachedResultValues();
-
-        // Loop over columns
-        for(int col = 0; col < ncols; col++) {
+        
+        if (subset == null) {
+            colset = new int[ncols];
+            for(int i = 0; i < ncols; i++) {
+                colset[i] = i;
+            }
+        } else {
+            colset = new int[subset.length];
+            colset = subset;
+        }
+        
+        // Loop over columns // was int col = 0; col < ncols; col++
+        for(int col : colset) {
             int colIndex = startCol + col;
             // Determine column header
             String columnHeader = null;
@@ -490,7 +502,7 @@ public final class Workbook extends Common {
             // If it was specified that there is a header but an empty(/non-existing)
             // cell or cell value is found, then use a default column name
             if(columnHeader == null)
-                columnHeader = "Col" + col;
+                columnHeader = "Col" + (col+1);
 
             ColumnBuilder cb = new ColumnBuilder(nrows, forceConversion);
             cb.setDateTimeFormat(dateTimeFormat);
@@ -631,12 +643,12 @@ public final class Workbook extends Common {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header);
     }
 
-    public DataFrame readNamedRegion(String name, boolean header) {
-        return readNamedRegion(name, header, null, false, "", false);
+    public DataFrame readNamedRegion(String name, boolean header, int [] subset) {
+        return readNamedRegion(name, header, null, false, "", false, subset);
     }
 
     public DataFrame readNamedRegion(String name, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat, boolean takeCached) {
+            String dateTimeFormat, boolean takeCached, int[] subset) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -653,7 +665,7 @@ public final class Workbook extends Common {
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
         return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes, forceConversion,
-                dateTimeFormat, takeCached);
+                dateTimeFormat, takeCached, subset);
     }
 
     /**
@@ -704,74 +716,47 @@ public final class Workbook extends Common {
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
-
-        if(startRow < 0) startRow = sheet.getFirstRowNum();
-        if(startRow < 0)
-            throw new IllegalArgumentException("Start row cannot be determined!");
-
-        // Check that the start row actually exists
-        if(sheet.getRow(startRow) == null)
-            throw new IllegalArgumentException("Specified sheet (index = " + (worksheetIndex+1) + ", name = " + workbook.getSheetName(worksheetIndex) + ") does not contain any data!");
-
-        if(endRow < 0) endRow = sheet.getLastRowNum();
-
-        if(startCol < 0) {
-            startCol = sheet.getRow(startRow).getFirstCellNum();
-            for(int i = startRow; i <= endRow; i++) {
-                Row r = sheet.getRow(i);
-                if(r != null && r.getFirstCellNum() < startCol)
-                    startCol = r.getFirstCellNum();
-            }
-        }
-        if(startCol < 0)
-            throw new IllegalArgumentException("Start column cannot be determined!");
-        
-        if(endCol < 0) {
-            endCol = startCol;
-            for(int i = startRow; i <= endRow; i++) {
-                Row r = sheet.getRow(i);
-                // NOTE: getLastCellNum is 1-based!
-                if(r != null && (r.getLastCellNum() - 1) > endCol)
-                    endCol = r.getLastCellNum() - 1;
-            }
-        }
-
+        int [] boundingBox = getBoundingBox(worksheetIndex, startRow, startCol, endRow, endCol);
+        startRow = boundingBox[0];
+        startCol = boundingBox[1];
+        endRow = boundingBox[2];
+        endCol = boundingBox[3];
         return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header, colTypes,
-                forceConversion, dateTimeFormat, takeCached);
+                forceConversion, dateTimeFormat, takeCached, subset);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false);
+    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header, int [] subset) {
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false, subset);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false);
+            String dateTimeFormat, int [] subset) {
+        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, subset);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, boolean header) {
-        return readWorksheet(worksheetIndex, header, null, false, "");
+    public DataFrame readWorksheet(int worksheetIndex, boolean header, int [] subset) {
+        return readWorksheet(worksheetIndex, header, null, false, "", subset);
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
         return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes,
-                forceConversion, dateTimeFormat, takeCached);
+                forceConversion, dateTimeFormat, takeCached, subset);
     }
 
-    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false);
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header, int [] subset) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false, subset);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false);
+            String dateTimeFormat, int [] subset) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, subset);
     }
 
-    public DataFrame readWorksheet(String worksheetName, boolean header) {
-        return readWorksheet(worksheetName, header, null, false, "");
+    public DataFrame readWorksheet(String worksheetName, boolean header, int [] subset) {
+        return readWorksheet(worksheetName, header, null, false, "", subset);
     }
 
     public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
@@ -1457,6 +1442,8 @@ public final class Workbook extends Common {
                 if(cell != null)
                     row.removeCell(cell);
             }
+            if (row.getLastCellNum()<0)
+                sheet.removeRow(row);
         }
     }
     
@@ -1531,5 +1518,48 @@ public final class Workbook extends Common {
         } else if(isHSSF()) {
             addWarning("Setting the sheet color for XLS files is not supported yet.");
         }   
+    }
+    
+    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
+        Sheet sheet = workbook.getSheetAt(sheetIndex);
+
+        if(startRow < 0) startRow = sheet.getFirstRowNum();
+        if(startRow < 0)
+            throw new IllegalArgumentException("Start row cannot be determined!");
+
+        // Check that the start row actually exists
+        if(sheet.getRow(startRow) == null)
+            throw new IllegalArgumentException("Specified sheet (index = " + (sheetIndex+1) + ", name = " + workbook.getSheetName(sheetIndex) + ") does not contain any data!");
+
+        if(endRow < 0) endRow = sheet.getLastRowNum();
+
+        if(startCol < 0) {
+            startCol = Integer.MAX_VALUE;
+            for(int i = startRow; i <= endRow; i++) {
+                Row r = sheet.getRow(i);
+                if(r != null && (r.getFirstCellNum() > -1) && (r.getFirstCellNum() < startCol))
+                    startCol = r.getFirstCellNum();
+            }
+            if(startCol == Integer.MAX_VALUE)
+                startCol = -1;
+        }
+        if(startCol < 0)
+            throw new IllegalArgumentException("Start column cannot be determined!");
+        
+        if(endCol < 0) {
+            endCol = startCol;
+            for(int i = startRow; i <= endRow; i++) {
+                Row r = sheet.getRow(i);
+                // NOTE: getLastCellNum is 1-based!
+                if(r != null && (r.getLastCellNum() - 1) > endCol)
+                    endCol = r.getLastCellNum() - 1;
+            }
+        }
+        
+        return new int[]{startRow,startCol,endRow,endCol};
+    }
+    
+    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
+        return getBoundingBox(workbook.getSheetIndex(sheetName), startRow, startCol, endRow, endCol);
     }
 }
