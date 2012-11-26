@@ -6,6 +6,7 @@
 package com.miraisolutions.xlconnect.data;
 
 import com.miraisolutions.xlconnect.Common;
+import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
 import java.util.ArrayList;
@@ -13,6 +14,8 @@ import java.util.Iterator;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 
 /**
  *
@@ -29,25 +32,171 @@ public class ColumnBuilder extends Common {
     // Date/time format used for conversion to and from strings
     private String dateTimeFormat;
 
-    // Helper collection to store CellValue's that are dates
+    // Helper collection to store CellValues that are dates
     // This is needed as a CellValue doesn't store the information whether it is
     // a date or not - dates are just numerics
     private ArrayList<CellValue> isDate = new ArrayList<CellValue>();
     // Should conversion to a less generic data type be forced?
     private boolean forceConversion;
 
-    public ColumnBuilder(int nrows, boolean forceConversion) {
+    private boolean takeCached = false;
+    private FormulaEvaluator evaluator = null;
+    private ErrorBehavior onErrorCell;
+    String[] missingValue;
+
+    public ColumnBuilder(int nrows, boolean forceConversion,
+            FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+            String[] missingValue) {
         this.detectedTypes = new ArrayList<DataType>(nrows);
         this.cells = new ArrayList<Cell>(nrows);
         this.values = new ArrayList<CellValue>(nrows);
         this.forceConversion = forceConversion;
+        this.evaluator = evaluator;
+        this.takeCached = evaluator == null;
+        this.onErrorCell = onErrorCell;
+        this.missingValue = missingValue;
     }
 
     public void addMissing() {
         // Add "missing" to collection
         values.add(null);
+        cells.add(null);
         // assume "smallest" data type
         detectedTypes.add(DataType.Boolean);
+    }
+
+
+    private void cellError(String msg) {
+        if(this.onErrorCell.equals(ErrorBehavior.WARN)) {
+            this.addMissing();
+            this.addWarning(msg);
+        } else
+            throw new IllegalArgumentException(msg);
+    }
+
+
+    // extracts the cached value from a cell without re-evaluating
+    // the formula. returns null if the cell is blank.
+    private CellValue getCachedCellValue(Cell cell) {
+        int valueType = cell.getCellType();
+        if(valueType == Cell.CELL_TYPE_FORMULA) {
+            valueType = cell.getCachedFormulaResultType();
+        }
+
+        switch(valueType) {
+            case Cell.CELL_TYPE_BLANK:
+                return null;
+            case Cell.CELL_TYPE_BOOLEAN:
+                if(cell.getBooleanCellValue()) {
+                    return CellValue.TRUE;
+                } else {
+                    return CellValue.FALSE;
+                }
+            case Cell.CELL_TYPE_NUMERIC:
+                return new CellValue(cell.getNumericCellValue());
+            case Cell.CELL_TYPE_STRING:
+                return new CellValue(cell.getStringCellValue());
+            case Cell.CELL_TYPE_ERROR:
+                return CellValue.getError(cell.getErrorCellValue());
+            default:
+                String msg =  String.format("Could not extract value from cell with cached value type %d", valueType);
+                throw new RuntimeException(msg);
+        }
+    }
+
+    // extracts the value from a cell by either evaluating it or taking the
+    // cached value
+    private CellValue getCellValue(Cell cell) {
+        if(this.takeCached) {
+            return getCachedCellValue(cell);
+        } else {
+            return this.evaluator.evaluate(cell);
+        }
+    }
+
+    public void addCell(Cell c) {
+        String msg;
+
+        // In case the cell does not exist ...
+        if(c == null) {
+            this.addMissing();
+            return;
+        }
+
+       /*
+         * The following is to handle error cells (before they have been evaluated
+         * to a CellValue) and cells which are formulas but have cached errors.
+         */
+        if(
+            c.getCellType() == Cell.CELL_TYPE_ERROR ||
+            (c.getCellType() == Cell.CELL_TYPE_FORMULA &&
+             c.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)
+        ) {
+             msg = "Error detected in cell " + CellUtils.formatAsString(c) +
+                    " - " + CellUtils.getErrorMessage(c.getErrorCellValue());
+            cellError(msg);
+            return;
+        }
+
+        CellValue cv = null;
+
+        // Try to evaluate cell;
+        // report an error if this fails
+        try {
+            cv = getCellValue(c);
+        } catch(Exception e) {
+            msg = "Error when trying to evaluate cell " + 
+                    CellUtils.formatAsString(c) + " - " + e.getMessage();
+            cellError(msg);
+            return;
+        }
+
+        // Not sure if this case should ever happen;
+        // let's be sure anyway
+        if(cv == null){
+            addMissing();
+            return;
+        }
+
+       // Determine (evaluated) cell data type
+        switch(cv.getCellType()) {
+            case Cell.CELL_TYPE_BLANK:
+                addMissing();
+                return;
+            case Cell.CELL_TYPE_BOOLEAN:
+                addValue(c, cv, DataType.Boolean);
+                break;
+            case Cell.CELL_TYPE_NUMERIC:
+                if(DateUtil.isCellDateFormatted(c))
+                    addValue(c, cv, DataType.DateTime);
+                else
+                    addValue(c, cv, DataType.Numeric);
+                break;
+            case Cell.CELL_TYPE_STRING:
+                boolean missing = false;
+                for(int i = 0; i < missingValue.length; i++) {
+                    if(cv.getStringValue() == null || cv.getStringValue().equals(missingValue[i])) {
+                        missing = true;
+                        break;
+                    }
+                }
+                if(missing)
+                    addMissing();
+                else
+                    addValue(c, cv, DataType.String);
+                break;
+            case Cell.CELL_TYPE_FORMULA:
+                msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!";
+                cellError(msg);
+                break;
+            case Cell.CELL_TYPE_ERROR:
+                msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
+                cellError(msg);
+                break;
+            default:
+                msg = "Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!";
+                cellError(msg);
+        }
     }
 
     public void addValue(Cell c, CellValue cv, DataType dt) {
@@ -77,9 +226,12 @@ public class ColumnBuilder extends Common {
         DataType columnType = (asType == null) ? this.determineColumnType() : asType;
         ArrayList colValues = new ArrayList(values.size());
         Iterator<CellValue> it = values.iterator();
+        Iterator<Cell> jt = cells.iterator();
+        DataFormatter fmt = new DataFormatter();
         int counter = 0;
         while(it.hasNext()) {
            CellValue cv = it.next();
+           Cell cell = jt.next();
            if(cv == null) {
                colValues.add(null);
            } /* else if(!CellUtils.isCellValueOfType(cv, columnType)) {
@@ -185,18 +337,18 @@ public class ColumnBuilder extends Common {
                    case String:
                         switch(detectedTypes.get(counter)) {
                            case Boolean:
-                               colValues.add(Boolean.toString(cv.getBooleanValue()));
-                               break;
                            case Numeric:
-                               colValues.add(Double.toString(cv.getNumberValue()));
+                               // format according to Excel format
+                               colValues.add(fmt.formatCellValue(cell));
+                               break;
+                           case DateTime:
+                               // format according to dateTimeFormatter
+                               colValues.add(Workbook.dateTimeFormatter.format(
+                                       DateUtil.getJavaDate(cv.getNumberValue()),
+                                       dateTimeFormat));
                                break;
                            case String:
                                colValues.add(cv.getStringValue());
-                               break;
-                           case DateTime:
-                               String s = Workbook.dateTimeFormatter.format(
-                                       DateUtil.getJavaDate(cv.getNumberValue()), dateTimeFormat);
-                               colValues.add(s);
                                break;
                            default:
                                throw new IllegalArgumentException("Unknown data type detected!");

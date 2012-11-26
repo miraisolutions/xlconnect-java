@@ -422,44 +422,6 @@ public final class Workbook extends Common {
         }
     }
 
-    // extracts the cached value from a cell without re-evaluating
-    // the formula. returns null if the cell is blank.
-    private CellValue getCachedCellValue(Cell cell) {
-        int valueType = cell.getCellType();
-        if(valueType == Cell.CELL_TYPE_FORMULA) {
-            valueType = cell.getCachedFormulaResultType();
-        }
-
-        switch(valueType) {
-            case Cell.CELL_TYPE_BLANK:
-                return null;
-            case Cell.CELL_TYPE_BOOLEAN:
-                if(cell.getBooleanCellValue()) {
-                    return CellValue.TRUE;
-                } else {
-                    return CellValue.FALSE;
-                }
-            case Cell.CELL_TYPE_NUMERIC:
-                return new CellValue(cell.getNumericCellValue());
-            case Cell.CELL_TYPE_STRING:
-                return new CellValue(cell.getStringCellValue());
-            case Cell.CELL_TYPE_ERROR:
-                return CellValue.getError(cell.getErrorCellValue());
-            default:
-                String msg =  String.format("Could not extract value from cell with cached value type %d", valueType);
-                throw new RuntimeException(msg);
-        }
-    }
-
-    // extracts the value from a cell by either evaluating it or taking the
-    // cached value
-    private CellValue getCellValue(FormulaEvaluator ev, Cell cell, boolean takeCached) {
-        if(!takeCached) {
-            return ev.evaluate(cell);
-        } else {
-            return getCachedCellValue(cell);
-        }
-    }
 
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
             DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
@@ -468,9 +430,12 @@ public final class Workbook extends Common {
         int [] colset;
         
 
-        // Formula evaluator
-        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-        evaluator.clearAllCachedResultValues();
+        // Formula evaluator - only if we don't want to take cached values
+        FormulaEvaluator evaluator = null;
+        if(!takeCached) { 
+            evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            evaluator.clearAllCachedResultValues();
+        }
         
         if (subset == null) {
             colset = new int[ncols];
@@ -504,7 +469,8 @@ public final class Workbook extends Common {
             if(columnHeader == null)
                 columnHeader = "Col" + (col+1);
 
-            ColumnBuilder cb = new ColumnBuilder(nrows, forceConversion);
+            ColumnBuilder cb = new ColumnBuilder(nrows, forceConversion, evaluator, onErrorCell,
+                    missingValue);
             cb.setDateTimeFormat(dateTimeFormat);
             
             // Loop over rows
@@ -512,84 +478,7 @@ public final class Workbook extends Common {
                 int rowIndex = startRow + row;
 
                 Cell cell = getCell(sheet, rowIndex, colIndex, false);
-                String msg = null;
-
-                // In case the cell does not exist ...
-                if(cell == null) {
-                    cb.addMissing();
-                    continue;
-                }
-
-                /*
-                 * The following is to handle error cells (before they have been evaluated
-                 * to a CellValue) and cells which are formulas but have cached errors.
-                 */
-                if(
-                    cell.getCellType() == Cell.CELL_TYPE_ERROR ||
-                    (cell.getCellType() == Cell.CELL_TYPE_FORMULA && cell.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)
-                ) {
-                    msg = "Error detected in cell " + CellUtils.formatAsString(cell) + " - " + CellUtils.getErrorMessage(cell.getErrorCellValue());
-                    cellError(cb, msg);
-                    continue;
-                }
-
-                CellValue cv = null;
-                // Try to evaluate cell;
-                // report an error if this fails
-                try {
-                    cv = getCellValue(evaluator, cell, takeCached);
-                } catch(Exception e) {
-                    msg = "Error when trying to evaluate cell " + CellUtils.formatAsString(cell) + " - " + e.getMessage();
-                    cellError(cb, msg);
-                    continue;
-                }
-
-                // Not sure if this case should ever happen;
-                // let's be sure anyway
-                if(cv == null){
-                    cb.addMissing();
-                    continue;
-                }
-
-                // Determine (evaluated) cell data type
-                switch(cv.getCellType()) {
-                    case Cell.CELL_TYPE_BLANK:
-                        cb.addMissing();
-                        break;
-                    case Cell.CELL_TYPE_BOOLEAN:
-                        cb.addValue(cell, cv, DataType.Boolean);
-                        break;
-                    case Cell.CELL_TYPE_NUMERIC:
-                        if(DateUtil.isCellDateFormatted(cell))
-                            cb.addValue(cell, cv, DataType.DateTime);
-                        else
-                            cb.addValue(cell, cv, DataType.Numeric);
-                        break;
-                    case Cell.CELL_TYPE_STRING:
-                        boolean missing = false;
-                        for(int i = 0; i < missingValue.length; i++) {
-                            if(cv.getStringValue() == null || cv.getStringValue().equals(missingValue[i])) {
-                                missing = true;
-                                break;
-                            }
-                        }
-                        if(missing)
-                            cb.addMissing();
-                        else
-                            cb.addValue(cell, cv, DataType.String);
-                        break;
-                    case Cell.CELL_TYPE_FORMULA:
-                        msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(cell) + "!";
-                        cellError(cb, msg);
-                        break;
-                    case Cell.CELL_TYPE_ERROR:
-                        msg = "Error detected in cell " + CellUtils.formatAsString(cell) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
-                        cellError(cb, msg);
-                        break;
-                    default:
-                        msg = "Unexpected cell type detected for cell " + CellUtils.formatAsString(cell) + "!";
-                        cellError(cb, msg);
-                }
+                cb.addCell(cell);
             }
 
             DataType columnType = ((colTypes != null) && (colTypes.length > 0)) ? colTypes[col % colTypes.length] :
@@ -603,14 +492,7 @@ public final class Workbook extends Common {
 
         return data;
     }
-
-    private void cellError(ColumnBuilder cb, String msg) {
-        if(onErrorCell.equals(ErrorBehavior.WARN)) {
-            cb.addMissing();
-            addWarning(msg);
-        } else
-            throw new IllegalArgumentException(msg);
-    }
+    
 
     public void onErrorCell(ErrorBehavior eb) {
         this.onErrorCell = eb;
