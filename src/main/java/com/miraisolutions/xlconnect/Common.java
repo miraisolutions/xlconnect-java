@@ -22,11 +22,6 @@ package com.miraisolutions.xlconnect;
 
 import java.util.ArrayList;
 
-/**
- * Common functionality
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public class Common implements SupportsWarnings {
 
     /* Warnings -

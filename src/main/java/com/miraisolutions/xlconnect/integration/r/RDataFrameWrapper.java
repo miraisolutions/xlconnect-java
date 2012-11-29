@@ -23,14 +23,10 @@ package com.miraisolutions.xlconnect.integration.r;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.ArrayList;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public final class RDataFrameWrapper {
 
     final DataFrame dataFrame;

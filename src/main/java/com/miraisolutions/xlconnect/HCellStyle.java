@@ -25,10 +25,6 @@ import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.DataFormat;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public class HCellStyle extends Common implements CellStyle {
 
     private final HSSFWorkbook workbook;

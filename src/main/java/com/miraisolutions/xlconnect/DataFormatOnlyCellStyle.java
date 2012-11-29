@@ -24,8 +24,6 @@ package com.miraisolutions.xlconnect;
  * Marker cell style used to specify that a cell style
  * should be determined dynamically with the data format
  * being re-specified according to the data type
- * 
- * @author Martin Studer, Mirai Solutions GmbH
  */
 public class DataFormatOnlyCellStyle extends Common implements CellStyle {
 

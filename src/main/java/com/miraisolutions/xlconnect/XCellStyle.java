@@ -44,8 +44,6 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
  * This class uses parts from XSSFCellStyle.java at
  * http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java
  * by The Apache Software Foundation
- * 
- * @author Martin Studer, Mirai Solutions GmbH
  */
 public class XCellStyle extends Common implements CellStyle {
 

@@ -20,10 +20,6 @@
 
 package com.miraisolutions.xlconnect;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public interface SupportsWarnings {
     void addWarning(String warning);
     String[] retrieveWarnings();

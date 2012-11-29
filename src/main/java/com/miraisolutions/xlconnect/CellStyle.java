@@ -20,10 +20,6 @@
 
 package com.miraisolutions.xlconnect;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public interface CellStyle extends SupportsWarnings {
     void setBorderBottom(short border);
     void setBorderLeft(short border);

@@ -22,10 +22,6 @@ package com.miraisolutions.xlconnect.integration.r;
 
 import com.miraisolutions.xlconnect.CellStyle;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public class RCellStyleWrapper {
 
     final CellStyle cellStyle;

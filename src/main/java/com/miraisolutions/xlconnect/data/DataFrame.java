@@ -22,10 +22,6 @@ package com.miraisolutions.xlconnect.data;
 
 import java.util.ArrayList;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public class DataFrame {
     
     protected ArrayList<String> columnNames;

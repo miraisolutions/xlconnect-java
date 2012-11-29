@@ -20,10 +20,6 @@
 
 package com.miraisolutions.xlconnect.data;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public enum DataType {
     Boolean, DateTime, Numeric, String
 }

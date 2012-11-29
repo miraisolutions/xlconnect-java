@@ -23,7 +23,6 @@ package com.miraisolutions.xlconnect;
 import com.miraisolutions.xlconnect.data.ColumnBuilder;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
-import com.miraisolutions.xlconnect.utils.CellUtils;
 import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
@@ -45,8 +44,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * Class representing a Microsoft Excel Workbook for XLConnect
- * 
- * @author Martin Studer, Mirai Solutions GmbH
  */
 public final class Workbook extends Common {
 
@@ -88,7 +85,7 @@ public final class Workbook extends Common {
        first element is used as missing value string when writing data
        (null means blank/empty cell)
      */
-    private String[] missingValue = new String[] { null };
+    private Object[] missingValue = new Object[] { null };
     // Cell style map
     private final Map<String, Map<String, CellStyle>> stylesMap =
             new HashMap<String, Map<String, CellStyle>>(10);
@@ -443,7 +440,6 @@ public final class Workbook extends Common {
                 colset[i] = i;
             }
         } else {
-            colset = new int[subset.length];
             colset = subset;
         }
         
@@ -675,7 +671,7 @@ public final class Workbook extends Common {
         int imageIndex = workbook.addPicture(bytes, imageType);
         is.close();
 
-        Drawing drawing = null;
+        Drawing drawing;
         if(isHSSF()) {
             drawing = ((HSSFSheet)sheet).getDrawingPatriarch();
             if(drawing == null) {
@@ -891,7 +887,7 @@ public final class Workbook extends Common {
         return sheet;
     }
 
-    public void setMissingValue(String[] values) {
+    public void setMissingValue(Object[] values) {
         missingValue = values;
     }
 
@@ -899,7 +895,14 @@ public final class Workbook extends Common {
         if(missingValue.length < 1 || missingValue[0] == null)
             cell.setCellType(Cell.CELL_TYPE_BLANK);
         else {
-            cell.setCellValue(missingValue[0]);
+            if(missingValue[0] instanceof String) {
+                cell.setCellValue((String) missingValue[0]);
+            } else if(missingValue[0] instanceof Double) {
+                cell.setCellValue(((Double) missingValue[0]).doubleValue());
+            } else {
+                cell.setCellType(Cell.CELL_TYPE_BLANK);
+                return;
+            }
             cell.setCellType(Cell.CELL_TYPE_STRING);
             setCellStyle(cell, DataFormatOnlyCellStyle.get());
         }

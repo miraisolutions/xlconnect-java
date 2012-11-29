@@ -20,10 +20,6 @@
 
 package com.miraisolutions.xlconnect;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public enum ErrorBehavior {
     WARN, THROW_EXCEPTION
 }

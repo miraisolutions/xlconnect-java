@@ -1,6 +1,21 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ *
+    XLConnect
+    Copyright (C) 2010 Mirai Solutions GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package com.miraisolutions.xlconnect.data;
@@ -11,16 +26,9 @@ import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellValue;
-import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.*;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
+
 public class ColumnBuilder extends Common {
     // Collection to hold detected data types for each value in a column
     // --> will be used to determine actual final data type for column
@@ -32,21 +40,19 @@ public class ColumnBuilder extends Common {
     // Date/time format used for conversion to and from strings
     private String dateTimeFormat;
 
-    // Helper collection to store CellValues that are dates
-    // This is needed as a CellValue doesn't store the information whether it is
-    // a date or not - dates are just numerics
-    private ArrayList<CellValue> isDate = new ArrayList<CellValue>();
     // Should conversion to a less generic data type be forced?
     private boolean forceConversion;
 
     private boolean takeCached = false;
     private FormulaEvaluator evaluator = null;
     private ErrorBehavior onErrorCell;
-    String[] missingValue;
+    // The following split is done for performance reasons
+    String[] missingValueStrings;
+    double[] missingValueNumbers;
 
     public ColumnBuilder(int nrows, boolean forceConversion,
             FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
-            String[] missingValue) {
+            Object[] missingValue) {
         this.detectedTypes = new ArrayList<DataType>(nrows);
         this.cells = new ArrayList<Cell>(nrows);
         this.values = new ArrayList<CellValue>(nrows);
@@ -54,7 +60,23 @@ public class ColumnBuilder extends Common {
         this.evaluator = evaluator;
         this.takeCached = evaluator == null;
         this.onErrorCell = onErrorCell;
-        this.missingValue = missingValue;
+        
+        // Split missing values into missing values for strings and doubles
+        // (for better performance later on)
+        ArrayList<Double> missingNum = new ArrayList<Double>();
+        ArrayList<String> missingStr = new ArrayList<String>();
+        for(int i = 0; i < missingValue.length; i++) {
+            if(missingValue[i] instanceof String) {
+                missingStr.add((String) missingValue[i]);
+            } else if(missingValue[i] instanceof Double) {
+                missingNum.add((Double) missingValue[i]);
+            }
+        }
+        missingValueStrings = missingStr.toArray(new String[missingStr.size()]);
+        missingValueNumbers = new double[missingNum.size()];
+        for(int i = 0; i < missingNum.size(); i++) {
+            missingValueNumbers[i] = missingNum.get(i).doubleValue();
+        }
     }
 
     public void addMissing() {
@@ -138,7 +160,7 @@ public class ColumnBuilder extends Common {
             return;
         }
 
-        CellValue cv = null;
+        CellValue cv;
 
         // Try to evaluate cell;
         // report an error if this fails
@@ -169,13 +191,24 @@ public class ColumnBuilder extends Common {
             case Cell.CELL_TYPE_NUMERIC:
                 if(DateUtil.isCellDateFormatted(c))
                     addValue(c, cv, DataType.DateTime);
-                else
-                    addValue(c, cv, DataType.Numeric);
+                else {
+                    boolean missing = false;
+                    for(int i = 0; i < missingValueNumbers.length; i++) {
+                        if(cv.getNumberValue() == missingValueNumbers[i]) {
+                            missing = true;
+                            break;
+                        }
+                    }
+                    if(missing)
+                        addMissing();
+                    else
+                        addValue(c, cv, DataType.Numeric);
+                }
                 break;
             case Cell.CELL_TYPE_STRING:
                 boolean missing = false;
-                for(int i = 0; i < missingValue.length; i++) {
-                    if(cv.getStringValue() == null || cv.getStringValue().equals(missingValue[i])) {
+                for(int i = 0; i < missingValueStrings.length; i++) {
+                    if(cv.getStringValue() == null || cv.getStringValue().equals(missingValueStrings[i])) {
                         missing = true;
                         break;
                     }
@@ -200,7 +233,6 @@ public class ColumnBuilder extends Common {
     }
 
     public void addValue(Cell c, CellValue cv, DataType dt) {
-        if(DataType.DateTime.equals(dt)) isDate.add(cv);
         cells.add(c);
         values.add(cv);
         detectedTypes.add(dt);

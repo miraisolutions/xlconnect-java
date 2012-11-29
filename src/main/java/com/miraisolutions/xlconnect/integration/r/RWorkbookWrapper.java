@@ -228,7 +228,7 @@ public final class RWorkbookWrapper {
         throw new IllegalArgumentException("Cell style " + name + " does not exist");
     }
 
-    public void setMissingValue(String[] value) {
+    public void setMissingValue(Object[] value) {
         workbook.setMissingValue(value);
     }
 
