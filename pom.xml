@@ -26,6 +26,11 @@
     <url>http://www.mirai-solutions.com</url>
     <repositories>
         <repository>
+            <id>MavenCentral</id>
+            <name>Maven Central Repository</name>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
             <id>FuseSource</id>
             <name>FuseSource Repository</name>
             <url>http://repo.fusesource.com/nexus/content/groups/public/</url>
@@ -157,12 +162,12 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.8</version>
+            <version>3.9</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.8</version>
+            <version>3.9</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.poi</groupId>
@@ -187,7 +192,7 @@
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
-            <version>2.0</version>
+            <version>2.1</version>
         </dependency>
     </dependencies>
 </project>
