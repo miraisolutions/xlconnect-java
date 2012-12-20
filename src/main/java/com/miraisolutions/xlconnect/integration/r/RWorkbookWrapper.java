@@ -128,16 +128,18 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
+            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
+            boolean autofitRow, boolean autofitCol) {
         DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
+                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
         return new RDataFrameWrapper(dataFrame);
     }
 
     public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
+            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
+            boolean autofitRow, boolean autofitCol) {
         DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
+                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
         return new RDataFrameWrapper(dataFrame);
     }
 

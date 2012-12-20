@@ -594,47 +594,63 @@ public final class Workbook extends Common {
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
+            boolean autofitRow, boolean autofitCol) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
-        int [] boundingBox = getBoundingBox(worksheetIndex, startRow, startCol, endRow, endCol);
+        int [] boundingBox = getBoundingBox(worksheetIndex, startRow, startCol, endRow, endCol, autofitRow, autofitCol);
         startRow = boundingBox[0];
         startCol = boundingBox[1];
         endRow = boundingBox[2];
         endCol = boundingBox[3];
-        return readData(sheet, startRow, startCol, (endRow - startRow) + 1, (endCol - startCol) + 1, header, colTypes,
-                forceConversion, dateTimeFormat, takeCached, subset);
+        
+        int nrows = startRow < 0 ? 0 : (endRow - startRow) + 1;
+        int ncols = startCol < 0 ? 0 : (endCol - startCol) + 1;
+        
+        System.out.println("Top Left: (" + startRow + "," + startCol + "), Bottom Right: (" + endRow + "," + endCol + ")");
+        return readData(sheet, startRow, startCol, nrows, ncols, header, colTypes, forceConversion, dateTimeFormat, takeCached, subset);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header, int [] subset) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false, subset);
+    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false, null, true, true);
+    }
+    
+    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header, boolean
+            autofitRow, boolean autofitCol) {
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false, null, autofitRow, autofitCol);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat, int [] subset) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, subset);
+            String dateTimeFormat) {
+        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, null, true, true);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, boolean header, int [] subset) {
-        return readWorksheet(worksheetIndex, header, null, false, "", subset);
+    public DataFrame readWorksheet(int worksheetIndex, boolean header) {
+        return readWorksheet(worksheetIndex, header, null, false, "");
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
+            boolean autofitRow, boolean autofitCol) {
         return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes,
-                forceConversion, dateTimeFormat, takeCached, subset);
+                forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
     }
 
-    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header, int [] subset) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false, subset);
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false, null, true, true);
+    }
+    
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
+            boolean autofitRow, boolean autofitCol) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false, null, autofitRow, autofitCol);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat, int [] subset) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, subset);
+            String dateTimeFormat) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, null, true, true);
     }
 
-    public DataFrame readWorksheet(String worksheetName, boolean header, int [] subset) {
-        return readWorksheet(worksheetName, header, null, false, "", subset);
+    public DataFrame readWorksheet(String worksheetName, boolean header) {
+        return readWorksheet(worksheetName, header, null, false, "");
     }
 
     public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
@@ -1406,45 +1422,85 @@ public final class Workbook extends Common {
     }
     
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
+        return getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol, false, false);
+    }
+    
+    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol,
+            boolean autofitRow, boolean autofitCol) {
         Sheet sheet = workbook.getSheetAt(sheetIndex);
+        final int mark = Integer.MAX_VALUE - 1;
 
-        if(startRow < 0) startRow = sheet.getFirstRowNum();
-        if(startRow < 0)
-            throw new IllegalArgumentException("Start row cannot be determined!");
-
-        // Check that the start row actually exists
-        if(sheet.getRow(startRow) == null)
-            throw new IllegalArgumentException("Specified sheet (index = " + (sheetIndex+1) + ", name = " + workbook.getSheetName(sheetIndex) + ") does not contain any data!");
-
-        if(endRow < 0) endRow = sheet.getLastRowNum();
-
-        if(startCol < 0) {
-            startCol = Integer.MAX_VALUE;
-            for(int i = startRow; i <= endRow; i++) {
-                Row r = sheet.getRow(i);
-                if(r != null && (r.getFirstCellNum() > -1) && (r.getFirstCellNum() < startCol))
-                    startCol = r.getFirstCellNum();
-            }
-            if(startCol == Integer.MAX_VALUE)
-                startCol = -1;
-        }
-        if(startCol < 0)
-            throw new IllegalArgumentException("Start column cannot be determined!");
-        
-        if(endCol < 0) {
-            endCol = startCol;
-            for(int i = startRow; i <= endRow; i++) {
-                Row r = sheet.getRow(i);
-                // NOTE: getLastCellNum is 1-based!
-                if(r != null && (r.getLastCellNum() - 1) > endCol)
-                    endCol = r.getLastCellNum() - 1;
+        if(startRow < 0) {
+            startRow = sheet.getFirstRowNum();
+            if(sheet.getRow(startRow) == null) {
+                startRow = -1;
             }
         }
         
-        return new int[]{startRow,startCol,endRow,endCol};
+        if(endRow < 0) {
+            endRow = sheet.getLastRowNum();
+            if(sheet.getRow(endRow) == null) {
+                endRow = -1;
+            }
+        }
+        
+        int minRow = startRow;
+        int maxRow = endRow;
+        int minCol = startCol;
+        int maxCol = endCol < 0 ? mark : endCol;
+        
+        startCol = startCol < 0 ? mark : startCol;
+        endCol = endCol < 0 ? -1 : endCol;
+        Cell topLeft = null, bottomRight = null;
+        boolean anyCell = false;
+        for(int i = minRow; i > -1 && i <= maxRow; i++) {
+            Row r = sheet.getRow(i);
+            if(r != null) {
+                // Determine column boundaries
+                int start = Math.max(minCol, r.getFirstCellNum());
+                int end = Math.min(maxCol + 1, r.getLastCellNum()); // NOTE: getLastCellNum is 1-based!
+                boolean anyNonBlank = false;
+                for(int j = start; j > -1 && j < end; j++) {
+                    Cell c = r.getCell(j);
+                    if(c != null && c.getCellType() != Cell.CELL_TYPE_BLANK) {
+                        anyCell = true;
+                        anyNonBlank = true;
+                        if((autofitCol || minCol < 0) && (topLeft == null || j < startCol)) {
+                            startCol = j;
+                            topLeft = c;
+                        }
+                        if((autofitCol || maxCol == mark) && (bottomRight == null || j > endCol)) {
+                            endCol = j;
+                            bottomRight = c;
+                        }
+                    }
+                }
+                if(autofitRow && anyNonBlank) {
+                    endRow = i;
+                    if(sheet.getRow(startRow) == null) {
+                        startRow = i;
+                    }
+                }
+            }
+        }
+        
+        if((autofitRow || startRow < 0) && !anyCell) {
+            startRow = endRow = -1;
+        }
+        if((autofitCol || startCol == mark) && !anyCell) {
+            startCol = endCol = -1;
+        }
+        
+        return new int[] {startRow, startCol, endRow, endCol};
+    }
+    
+    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol,
+            boolean autofitRow, boolean autofitColumn) {
+        return getBoundingBox(workbook.getSheetIndex(sheetName), startRow, startCol, endRow, endCol,
+                autofitRow, autofitColumn);
     }
     
     public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(workbook.getSheetIndex(sheetName), startRow, startCol, endRow, endCol);
+        return getBoundingBox(sheetName, startRow, startCol, endRow, endCol, false, false);
     }
 }

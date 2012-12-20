@@ -371,7 +371,7 @@ public class ColumnBuilder extends Common {
                            case Boolean:
                            case Numeric:
                                // format according to Excel format
-                               colValues.add(fmt.formatCellValue(cell));
+                               colValues.add(fmt.formatCellValue(cell, this.evaluator));
                                break;
                            case DateTime:
                                // format according to dateTimeFormatter
