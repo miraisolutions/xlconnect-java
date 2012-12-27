@@ -465,10 +465,16 @@ public final class RWorkbookWrapper {
     public void setSheetColor(String sheetName, int color) {
         workbook.setSheetColor(sheetName, color);
     }
-    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
-	return workbook.getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol);
+    
+    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol,
+            boolean autofitRow, boolean autofitCol) {
+	return workbook.getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol,
+                autofitRow, autofitCol);
     }
-    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
-	return workbook.getBoundingBox(sheetName, startRow, startCol, endRow, endCol);
+    
+    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol,
+            boolean autofitRow, boolean autofitCol) {
+	return workbook.getBoundingBox(sheetName, startRow, startCol, endRow, endCol,
+                autofitRow, autofitCol);
     }
 }

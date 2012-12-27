@@ -605,8 +605,11 @@ public final class Workbook extends Common {
         
         int nrows = startRow < 0 ? 0 : (endRow - startRow) + 1;
         int ncols = startCol < 0 ? 0 : (endCol - startCol) + 1;
+        if(nrows == 0 || ncols == 0) {
+            this.addWarning("Data frame contains " + nrows + " rows and " + ncols + " columns!");
+        }
         
-        System.out.println("Top Left: (" + startRow + "," + startCol + "), Bottom Right: (" + endRow + "," + endCol + ")");
+        // System.out.println("Top Left: (" + startRow + "," + startCol + "), Bottom Right: (" + endRow + "," + endCol + ")");
         return readData(sheet, startRow, startCol, nrows, ncols, header, colTypes, forceConversion, dateTimeFormat, takeCached, subset);
     }
 
@@ -1422,7 +1425,7 @@ public final class Workbook extends Common {
     }
     
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol, false, false);
+        return getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol, true, true);
     }
     
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol,
@@ -1433,6 +1436,7 @@ public final class Workbook extends Common {
         if(startRow < 0) {
             startRow = sheet.getFirstRowNum();
             if(sheet.getRow(startRow) == null) {
+                // There is no row in this sheet
                 startRow = -1;
             }
         }
@@ -1440,6 +1444,7 @@ public final class Workbook extends Common {
         if(endRow < 0) {
             endRow = sheet.getLastRowNum();
             if(sheet.getRow(endRow) == null) {
+                // There is no row in this sheet
                 endRow = -1;
             }
         }
@@ -1501,6 +1506,6 @@ public final class Workbook extends Common {
     }
     
     public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(sheetName, startRow, startCol, endRow, endCol, false, false);
+        return getBoundingBox(sheetName, startRow, startCol, endRow, endCol, true, true);
     }
 }
