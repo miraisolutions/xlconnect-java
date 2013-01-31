@@ -277,6 +277,10 @@ public final class RWorkbookWrapper {
     public void setCellStyle(int sheetIndex, int row, int col, RCellStyleWrapper cellStyle) {
         workbook.setCellStyle(sheetIndex, row, col, cellStyle.cellStyle);
     }
+    
+    public void setCellStyle(String formula, RCellStyleWrapper cellStyle) {
+        workbook.setCellStyle(formula, cellStyle.cellStyle);
+    }
 
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
         workbook.setColumnWidth(sheetIndex, columnIndex, width);

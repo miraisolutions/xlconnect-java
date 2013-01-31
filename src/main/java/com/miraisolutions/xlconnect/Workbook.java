@@ -1010,6 +1010,9 @@ public final class Workbook extends Common {
     public void setCellStyle(String formula, CellStyle cs) {
         AreaReference aref = new AreaReference(formula);
         String sheetName = aref.getFirstCell().getSheetName();
+        if(sheetName == null) {
+            throw new IllegalArgumentException("Invalid formula reference - should be of the form Sheet!A1:B10");
+        }
         Sheet sheet = getSheet(sheetName);
         
         CellReference[] crefs = aref.getAllReferencedCells();
