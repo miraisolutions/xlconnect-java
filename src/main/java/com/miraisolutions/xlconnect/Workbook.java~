@@ -454,7 +454,7 @@ public final class Workbook extends Common {
                 if(cell != null) {
                     if(!takeCached) {
                      CellValue cv = evaluator.evaluate(cell);
-                     if(cv != null) columnHeader = cv.getStringValue();
+                     columnHeader = cv.getStringValue();
                     } else {
                      columnHeader = cell.getStringCellValue();
                     }
