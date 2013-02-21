@@ -126,8 +126,8 @@
                     <!-- Artifact may need to be installed manually -->
                     <dependency>
                         <groupId>net.sf.proguard</groupId>
-                        <artifactId>proguard</artifactId>
-                        <version>4.7</version>
+                        <artifactId>proguard-base</artifactId>
+                        <version>4.8</version>
                         <scope>runtime</scope>
                     </dependency>
                 </dependencies>
