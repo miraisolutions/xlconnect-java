@@ -70,9 +70,6 @@ public final class Workbook extends Common {
     // NOTE: currently fixed to a RPOSIXDateTimeFormatter
     public final static DateTimeFormatter dateTimeFormatter = new RPOSIXDateTimeFormatter();
 
-    // Internal date/time format
-    public final static String DATE_TIME_FORMAT = "%Y-%m-%d %H:%M:%S";
-
     // Apache POI workbook instance
     private final org.apache.poi.ss.usermodel.Workbook workbook;
     // Underlying file instance

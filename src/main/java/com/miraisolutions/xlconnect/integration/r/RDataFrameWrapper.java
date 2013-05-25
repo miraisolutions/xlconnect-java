@@ -71,13 +71,13 @@ public final class RDataFrameWrapper {
         dataFrame.addColumn(name, DataType.String, v);
     }
 
-    public void addDateTimeColumn(String name, String[] column, boolean[] na) {
+    public void addDateTimeColumn(String name, long[] column, boolean[] na) {
         Date[] elements = new Date[column.length];
         for(int i = 0; i < column.length; i++) {
             if(na[i])
                 elements[i] = null;
-            else 
-                elements[i] = Workbook.dateTimeFormatter.parse(column[i], Workbook.DATE_TIME_FORMAT);
+            else
+                elements[i] = new Date(column[i]);
         }
         ArrayList<Date> v = new ArrayList<Date>(Arrays.asList(elements));
         dataFrame.addColumn(name, DataType.DateTime, v);
@@ -132,16 +132,16 @@ public final class RDataFrameWrapper {
         return values;
     }
 
-    public String[] getDateTimeColumn(int col) {
+    public long[] getDateTimeColumn(int col) {
         ArrayList<Date> v = dataFrame.getColumn(col);
-        String[] values = new String[v.size()];
+        long[] values = new long[v.size()];
 
         for(int i = 0; i < v.size(); i++) {
             Date d = v.get(i);
             if(d == null)
-                values[i] = null;
+                values[i] = 0;
             else
-                values[i] = Workbook.dateTimeFormatter.format(d, Workbook.DATE_TIME_FORMAT);
+                values[i] = d.getTime();
         }
 
         return values;
