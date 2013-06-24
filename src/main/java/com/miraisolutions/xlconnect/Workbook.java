@@ -219,13 +219,21 @@ public final class Workbook extends Common {
         for(int i = 0; i < count; i++) {
             Name namedRegion = workbook.getNameAt(i);
             // if valid only, check corresponding reference formula validity
-            if(validOnly && !isValidReference(namedRegion.getRefersToFormula())) continue;
+            if(validOnly && !isValidNamedRegion(namedRegion)) continue;
             nameNames.add(namedRegion.getNameName());
         }
 
         return nameNames.toArray(new String[nameNames.size()]);
     }
-
+    
+    
+    private boolean isValidNamedRegion(Name region) {  
+        return !region.isDeleted() && hasValidWorkSheet(region);
+    }
+    private boolean hasValidWorkSheet(Name region) {
+        return (region.getSheetName() != null && !"".equals(region.getSheetName()));
+    }
+    
     public boolean existsSheet(String name) {
         return workbook.getSheet(name) != null;
     }
