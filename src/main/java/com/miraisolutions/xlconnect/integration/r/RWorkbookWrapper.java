@@ -118,6 +118,20 @@ public final class RWorkbookWrapper {
                 forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
+    
+    public RDataFrameWrapper readTable(int worksheetIndex, String tableName, boolean header, String[] colTypes,
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+        DataFrame dataFrame = workbook.readTable(worksheetIndex, tableName, header, fromString(colTypes),
+                forceConversion, dateTimeFormat, takeCached, subset);
+        return new RDataFrameWrapper(dataFrame);
+    }
+    
+    public RDataFrameWrapper readTable(String worksheetName, String tableName, boolean header, String[] colTypes,
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+        DataFrame dataFrame = workbook.readTable(worksheetName, tableName, header, fromString(colTypes),
+                forceConversion, dateTimeFormat, takeCached, subset);
+        return new RDataFrameWrapper(dataFrame);
+    }
 
     public boolean existsName(String name) {
         return workbook.existsName(name);
@@ -351,6 +365,18 @@ public final class RWorkbookWrapper {
 
     public int[] getReferenceCoordinates(String name) {
 	return workbook.getReferenceCoordinates(name);
+    }
+    
+    public int[] getReferenceCoordinatesForName(String name) {
+        return workbook.getReferenceCoordinatesForName(name);
+    }
+    
+    public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
+        return workbook.getReferenceCoordinatesForTable(sheetIndex, tableName);
+    }
+    
+    public int[] getReferenceCoordinatesForTable(String sheetName, String tableName) {
+        return workbook.getReferenceCoordinatesForTable(sheetName, tableName);
     }
 
     public void setForceFormulaRecalculation(int sheetIndex, boolean value) {

@@ -39,6 +39,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFTable;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
@@ -313,8 +314,12 @@ public final class Workbook extends Common {
         return getName(name).getRefersToFormula();
     }
 
-    
+    // Keep for backwards compatibility
     public int[] getReferenceCoordinates(String name) {
+        return getReferenceCoordinatesForName(name);
+    }
+    
+    public int[] getReferenceCoordinatesForName(String name) {
         Name cname = getName(name);
         AreaReference aref = new AreaReference(cname.getRefersToFormula());
         // Get upper left corner
@@ -325,7 +330,27 @@ public final class Workbook extends Common {
 	int bottom = last.getRow();
 	int left = first.getCol();
 	int right = last.getCol();
-        return new int[]{top,left,bottom,right};
+        return new int[] {top, left, bottom, right};
+    }
+    
+    public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
+        XSSFSheet s = (XSSFSheet) getSheet(sheetIndex);
+        for(XSSFTable t : s.getTables()) {
+            if(tableName.equals(t.getName())) {
+                CellReference start = t.getStartCellReference();
+                CellReference end = t.getEndCellReference();
+                int top = start.getRow();
+                int bottom = end.getRow();
+                int left = start.getCol();
+                int right = end.getCol();
+                return new int[] {top, left, bottom, right};
+            }
+        }
+        throw new IllegalArgumentException("Could not find table '" + tableName + "'!");
+    }
+    
+    public int[] getReferenceCoordinatesForTable(String sheetName, String tableName) {
+        return getReferenceCoordinatesForTable(workbook.getSheetIndex(sheetName), tableName);
     }
 
     private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header) {
@@ -548,6 +573,23 @@ public final class Workbook extends Common {
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
         return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes, forceConversion,
+                dateTimeFormat, takeCached, subset);
+    }
+    
+    public DataFrame readTable(int worksheetIndex, String tableName, boolean header, DataType[] colTypes, boolean forceConversion,
+            String dateTimeFormat, boolean takeCached, int[] subset) {
+        if(!isXSSF()) throw new IllegalArgumentException("Tables are not supported with this file format!");
+        XSSFSheet s = (XSSFSheet) getSheet(worksheetIndex);
+        int[] coords = getReferenceCoordinatesForTable(worksheetIndex, tableName);
+        int nrows = coords[2] - coords[0] + 1;
+        int ncols = coords[3] - coords[1] + 1;
+        return readData(s, coords[0], coords[1], nrows, ncols, header, colTypes, forceConversion, dateTimeFormat,
+                takeCached, subset);
+    }
+    
+    public DataFrame readTable(String worksheetName, String tableName, boolean header, DataType[] colTypes, boolean forceConversion,
+            String dateTimeFormat, boolean takeCached, int[] subset) {
+        return readTable(workbook.getSheetIndex(worksheetName), tableName, header, colTypes, forceConversion,
                 dateTimeFormat, takeCached, subset);
     }
 
@@ -843,7 +885,7 @@ public final class Workbook extends Common {
         save(excelFile);
     }
 
-    private Name getName(String name) {
+    Name getName(String name) {
         Name cname = workbook.getName(name);
         if(cname != null)
             return cname;
