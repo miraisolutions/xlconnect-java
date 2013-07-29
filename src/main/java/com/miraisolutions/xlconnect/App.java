@@ -22,6 +22,7 @@ package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+import com.miraisolutions.xlconnect.data.ReadStrategy;
 import com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper;
 import com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -57,6 +59,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFTable;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
@@ -64,148 +67,26 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
-        Workbook wbx = Workbook.getWorkbook("C:/Users/mstuder/split.xlsx", true);
-        wbx.createSheet("test");
-        wbx.createSplitPane("test", 5, 3, 5, 3);
-        wbx.save();
-        
-        if(1 == 1) return;
-        
-        /* Performance measurements */
-        int nrows = 10000, ncols = 100;
-
-        File f = new File("C:/Users/mstuder/Documents/perf.xls");
-        if(f.exists()) f.delete();
-
-        long start = System.currentTimeMillis();
-
-        DataFrame dfx = new DataFrame();
-        for(int i = 0; i < ncols; i++) {
-            ArrayList<Double> v = new ArrayList<Double>(nrows);
-            for(int j = 0; j < nrows; j++)
-                v.add(Math.random());
-
-            dfx.addColumn(Integer.toString(i), DataType.Numeric, v);
-        }
-
-        long end = System.currentTimeMillis();
-        System.out.println("Data creation: " + (end - start));
-
-        Workbook wb = Workbook.getWorkbook(f, true);
-        wb.createSheet("MyData");
-        start = System.currentTimeMillis();
-        wb.writeWorksheet(dfx, "MyData", true);
-        end = System.currentTimeMillis();
-        System.out.println("Write worksheet: " + (end - start));
-        start = System.currentTimeMillis();
-        wb.save();
-        end = System.currentTimeMillis();
-        System.out.println("Save: " + (end - start));
-
-        
-        /*
-        Workbook wb = Workbook.getWorkbook("C:/Users/mstuder/Desktop/mtcars.xlsx", false);
-        DataFrame dfx = new DataFrame();
-        ArrayList<Double> v = new ArrayList<Double>(10);
-        for(int i = 0; i < 10; i++) v.add(new Double(i));
-        dfx.addColumn("A", DataType.Numeric, v);
-        dfx.addColumn("B", DataType.Numeric, v);
-        wb.appendNamedRegion(dfx, "mtcars", false);
-         * */
-        
-        if(1 == 1) return;
-
-        String[] values = new String[] {"NO_FILL", "SOLID_FOREGROUND", "FINE_DOTS", "ALT_BARS", "SPARSE_DOTS",
-            "THICK_HORZ_BANDS", "THICK_VERT_BANDS", "THICK_BACKWARD_DIAG", "THICK_FORWARD_DIAG", "BIG_SPOTS",
-            "BRICKS", "THIN_HORZ_BANDS", "THIN_VERT_BANDS", "THIN_BACKWARD_DIAG", "THIN_FORWARD_DIAG",
-            "SQUARES", "DIAMONDS"};
-
-        Class c = Class.forName("org.apache.poi.ss.usermodel.CellStyle");
-        for(String val : values) {
-            System.out.println("XLC$\"FILL." + val + "\" <- " + c.getField(val).get(null));
-        }
-
-        org.apache.poi.ss.usermodel.CellStyle css;
-
-        if(1 == 1) return;
-
-        File excelFile = new File("C:/temp/test.xlsx");
-        if(excelFile.exists()) excelFile.delete();
-
-        ArrayList<String> col1 = new ArrayList<String>(5);
-        col1.add("A");
-        col1.add("B");
-        col1.add("C");
-        col1.add(null);
-        col1.add("E");
-
-        ArrayList<Double> col2 = new ArrayList<Double>(5);
-        for(int i = 0; i < 5; i++) col2.add(new Double(i));
-        col2.set(1, null);
-
-        ArrayList<Boolean> col3 = new ArrayList<Boolean>(5);
-        for(int i = 0; i < 5; i++) col3.add(i%2 == 0);
-        col3.set(2, null);
-
-        ArrayList<Date> col4 = new ArrayList<Date>(5);
-        for(int i = 0; i < 5; i++) col4.add(new Date(System.currentTimeMillis()));
-        col4.set(4, null);
-
-        DataFrame df = new DataFrame();
-        df.addColumn("Letter", DataType.String, col1);
-        df.addColumn("Value", DataType.Numeric, col2);
-        df.addColumn("Logical", DataType.Boolean, col3);
-        df.addColumn("DateTime", DataType.DateTime, col4);
-
-        Workbook workbook = Workbook.getWorkbook(excelFile, true);
-        workbook.setStyleAction(StyleAction.XLCONNECT);
-
-        // Write named region
-        workbook.createName("Test", "Test!$B$2", true);
-        workbook.writeNamedRegion(df, "Test", true);
-
-        //--
-        // Write worksheet
-        workbook.createSheet("Test Data");
-        workbook.writeWorksheet(df, "Test Data", 0, 0, true);
-        // Add images
-        workbook.createName("Mirai1", "Image!$B$3:$D$5", true);
-        workbook.createName("Mirai2", "Image!$B$10", true);
-        workbook.addImage("C:/temp/mirai_solutions1.jpg", "Mirai1", true);
-        workbook.addImage("C:/temp/mirai-solutions2.jpg", "Mirai2", false);
-
-        
-        CellStyle cs = workbook.createCellStyle("MyPersonalStyle.Header");
-        cs.setBorderBottom(org.apache.poi.ss.usermodel.CellStyle.BORDER_THICK);
-        // cs.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
-        // cs.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-        workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
-        workbook.setStyleNamePrefix("MyPersonalStyle");
-        workbook.createName("Somewhere", "Somewhere!$C$5", true);
-        workbook.writeNamedRegion(df, "Somewhere", true);     
-
-        CellStyle funky = workbook.createCellStyle();
-        funky.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
-        funky.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
-        workbook.setCellStyle("Somewhere!$D$6:$E$9", funky);
-        
-        // ---
-
-        workbook.save();
-
-        /**
-        DataFrame res = workbook.readNamedRegion("Test", true);
-        printDataFrame(res);
-
-        res = workbook.readWorksheet("Test Data", true);
-        printDataFrame(res);
-         **/
+        System.out.println("Start");
+        Workbook wb = Workbook.getWorkbook("/home/mstuder/Documents/Projects/R/XLConnect/xlconnect/inst/unitTests/resources/testWorkbookReadWorksheet.xls", false);
+        DataFrame df = wb.readWorksheet(1, true, ReadStrategy.DEFAULT, null, false, "%Y-%m-%d %H:%M:%S");
+        printDataFrame(df);
     }
 
     public static void printDataFrame(DataFrame df) {
         for(int i = 0; i < df.columns(); i++) {
             System.out.println(df.getColumnName(i) + ":");
-            System.out.println(df.getColumn(i).toString());
+            Object data = df.getColumn(i).getData();
+            boolean[] missing = df.getColumn(i).getMissing();
+            int len = missing.length;
+            for(int j = 0; j < len; j++) {
+                if(missing[j])
+                    System.out.print("[NA]");
+                else
+                    System.out.print(Array.get(data, j));
+                System.out.print(" ");
+            }
+            System.out.println();
         }
     }
 }

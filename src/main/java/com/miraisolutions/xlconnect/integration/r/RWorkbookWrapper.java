@@ -26,6 +26,7 @@ import com.miraisolutions.xlconnect.StyleAction;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+import com.miraisolutions.xlconnect.data.ReadStrategy;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -102,7 +103,7 @@ public final class RWorkbookWrapper {
         workbook.writeNamedRegion(dataFrame.dataFrame, name, header);
     }
 
-    private static DataType[] fromString(String[] colTypes) {
+    private static DataType[] dataTypeFromString(String[] colTypes) {
         DataType[] ctypes = null;
         if(colTypes != null) {
             ctypes = new DataType[colTypes.length];
@@ -113,23 +114,24 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
-        DataFrame dataFrame = workbook.readNamedRegion(name, header, fromString(colTypes),
-                forceConversion, dateTimeFormat, takeCached, subset);
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
+            String readStrategy) {
+        DataFrame dataFrame = workbook.readNamedRegion(name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
+                dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
     
     public RDataFrameWrapper readTable(int worksheetIndex, String tableName, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
-        DataFrame dataFrame = workbook.readTable(worksheetIndex, tableName, header, fromString(colTypes),
-                forceConversion, dateTimeFormat, takeCached, subset);
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset, String readStrategy) {
+        DataFrame dataFrame = workbook.readTable(worksheetIndex, tableName, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
+                dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
     
     public RDataFrameWrapper readTable(String worksheetName, String tableName, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
-        DataFrame dataFrame = workbook.readTable(worksheetName, tableName, header, fromString(colTypes),
-                forceConversion, dateTimeFormat, takeCached, subset);
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset, String readStrategy) {
+        DataFrame dataFrame = workbook.readTable(worksheetName, tableName, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
+                dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
 
@@ -142,18 +144,20 @@ public final class RWorkbookWrapper {
     }
 
     public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
-            boolean autofitRow, boolean autofitCol) {
+            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, 
+            int [] subset, String readStrategy) {
         DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
+                ReadStrategy.valueOf(readStrategy.toUpperCase()), dataTypeFromString(colTypes), forceConversion, dateTimeFormat, 
+                takeCached, subset, false, false);
         return new RDataFrameWrapper(dataFrame);
     }
 
     public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
-            boolean autofitRow, boolean autofitCol) {
+            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached, 
+            int [] subset, String readStrategy) {
         DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
-                fromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
+                ReadStrategy.valueOf(readStrategy.toUpperCase()), dataTypeFromString(colTypes), forceConversion, dateTimeFormat,
+                takeCached, subset, false, false);
         return new RDataFrameWrapper(dataFrame);
     }
 

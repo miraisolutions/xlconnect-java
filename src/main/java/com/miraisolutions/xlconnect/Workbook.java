@@ -20,9 +20,7 @@
 
 package com.miraisolutions.xlconnect;
 
-import com.miraisolutions.xlconnect.data.ColumnBuilder;
-import com.miraisolutions.xlconnect.data.DataFrame;
-import com.miraisolutions.xlconnect.data.DataType;
+import com.miraisolutions.xlconnect.data.*;
 import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
@@ -378,59 +376,56 @@ public final class Workbook extends Common {
         for(int i = 0; i < data.columns(); i++) {
             // Get column style
             CellStyle cs = styles.get(COLUMN + i);
+            Column col = data.getColumn(i);
             // Depending on column type ...
             switch(data.getColumnType(i)) {
                 case Numeric:
-                    ArrayList<Double> numericValues = data.getColumn(i);
+                    double[] doubleValues = col.getNumericData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        Double d = numericValues.get(j);
-                        if(d == null)
+                        if(col.isMissing(j))
                             setMissing(cell);
                         else {
-                            cell.setCellValue(d.doubleValue());
+                            cell.setCellValue(doubleValues[j]);
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             setCellStyle(cell, cs);
                         }
                     }
                     break;
                 case String:
-                    ArrayList<String> stringValues = data.getColumn(i);
+                    String[] stringValues = col.getStringData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        String s = stringValues.get(j);
-                        if(s == null)
+                        if(col.isMissing(j))
                             setMissing(cell);
                         else {
-                            cell.setCellValue(stringValues.get(j));
+                            cell.setCellValue(stringValues[j]);
                             cell.setCellType(Cell.CELL_TYPE_STRING);
                             setCellStyle(cell, cs);
                         }
                     }
                     break;
                 case Boolean:
-                    ArrayList<Boolean> booleanValues = data.getColumn(i);
+                    boolean[] booleanValues = col.getBooleanData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        Boolean b = booleanValues.get(j);
-                        if(b == null)
+                        if(col.isMissing(j))
                             setMissing(cell);
                         else {
-                            cell.setCellValue(booleanValues.get(j).booleanValue());
+                            cell.setCellValue(booleanValues[j]);
                             cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             setCellStyle(cell, cs);
                         }
                     }
                     break;
                 case DateTime:
-                    ArrayList<Date> dateValues = data.getColumn(i);
+                    Date[] dateValues = col.getDateTimeData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        Date d = dateValues.get(j);
-                        if(d == null)
+                        if(col.isMissing(j))
                             setMissing(cell);
                         else {
-                            cell.setCellValue(d);
+                            cell.setCellValue(dateValues[j]);
                             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                             setCellStyle(cell, cs);
                         }
@@ -451,7 +446,8 @@ public final class Workbook extends Common {
 
 
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset) {
+            ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, 
+            boolean takeCached, int [] subset) {
 
         DataFrame data = new DataFrame();
         int [] colset;
@@ -473,7 +469,21 @@ public final class Workbook extends Common {
             colset = subset;
         }
         
-        // Loop over columns // was int col = 0; col < ncols; col++
+        ColumnBuilder cb;
+        switch(readStrategy) {
+            case DEFAULT:
+                cb = new DefaultColumnBuilder(nrows, forceConversion, evaluator, onErrorCell,
+                    missingValue, dateTimeFormat);
+                break;
+            case FAST:
+                cb = new FastColumnBuilder(nrows, forceConversion, evaluator, onErrorCell,
+                    dateTimeFormat);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown read strategy!");
+        }
+        
+        // Loop over columns
         for(int col : colset) {
             int colIndex = startCol + col;
             // Determine column header
@@ -495,22 +505,40 @@ public final class Workbook extends Common {
             if(columnHeader == null)
                 columnHeader = "Col" + (col+1);
 
-            ColumnBuilder cb = new ColumnBuilder(nrows, forceConversion, evaluator, onErrorCell,
-                    missingValue);
-            cb.setDateTimeFormat(dateTimeFormat);
+            // Prepare column builder for new set of rows
+            cb.clear();
             
             // Loop over rows
+            Row r;
             for(int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
 
-                Cell cell = getCell(sheet, rowIndex, colIndex, false);
+                // Cell cell = getCell(sheet, rowIndex, colIndex, false);
+                Cell cell = ((r = sheet.getRow(rowIndex)) == null) ? null : r.getCell(colIndex);
                 cb.addCell(cell);
             }
 
             DataType columnType = ((colTypes != null) && (colTypes.length > 0)) ? colTypes[col % colTypes.length] :
                 cb.determineColumnType();
-            ArrayList columnValues = cb.build(columnType);
-            data.addColumn(columnHeader, columnType, columnValues);
+            switch(columnType) {
+                case Boolean:
+                    data.addColumn(columnHeader, cb.buildBooleanColumn());
+                    break;
+                case DateTime:
+                    data.addColumn(columnHeader, cb.buildDateTimeColumn());
+                    break;
+                case Numeric:
+                    data.addColumn(columnHeader, cb.buildNumericColumn());
+                    break;
+                case String:
+                    data.addColumn(columnHeader, cb.buildStringColumn());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown data type detected!");
+                    
+            }
+            // ArrayList columnValues = cb.build(columnType);
+            // data.addColumn(columnHeader, columnType, columnValues);
             // Copy warnings
             for(String w : cb.retrieveWarnings())
                 this.addWarning(w);
@@ -551,12 +579,12 @@ public final class Workbook extends Common {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header);
     }
 
-    public DataFrame readNamedRegion(String name, boolean header, int [] subset) {
-        return readNamedRegion(name, header, null, false, "", false, subset);
+    public DataFrame readNamedRegion(String name, boolean header) {
+        return readNamedRegion(name, header, ReadStrategy.DEFAULT, null, false, "", false, null);
     }
 
-    public DataFrame readNamedRegion(String name, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat, boolean takeCached, int[] subset) {
+    public DataFrame readNamedRegion(String name, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
+            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -572,25 +600,25 @@ public final class Workbook extends Common {
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
-        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, colTypes, forceConversion,
-                dateTimeFormat, takeCached, subset);
+        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes, 
+                forceConversion, dateTimeFormat, takeCached, subset);
     }
     
-    public DataFrame readTable(int worksheetIndex, String tableName, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat, boolean takeCached, int[] subset) {
+    public DataFrame readTable(int worksheetIndex, String tableName, boolean header, ReadStrategy readStrategy, 
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
         if(!isXSSF()) throw new IllegalArgumentException("Tables are not supported with this file format!");
         XSSFSheet s = (XSSFSheet) getSheet(worksheetIndex);
         int[] coords = getReferenceCoordinatesForTable(worksheetIndex, tableName);
         int nrows = coords[2] - coords[0] + 1;
         int ncols = coords[3] - coords[1] + 1;
-        return readData(s, coords[0], coords[1], nrows, ncols, header, colTypes, forceConversion, dateTimeFormat,
+        return readData(s, coords[0], coords[1], nrows, ncols, header, readStrategy, colTypes, forceConversion, dateTimeFormat,
                 takeCached, subset);
     }
     
-    public DataFrame readTable(String worksheetName, String tableName, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat, boolean takeCached, int[] subset) {
-        return readTable(workbook.getSheetIndex(worksheetName), tableName, header, colTypes, forceConversion,
-                dateTimeFormat, takeCached, subset);
+    public DataFrame readTable(String worksheetName, String tableName, boolean header, ReadStrategy readStrategy, 
+            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+        return readTable(workbook.getSheetIndex(worksheetName), tableName, header, readStrategy, colTypes, 
+                forceConversion, dateTimeFormat, takeCached, subset);
     }
 
     /**
@@ -641,10 +669,10 @@ public final class Workbook extends Common {
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
-            boolean autofitRow, boolean autofitCol) {
+            ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, 
+            boolean takeCached, int[] subset, boolean autofitRow, boolean autofitCol) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
-        int [] boundingBox = getBoundingBox(worksheetIndex, startRow, startCol, endRow, endCol, autofitRow, autofitCol);
+        int[] boundingBox = getBoundingBox(worksheetIndex, startRow, startCol, endRow, endCol, autofitRow, autofitCol);
         startRow = boundingBox[0];
         startCol = boundingBox[1];
         endRow = boundingBox[2];
@@ -656,51 +684,57 @@ public final class Workbook extends Common {
             this.addWarning("Data frame contains " + nrows + " rows and " + ncols + " columns!");
         }
         
-        // System.out.println("Top Left: (" + startRow + "," + startCol + "), Bottom Right: (" + endRow + "," + endCol + ")");
-        return readData(sheet, startRow, startCol, nrows, ncols, header, colTypes, forceConversion, dateTimeFormat, takeCached, subset);
+        return readData(sheet, startRow, startCol, nrows, ncols, header, readStrategy, colTypes, forceConversion, dateTimeFormat, 
+                takeCached, subset);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false, null, true, true);
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
+                null, false, "", false, null, true, true);
     }
     
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header, boolean
             autofitRow, boolean autofitCol) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, null, false, "", false, null, autofitRow, autofitCol);
+        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
+                null, false, "", false, null, autofitRow, autofitCol);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, null, true, true);
+    public DataFrame readWorksheet(int worksheetIndex, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
+            boolean forceConversion, String dateTimeFormat) {
+        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion, 
+                dateTimeFormat, false, null, true, true);
     }
 
     public DataFrame readWorksheet(int worksheetIndex, boolean header) {
-        return readWorksheet(worksheetIndex, header, null, false, "");
+        return readWorksheet(worksheetIndex, header, ReadStrategy.DEFAULT, null, false, "");
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
-            boolean autofitRow, boolean autofitCol) {
-        return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, colTypes,
-                forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
+            ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, 
+            int [] subset, boolean autofitRow, boolean autofitCol) {
+        return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, readStrategy,
+                colTypes, forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
     }
 
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false, null, true, true);
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT, 
+                null, false, "", false, null, true, true);
     }
     
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
             boolean autofitRow, boolean autofitCol) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, null, false, "", false, null, autofitRow, autofitCol);
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
+                null, false, "", false, null, autofitRow, autofitCol);
     }
 
-    public DataFrame readWorksheet(String worksheetName, boolean header, DataType[] colTypes, boolean forceConversion,
-            String dateTimeFormat) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, colTypes, forceConversion, dateTimeFormat, false, null, true, true);
+    public DataFrame readWorksheet(String worksheetName, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
+            boolean forceConversion, String dateTimeFormat) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion, 
+                dateTimeFormat, false, null, true, true);
     }
 
     public DataFrame readWorksheet(String worksheetName, boolean header) {
-        return readWorksheet(worksheetName, header, null, false, "");
+        return readWorksheet(worksheetName, header, ReadStrategy.DEFAULT, null, false, "");
     }
 
     public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {

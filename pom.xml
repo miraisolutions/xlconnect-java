@@ -101,9 +101,9 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.pyx4me</groupId>
+                <groupId>com.github.wvengen</groupId>
                 <artifactId>proguard-maven-plugin</artifactId>
-                <version>2.0.4</version>
+                <version>2.0.6</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -112,18 +112,18 @@
                 </executions>
                 <configuration>
                     <options>
+                        <option>-dontobfuscate</option>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RDataFrameWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RWorkbookWrapper { public *; }</option>
                         <option>-keep public class com.miraisolutions.xlconnect.integration.r.RCellStyleWrapper { public *; }</option>
-                        <option>-optimizationpasses 3</option>
-                        <option>-dontobfuscate</option>
+                        <option>-optimizations !field/removal/*,!method/removal/*</option>
+                        <option>-optimizationpasses 5</option>
                     </options>
                     <libs>
                         <lib>${java.home}/lib/rt.jar</lib>
                     </libs>
                 </configuration>
                 <dependencies>
-                    <!-- Artifact may need to be installed manually -->
                     <dependency>
                         <groupId>net.sf.proguard</groupId>
                         <artifactId>proguard-base</artifactId>

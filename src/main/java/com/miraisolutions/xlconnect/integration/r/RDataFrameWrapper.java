@@ -20,11 +20,10 @@
 
 package com.miraisolutions.xlconnect.integration.r;
 
-import com.miraisolutions.xlconnect.Workbook;
+import com.miraisolutions.xlconnect.data.Column;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 public final class RDataFrameWrapper {
@@ -40,35 +39,15 @@ public final class RDataFrameWrapper {
     }
 
     public void addNumericColumn(String name, double[] column, boolean[] na) {
-        Double[] elements = new Double[column.length];
-        for(int i = 0; i < column.length; i++) {
-            if(na[i])
-                elements[i] = null;
-            else
-                elements[i] = new Double(column[i]);
-        }
-        ArrayList<Double> v = new ArrayList<Double>(Arrays.asList(elements));
-        dataFrame.addColumn(name, DataType.Numeric, v);
+        dataFrame.addColumn(name, new Column(column, na, DataType.Numeric));
     }
 
     public void addBooleanColumn(String name, boolean[] column, boolean[] na) {
-        Boolean[] elements = new Boolean[column.length];
-        for(int i = 0; i < column.length; i++) {
-            if(na[i])
-                elements[i] = null;
-            else
-                elements[i] = new Boolean(column[i]);
-        }
-        ArrayList<Boolean> v = new ArrayList<Boolean>(Arrays.asList(elements));
-        dataFrame.addColumn(name, DataType.Boolean, v);
+        dataFrame.addColumn(name, new Column(column, na, DataType.Boolean));
     }
 
     public void addStringColumn(String name, String[] column, boolean[] na) {
-        for(int i = 0; i < column.length; i++) {
-            if(na[i]) column[i] = null;
-        }
-        ArrayList<String> v = new ArrayList<String>(Arrays.asList(column));
-        dataFrame.addColumn(name, DataType.String, v);
+        dataFrame.addColumn(name, new Column(column, na, DataType.String));
     }
 
     public void addDateTimeColumn(String name, long[] column, boolean[] na) {
@@ -79,8 +58,7 @@ public final class RDataFrameWrapper {
             else
                 elements[i] = new Date(column[i]);
         }
-        ArrayList<Date> v = new ArrayList<Date>(Arrays.asList(elements));
-        dataFrame.addColumn(name, DataType.DateTime, v);
+        dataFrame.addColumn(name, new Column(elements, na, DataType.DateTime));
     }
 
     public String[] getColumnTypes() {
@@ -98,61 +76,32 @@ public final class RDataFrameWrapper {
     }
 
     public double[] getNumericColumn(int col) {
-        ArrayList<Double> v = dataFrame.getColumn(col);
-        double[] values = new double[v.size()];
-
-        for(int i = 0; i < v.size(); i++) {
-            Double d = v.get(i);
-            if(d == null)
-                values[i] = 0.0;
-            else
-                values[i] = d.doubleValue();
-        }
-
-        return values;
+        return dataFrame.getColumn(col).getNumericData();
     }
 
     public String[] getStringColumn(int col) {
-        ArrayList<String> v = dataFrame.getColumn(col);
-        return v.toArray(new String[v.size()]);
+        return dataFrame.getColumn(col).getStringData();
     }
 
     public boolean[] getBooleanColumn(int col) {
-        ArrayList<Boolean> v = dataFrame.getColumn(col);
-        boolean[] values = new boolean[v.size()];
-
-        for(int i = 0; i < v.size(); i++) {
-            Boolean b = v.get(i);
-            if(b == null)
-                values[i] = false;
-            else
-                values[i] = b.booleanValue();
-        }
-
-        return values;
+        return dataFrame.getColumn(col).getBooleanData();
     }
 
     public long[] getDateTimeColumn(int col) {
-        ArrayList<Date> v = dataFrame.getColumn(col);
-        long[] values = new long[v.size()];
+        Date[] v = dataFrame.getColumn(col).getDateTimeData();
+        long[] values = new long[v.length];
 
-        for(int i = 0; i < v.size(); i++) {
-            Date d = v.get(i);
-            if(d == null)
+        for(int i = 0; i < v.length; i++) {
+            if(v[i] == null)
                 values[i] = 0;
             else
-                values[i] = d.getTime();
+                values[i] = v[i].getTime();
         }
 
         return values;
     }
 
     public boolean[] isMissing(int col) {
-        ArrayList v = dataFrame.getColumn(col);
-        boolean[] missing = new boolean[v.size()];
-        for(int i = 0; i < v.size(); i++) {
-            missing[i] = v.get(i) == null;
-        }
-        return missing;
+        return dataFrame.getColumn(col).getMissing();
     }
 }

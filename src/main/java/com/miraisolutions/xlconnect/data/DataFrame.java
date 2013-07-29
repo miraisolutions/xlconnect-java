@@ -25,13 +25,11 @@ import java.util.ArrayList;
 public class DataFrame {
     
     protected ArrayList<String> columnNames;
-    protected ArrayList<DataType> columnTypes;
-    protected ArrayList<ArrayList> columns;
+    protected ArrayList<Column> columns;
 
     public DataFrame() {
         this.columnNames = new ArrayList<String>();
-        this.columnTypes = new ArrayList<DataType>();
-        this.columns = new ArrayList<ArrayList>();
+        this.columns = new ArrayList<Column>();
     }
 
     public int columns() {
@@ -62,10 +60,9 @@ public class DataFrame {
     }
 
     
-    public void addColumn(String name, DataType type, ArrayList column) {
+    public void addColumn(String name, Column column) {
         if(isEmpty() || (column.size() == rows())) {
             columnNames.add(name);
-            columnTypes.add(type);
             columns.add(column);
         } else
             throw new IllegalArgumentException("Length of specified column does not match length of " +
@@ -77,10 +74,10 @@ public class DataFrame {
     }
 
     public DataType getColumnType(int index) {
-        return columnTypes.get(index);
+        return columns.get(index).getDataType();
     }
 
-    public ArrayList getColumn(int index) {
+    public Column getColumn(int index) {
         return columns.get(index);
     }
 
@@ -89,6 +86,10 @@ public class DataFrame {
     }
 
     public ArrayList<DataType> getColumnTypes() {
-        return columnTypes;
+        ArrayList<DataType> dataTypes = new ArrayList<DataType>(columns.size());
+        for(Column c : columns) {
+            dataTypes.add(c.getDataType());
+        }
+        return dataTypes;
     }
 }
