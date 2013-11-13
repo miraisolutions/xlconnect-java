@@ -51,19 +51,11 @@ public final class Workbook extends Common {
     private final static String COLUMN = "Column";
     private final static String SEP = ".";
 
-    // Default style names
-    private final static String XLCONNECT_STYLE = "XLCONNECT_STYLE";
-
-    private final static String XLCONNECT_HEADER_STYLE_NAME = "XLConnect.Header";
-    private final static String XLCONNECT_GENERAL_STYLE_NAME = "XLConnect.General";
-    private final static String XLCONNECT_DATE_STYLE_NAME = "XLConnect.Date";
-
-    // Style types
-    private final static String HEADER_STYLE = "Header";
-    private final static String NUMERIC_STYLE = "Numeric";
-    private final static String STRING_STYLE = "String";
-    private final static String BOOLEAN_STYLE = "Boolean";
-    private final static String DATETIME_STYLE = "DateTime";
+    private final static String HEADER_STYLE = "XLConnect.Header";
+    private final static String NUMERIC_STYLE = "XLConnect.Numeric";
+    private final static String STRING_STYLE = "XLConnect.String";
+    private final static String BOOLEAN_STYLE = "XLConnect.Boolean";
+    private final static String DATETIME_STYLE = "XLConnect.DateTime";
 
     // Formatter
     // NOTE: currently fixed to a RPOSIXDateTimeFormatter
@@ -82,11 +74,15 @@ public final class Workbook extends Common {
        (null means blank/empty cell)
      */
     private Object[] missingValue = new Object[] { null };
-    // Cell style map
-    private final Map<String, Map<String, CellStyle>> stylesMap =
-            new HashMap<String, Map<String, CellStyle>>(10);
+    // Default cell styles
+    private final Map<String, CellStyle> defaultStyles =
+            new HashMap<String, CellStyle>(5);
+    // Styles per data type
+    private final Map<DataType, CellStyle> dataTypeStyles = new EnumMap(DataType.class);
+    
     // Data format map
     private final Map<DataType, String> dataFormatMap = new EnumMap(DataType.class);
+
 
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
@@ -120,56 +116,76 @@ public final class Workbook extends Common {
         initDefaultDataFormats();
         initDefaultStyles();
     }
-
-    private void initDefaultStyles() {
-        Map<String, CellStyle> xlconnectDefaults =
-                new HashMap<String, CellStyle>(5);
-
-        // Header style
-        CellStyle headerStyle = getCellStyle(XLCONNECT_HEADER_STYLE_NAME);
-        if(headerStyle == null) {
-            headerStyle = createCellStyle(XLCONNECT_HEADER_STYLE_NAME);
-            headerStyle.setDataFormat(dataFormatMap.get(DataType.String));
-            headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
-            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            headerStyle.setWrapText(true);
-        }
-
-        // String / boolean / numeric style
-        CellStyle style = getCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
-        if(style == null) {
-            style = createCellStyle(XLCONNECT_GENERAL_STYLE_NAME);
-            style.setDataFormat(dataFormatMap.get(DataType.String));
-            style.setWrapText(true);
-        }
-
-        // Date style
-        CellStyle dateStyle = getCellStyle(XLCONNECT_DATE_STYLE_NAME);
-        if(dateStyle == null) {
-            dateStyle = createCellStyle(XLCONNECT_DATE_STYLE_NAME);
-            dateStyle.setDataFormat(dataFormatMap.get(DataType.DateTime));
-            dateStyle.setWrapText(true);
-        }
-
-        xlconnectDefaults.put(HEADER_STYLE, headerStyle);
-        xlconnectDefaults.put(STRING_STYLE, style);
-        xlconnectDefaults.put(NUMERIC_STYLE, style);
-        xlconnectDefaults.put(BOOLEAN_STYLE, style);
-        xlconnectDefaults.put(DATETIME_STYLE, dateStyle);
-
-        // Add style definitions to style map
-        stylesMap.put(XLCONNECT_STYLE, xlconnectDefaults);
-    }
-
+    
     private void initDefaultDataFormats() {
         dataFormatMap.put(DataType.Boolean, "General");
         dataFormatMap.put(DataType.DateTime, "mm/dd/yyyy hh:mm:ss");
         dataFormatMap.put(DataType.Numeric, "General");
         dataFormatMap.put(DataType.String, "General");
     }
+    
+    private CellStyle initGeneralStyle(String name, DataType type) {
+        CellStyle style = getCellStyle(name);
+         if(style == null) {
+            style = createCellStyle(name);
+            if(type == null)
+                style.setDataFormat("General");
+            else
+                style.setDataFormat(dataFormatMap.get(type));
+            style.setWrapText(true);
+        }
+        return style;
+    }
+    
+    private CellStyle initGeneralStyle(String name) {
+        return initGeneralStyle(name, null);
+    }
+
+    private void initDefaultStyles() {
+
+        // Header style
+        CellStyle headerStyle = getCellStyle(HEADER_STYLE);
+        if(headerStyle == null) {
+            headerStyle = initGeneralStyle(HEADER_STYLE);
+            headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        }
+
+        // String / boolean / numeric style
+        CellStyle stringStyle = initGeneralStyle(STRING_STYLE);
+        dataTypeStyles.put(DataType.String, stringStyle);
+        CellStyle numericStyle = initGeneralStyle(NUMERIC_STYLE);
+        dataTypeStyles.put(DataType.Numeric, numericStyle);
+        CellStyle booleanStyle = initGeneralStyle(BOOLEAN_STYLE);
+        dataTypeStyles.put(DataType.Boolean, booleanStyle);
+
+        // Date style
+        CellStyle dateStyle = getCellStyle(DATETIME_STYLE);
+        if(dateStyle == null) {
+            dateStyle = createCellStyle(DATETIME_STYLE);
+            dateStyle.setDataFormat(dataFormatMap.get(DataType.DateTime));
+            dateStyle.setWrapText(true);
+        }
+        dataTypeStyles.put(DataType.DateTime, dateStyle);
+
+        defaultStyles.put(HEADER_STYLE, headerStyle);
+        defaultStyles.put(STRING_STYLE, stringStyle);
+        defaultStyles.put(NUMERIC_STYLE, numericStyle);
+        defaultStyles.put(BOOLEAN_STYLE, booleanStyle);
+        defaultStyles.put(DATETIME_STYLE, dateStyle);
+    }
+    
+    public void setCellStyleForDataType(DataType type, CellStyle cs) {
+        dataTypeStyles.put(type, cs);
+    }
+    
+    public CellStyle getCellStyleForDataType(DataType type) {
+        return dataTypeStyles.get(type);
+    }
 
     public void setDataFormat(DataType type, String format) {
         dataFormatMap.put(type, format);
+        
     }
 
     public String getDataFormat(DataType type) {
@@ -1004,7 +1020,7 @@ public final class Workbook extends Common {
                 return;
             }
             cell.setCellType(Cell.CELL_TYPE_STRING);
-            setCellStyle(cell, DataFormatOnlyCellStyle.get());
+            setCellStyle(cell, DataFormatOnlyCellStyle.get(DataType.String));
         }
     }
 
@@ -1065,22 +1081,7 @@ public final class Workbook extends Common {
                 XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
             } else if(cs instanceof DataFormatOnlyCellStyle) {
                 CellStyle csx = getCellStyle(c);
-                switch(c.getCellType()) {
-                    case Cell.CELL_TYPE_NUMERIC:
-                        if(DateUtil.isCellDateFormatted(c))
-                            csx.setDataFormat(dataFormatMap.get(DataType.DateTime));
-                        else
-                            csx.setDataFormat(dataFormatMap.get(DataType.Numeric));
-                        break;
-                    case Cell.CELL_TYPE_STRING:
-                        csx.setDataFormat(dataFormatMap.get(DataType.String));
-                        break;
-                    case Cell.CELL_TYPE_BOOLEAN:
-                        csx.setDataFormat(dataFormatMap.get(DataType.Boolean));
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unexpected cell type detected!");
-                }
+                csx.setDataFormat(dataFormatMap.get(((DataFormatOnlyCellStyle) cs).getDataType()));
                 SSCellStyle.set(c, (SSCellStyle) csx);
             } else {
                 SSCellStyle.set(c, (SSCellStyle) cs);
@@ -1127,28 +1128,36 @@ public final class Workbook extends Common {
 
         switch(styleAction) {
             case XLCONNECT:
-                Map<String, CellStyle> xlconnectStyles = stylesMap.get(XLCONNECT_STYLE);
                 if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++)
-                        cstyles.put(HEADER + i, xlconnectStyles.get(HEADER_STYLE));
+                        cstyles.put(HEADER + i, defaultStyles.get(HEADER_STYLE));
                 }
                 for(int i = 0; i < data.columns(); i++) {
                     switch(data.getColumnType(i)) {
                         case Boolean:
-                            cstyles.put(COLUMN + i, xlconnectStyles.get(BOOLEAN_STYLE));
+                            cstyles.put(COLUMN + i, defaultStyles.get(BOOLEAN_STYLE));
                             break;
                         case DateTime:
-                            cstyles.put(COLUMN + i, xlconnectStyles.get(DATETIME_STYLE));
+                            cstyles.put(COLUMN + i, defaultStyles.get(DATETIME_STYLE));
                             break;
                         case Numeric:
-                            cstyles.put(COLUMN + i, xlconnectStyles.get(NUMERIC_STYLE));
+                            cstyles.put(COLUMN + i, defaultStyles.get(NUMERIC_STYLE));
                             break;
                         case String:
-                            cstyles.put(COLUMN + i, xlconnectStyles.get(STRING_STYLE));
+                            cstyles.put(COLUMN + i, defaultStyles.get(STRING_STYLE));
                             break;
                         default:
                             throw new IllegalArgumentException("Unknown column type detected!");
                     }
+                }
+                break;
+            case DATATYPE:
+                if(data.hasColumnHeader()) {
+                    for(int i = 0; i < data.columns(); i++)
+                        cstyles.put(HEADER + i, defaultStyles.get(HEADER_STYLE));
+                }
+                for(int i = 0; i < data.columns(); i++) {
+                    cstyles.put(COLUMN + i, dataTypeStyles.get(data.getColumnType(i)));
                 }
                 break;
             case NONE:
@@ -1201,14 +1210,13 @@ public final class Workbook extends Common {
                 }
                 break;
             case DATA_FORMAT_ONLY:
-                CellStyle cs = DataFormatOnlyCellStyle.get();
                 if(data.hasColumnHeader()) {
                     for(int i = 0; i < data.columns(); i++) {
-                        cstyles.put(HEADER + i, cs);
+                        cstyles.put(HEADER + i, DataFormatOnlyCellStyle.get(DataType.String));
                     }
                 }
                 for(int i = 0; i < data.columns(); i++) {
-                    cstyles.put(COLUMN + i, cs);
+                    cstyles.put(COLUMN + i, DataFormatOnlyCellStyle.get(data.getColumnType(i)));
                 }
                 break;
             default:

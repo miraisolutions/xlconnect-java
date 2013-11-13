@@ -269,9 +269,19 @@ public final class RWorkbookWrapper {
         workbook.setDataFormat(fromString(dataType), format);
     }
     
+    public void setCellStyleForDataType(String dataType, RCellStyleWrapper cellStyle) {
+        workbook.setCellStyleForDataType(fromString(dataType), cellStyle.cellStyle);
+    }
+    
+    public RCellStyleWrapper getCellStyleForDataType(String dataType) {
+        return new RCellStyleWrapper(workbook.getCellStyleForDataType(fromString(dataType)));
+    }
+    
     public void setStyleAction(String action) {
         if("XLCONNECT".equals(action))
             workbook.setStyleAction(StyleAction.XLCONNECT);
+        else if("DATATYPE".equals(action))
+            workbook.setStyleAction(StyleAction.DATATYPE);
         else if("NONE".equals(action))
             workbook.setStyleAction(StyleAction.NONE);
         else if("PREDEFINED".equals(action))

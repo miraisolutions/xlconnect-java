@@ -20,6 +20,7 @@
 
 package com.miraisolutions.xlconnect;
 
+import com.miraisolutions.xlconnect.data.Column;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
@@ -67,10 +68,24 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
-        System.out.println("Start");
-        Workbook wb = Workbook.getWorkbook("/home/mstuder/Documents/Projects/R/XLConnect/xlconnect/inst/unitTests/resources/testWorkbookReadWorksheet.xls", false);
-        DataFrame df = wb.readWorksheet(1, true, ReadStrategy.DEFAULT, null, false, "%Y-%m-%d %H:%M:%S");
+        String file = "/home/mstuder/test.xlsx";
+        File f = new File(file);
+        if(f.exists()) f.delete();
+        Workbook wb = Workbook.getWorkbook(f, true);
+        wb.setStyleAction(StyleAction.DATATYPE);
+        CellStyle cs = wb.createCellStyle();
+        cs.setDataFormat("d/m/yy");
+        wb.setCellStyleForDataType(DataType.DateTime, cs);
+        DataFrame df = new DataFrame();
+        boolean[] missing = new boolean[] {false, false, false, false, false};
+        Date date = new Date();
+        df.addColumn("A", new Column(new double[] {1.0, 2.0, 3.0, 4.0, 5.0}, missing, DataType.Numeric));
+        df.addColumn("B", new Column(new Date[] {date, date, date, date, date}, missing, DataType.DateTime));
+        wb.createSheet("data");
+        wb.writeWorksheet(df, "data", true);
+        wb.save();
         printDataFrame(df);
+        
     }
 
     public static void printDataFrame(DataFrame df) {

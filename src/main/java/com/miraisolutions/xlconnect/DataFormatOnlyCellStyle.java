@@ -20,6 +20,9 @@
 
 package com.miraisolutions.xlconnect;
 
+import com.miraisolutions.xlconnect.data.DataType;
+import java.util.EnumMap;
+
 /**
  * Marker cell style used to specify that a cell style
  * should be determined dynamically with the data format
@@ -27,7 +30,17 @@ package com.miraisolutions.xlconnect;
  */
 public class DataFormatOnlyCellStyle extends Common implements CellStyle {
 
-    private static DataFormatOnlyCellStyle instance = null;
+    // private static DataFormatOnlyCellStyle instance = null;
+    private static EnumMap<DataType, DataFormatOnlyCellStyle> instances = new EnumMap<DataType, DataFormatOnlyCellStyle>(DataType.class);
+    private DataType dataType;
+    
+    private DataFormatOnlyCellStyle(DataType type) {
+        this.dataType = type;
+    }
+
+    public DataType getDataType() {
+        return dataType;
+    }
 
     public void setBorderBottom(short border) {
         throw new UnsupportedOperationException();
@@ -80,10 +93,19 @@ public class DataFormatOnlyCellStyle extends Common implements CellStyle {
     public void setWrapText(boolean wrap) {
         throw new UnsupportedOperationException();
     }
+    
+    public String getDataFormat() {
+        throw new UnsupportedOperationException();
+    }
 
-    public static DataFormatOnlyCellStyle get() {
-        if(instance == null)
-            instance = new DataFormatOnlyCellStyle();
-        return instance;
+    public static DataFormatOnlyCellStyle get(DataType type) {
+        DataFormatOnlyCellStyle cs;
+        if(instances.containsKey(type))
+            cs = instances.get(type);
+        else {
+            cs = new DataFormatOnlyCellStyle(type);
+            instances.put(type, cs);
+        }
+        return cs;
     }
 }
