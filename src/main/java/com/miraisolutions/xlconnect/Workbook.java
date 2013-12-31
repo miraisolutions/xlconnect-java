@@ -87,14 +87,14 @@ public final class Workbook extends Common {
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
-
+    
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
         this.workbook = WorkbookFactory.create(in);
         this.excelFile = null;
         initDefaultDataFormats();
         initDefaultStyles();
     }
-
+    
     private Workbook(File excelFile) throws FileNotFoundException, IOException, InvalidFormatException {
         this(new FileInputStream(excelFile));
         this.excelFile = excelFile;
@@ -402,8 +402,13 @@ public final class Workbook extends Common {
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
-                            cell.setCellValue(doubleValues[j]);
-                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                            if(Double.isInfinite(doubleValues[j])) {
+                              cell.setCellType(Cell.CELL_TYPE_ERROR);
+                              cell.setCellErrorValue(FormulaError.NA.getCode());
+                            } else {
+                              cell.setCellValue(doubleValues[j]);
+                              cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                            }
                             setCellStyle(cell, cs);
                         }
                     }
@@ -921,9 +926,9 @@ public final class Workbook extends Common {
     }
 
     public void save(File f) throws FileNotFoundException, IOException {
-        this.excelFile = f;
+            this.excelFile = f;
         FileOutputStream fos = new FileOutputStream(f, false);
-        workbook.write(fos);
+            workbook.write(fos);
         fos.close();
     }
 
