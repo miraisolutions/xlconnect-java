@@ -521,4 +521,12 @@ public final class RWorkbookWrapper {
 	return workbook.getBoundingBox(sheetName, startRow, startCol, endRow, endCol,
                 autofitRow, autofitCol);
     }
+    
+    public String[] getTables(int sheetIndex) {
+        return workbook.getTables(sheetIndex);
+    }
+    
+    public String[] getTables(String sheetName) {
+        return workbook.getTables(sheetName);
+    }
 }

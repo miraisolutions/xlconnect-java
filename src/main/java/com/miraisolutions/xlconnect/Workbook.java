@@ -347,7 +347,29 @@ public final class Workbook extends Common {
         return new int[] {top, left, bottom, right};
     }
     
+    public String[] getTables(int sheetIndex) {
+        if(isXSSF()) {
+            XSSFSheet s = (XSSFSheet) getSheet(sheetIndex);
+            String[] tables = new String[s.getTables().size()];
+            int i = 0;
+            Iterator<XSSFTable> it = s.getTables().iterator();
+            while(it.hasNext()) {
+                tables[i++] = it.next().getName();
+            }
+            return tables;
+        } else {
+            return new String[0];
+        }
+    }
+    
+    public String[] getTables(String sheetName) {
+        return getTables(workbook.getSheetIndex(sheetName));
+    }
+    
     public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
+        if(!isXSSF()) {
+            throw new IllegalArgumentException("Tables are not supported with this file format");
+        }
         XSSFSheet s = (XSSFSheet) getSheet(sheetIndex);
         for(XSSFTable t : s.getTables()) {
             if(tableName.equals(t.getName())) {
