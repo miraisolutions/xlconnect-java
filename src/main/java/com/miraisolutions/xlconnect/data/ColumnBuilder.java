@@ -161,9 +161,11 @@ public abstract class ColumnBuilder extends Common {
         Date[] colValues = new Date[values.size()];
         boolean[] missing = new boolean[values.size()];
         Iterator<CellValue> it = values.iterator();
+        Iterator<Cell> jt = cells.iterator();
         int counter = 0;
         while (it.hasNext()) {
             CellValue cv = it.next();
+            Cell cell = jt.next();
             if (cv == null) {
                 missing[counter] = true;
             } else {
@@ -197,7 +199,7 @@ public abstract class ColumnBuilder extends Common {
                         }
                         break;
                     case DateTime:
-                        colValues[counter] = DateUtil.getJavaDate(cv.getNumberValue());
+                        colValues[counter] = cell.getDateCellValue();
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown data type detected!");
