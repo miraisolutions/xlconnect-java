@@ -21,7 +21,7 @@
     <groupId>com.miraisolutions</groupId>
     <artifactId>XLConnect</artifactId>
     <packaging>jar</packaging>
-    <version>0.2-6</version>
+    <version>0.2-8</version>
     <name>XLConnect</name>
     <url>http://www.mirai-solutions.com</url>
     <repositories>
@@ -64,7 +64,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.2</version>
                 <configuration>
                     <includes>
                         <include>**/NOTICE</include>
@@ -87,10 +86,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
                 <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                     <includes>
                         <include>**/NOTICE</include>
                         <include>**/xlconnect/*.*</include>
@@ -100,10 +98,10 @@
                     </includes>
                 </configuration>
             </plugin>
+	    <!--
             <plugin>
                 <groupId>com.github.wvengen</groupId>
                 <artifactId>proguard-maven-plugin</artifactId>
-                <version>2.0.6</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -127,11 +125,12 @@
                     <dependency>
                         <groupId>net.sf.proguard</groupId>
                         <artifactId>proguard-base</artifactId>
-                        <version>4.9</version>
+                        <version>4.11</version>
                         <scope>runtime</scope>
                     </dependency>
                 </dependencies>
             </plugin>
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -162,12 +161,12 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.10-beta2</version>
+            <version>3.11-beta1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.10-beta2</version>
+            <version>3.11-beta1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.poi</groupId>
