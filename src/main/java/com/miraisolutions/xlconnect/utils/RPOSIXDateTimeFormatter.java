@@ -67,8 +67,8 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               builder.appendMonthOfYearText();
               break;
             case 'c':
-              //  Date and time.  Locale-specific on output, ‘"%a %b %e
-              // %H:%M:%S %Y"’ on input.
+              //  Date and time.  Locale-specific on output, ï¿½"%a %b %e
+              // %H:%M:%S %Y"ï¿½ on input.
               throw new UnsupportedOperationException("%c not yet implemented");
             case 'd':
               // Day of the month as decimal number (01-31).
@@ -95,8 +95,8 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               builder.appendMinuteOfHour(2);
               break;
             case 'p':
-              // AM/PM indicator in the locale.  Used in conjunction with ‘%I’
-              // and *not* with ‘%H’.  An empty string in some locales.
+              // AM/PM indicator in the locale.  Used in conjunction with ï¿½%Iï¿½
+              // and *not* with ï¿½%Hï¿½.  An empty string in some locales.
               builder.appendHalfdayOfDayText();
               break;
             case 'O':
@@ -105,15 +105,17 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               } else {
                 switch(format.charAt(++i)) {
                 case 'S':
-                  // Specific to R is ‘%OSn’, which for output gives the seconds to ‘0
-                  // <= n <= 6’ decimal places (and if ‘%OS’ is not followed by a
-                  // digit, it uses the setting of ‘getOption("digits.secs")’, or if
-                  // that is unset, ‘n = 3’).  Further, for ‘strptime’ ‘%OS’ will input
-                  // seconds including fractional seconds.  Note that ‘%S’ ignores (and
-                  // not rounds) fractional parts on output.
-
-                  // TODO: not sure how to handle fractional seconds here
+                  int n = 3;
+                  if(i+1 < format.length()) {
+                      n = Integer.parseInt(Character.toString(format.charAt(++i)));
+                  }
+                  
                   builder.appendSecondOfMinute(2);
+                  if(n > 0) {
+                      builder.appendLiteral('.');
+                      builder.appendFractionOfSecond(n, n);
+                  }
+                  
                   break;
                 default:
                   throw new UnsupportedOperationException("%O[dHImMUVwWy] not yet implemented");
@@ -140,17 +142,17 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               // the first day of week (and typically with the first Monday of
               // the year as day 1 of week 1). The UK convention.
 
-              // ‘%x’ Date.  Locale-specific on output, ‘"%y/%m/%d"’ on input.
+              // ï¿½%xï¿½ Date.  Locale-specific on output, ï¿½"%y/%m/%d"ï¿½ on input.
 
 
-              //‘%X’ Time.  Locale-specific on output, ‘"%H:%M:%S"’ on input.
+              //ï¿½%Xï¿½ Time.  Locale-specific on output, ï¿½"%H:%M:%S"ï¿½ on input.
 
             case 'y':
               // Year without century (00-99). Values 00 to 68 are prefixed by
               // 20 and 69 to 99 by 19 - that is the behaviour specified by
-              // the 2004 POSIX standard, but it does also say ‘it is expected
+              // the 2004 POSIX standard, but it does also say ï¿½it is expected
               // that in a future version the default century inferred from a
-              // 2-digit year will change’.
+              // 2-digit year will changeï¿½.
               builder.appendTwoDigitYear(1968, true);
               break;
             case 'Y':
@@ -158,7 +160,7 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               builder.appendYear(1,4);
               break;
             case 'z':
-              // Signed offset in hours and minutes from UTC, so ‘-0800’ is 8
+              // Signed offset in hours and minutes from UTC, so ï¿½-0800ï¿½ is 8
               // hours behind UTC.
               builder.appendTimeZoneOffset(null /* always show offset, even when zero */,
                   true /* show seperators */,
