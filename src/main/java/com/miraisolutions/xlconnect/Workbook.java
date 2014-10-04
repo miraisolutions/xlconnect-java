@@ -245,8 +245,13 @@ public final class Workbook extends Common {
     private boolean isValidNamedRegion(Name region) {  
         return !region.isDeleted() && hasValidWorkSheet(region);
     }
+    
     private boolean hasValidWorkSheet(Name region) {
-        return (region.getSheetName() != null && !"".equals(region.getSheetName()));
+        String sheetName = null;
+        try {
+            sheetName = region.getSheetName();
+        } catch(Exception e) {}
+        return (sheetName != null && !"".equals(sheetName));
     }
     
     public boolean existsSheet(String name) {
