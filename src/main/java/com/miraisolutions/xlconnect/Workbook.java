@@ -531,27 +531,27 @@ public final class Workbook extends Common {
                 throw new IllegalArgumentException("Unknown read strategy!");
         }
         
-        // Loop over columns
-        for(int col : colset) {
-            int colIndex = startCol + col;
-            // Determine column header
-            String columnHeader = null;
-            if(header) {
-                Cell cell = getCell(sheet, startRow, colIndex, false);
-                // Check if there actually is a cell ...
-                if(cell != null) {
-                    if(!takeCached) {
-                     CellValue cv = evaluator.evaluate(cell);
-                     if(cv != null) columnHeader = cv.getStringValue();
-                    } else {
-                     columnHeader = cell.getStringCellValue();
-                    }
-                }
+        // Determine header column
+        String[] columnHeaders = new String[colset.length];
+        if(header) {
+            ColumnBuilder cbHeader = new DefaultColumnBuilder(1, true, evaluator, onErrorCell, missingValue, dateTimeFormat);
+            for(int col : colset) {
+                cbHeader.addCell(getCell(sheet, startRow, startCol + col, false)); 
             }
-            // If it was specified that there is a header but an empty(/non-existing)
-            // cell or cell value is found, then use a default column name
-            if(columnHeader == null)
-                columnHeader = "Col" + (col+1);
+            columnHeaders = cbHeader.buildStringColumn().getStringData();
+        }
+        // Replace missing column headers
+        for(int i = 0; i < columnHeaders.length; i++) {
+            if(columnHeaders[i] == null) {
+                columnHeaders[i] = "Col" + (colset[i] + 1);
+            }
+        }
+        
+        // Loop over columns
+        for(int i = 0; i < colset.length; i++) {
+            int col = colset[i];
+            int colIndex = startCol + col;
+            String columnHeader = columnHeaders[i];
 
             // Prepare column builder for new set of rows
             cb.clear();
