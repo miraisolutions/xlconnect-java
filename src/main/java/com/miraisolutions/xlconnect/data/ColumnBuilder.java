@@ -349,6 +349,7 @@ public abstract class ColumnBuilder extends Common {
         if (this.takeCached) {
             return getCachedCellValue(cell);
         } else {
+            this.evaluator.evaluateFormulaCell(cell);
             return this.evaluator.evaluate(cell);
         }
     }
