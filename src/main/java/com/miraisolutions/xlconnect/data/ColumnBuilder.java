@@ -74,19 +74,18 @@ public abstract class ColumnBuilder extends Common {
             return;
         }
         String msg;
-        /*
-         * The following is to handle error cells (before they have been evaluated
-         * to a CellValue) and cells which are formulas but have cached errors.
-         */
-        if (c.getCellType() == Cell.CELL_TYPE_ERROR || (c.getCellType() == Cell.CELL_TYPE_FORMULA && c.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)) {
-            msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(c.getErrorCellValue());
-            cellError(msg);
-            return;
-        }
         CellValue cv;
+        
         // Try to evaluate cell;
         // report an error if this fails
         try {
+            int cellType = this.takeCached ? c.getCellType() : evaluator.evaluateFormulaCell(c);
+            if (cellType == Cell.CELL_TYPE_ERROR) {
+                msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(c.getErrorCellValue());
+                cellError(msg);
+                return;
+            }
+        
             cv = getCellValue(c);
         } catch (Exception e) {
             msg = "Error when trying to evaluate cell " + CellUtils.formatAsString(c) + " - " + e.getMessage();
@@ -349,7 +348,6 @@ public abstract class ColumnBuilder extends Common {
         if (this.takeCached) {
             return getCachedCellValue(cell);
         } else {
-            this.evaluator.evaluateFormulaCell(cell);
             return this.evaluator.evaluate(cell);
         }
     }
