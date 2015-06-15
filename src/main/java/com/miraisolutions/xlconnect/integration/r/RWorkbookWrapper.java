@@ -39,6 +39,10 @@ public final class RWorkbookWrapper {
 
     private final Workbook workbook;
 
+    public RWorkbookWrapper(String filename, String password, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+        this.workbook = Workbook.getWorkbook(filename, password, create);
+    }
+    
     public RWorkbookWrapper(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
         this.workbook = Workbook.getWorkbook(filename, create);
     }
