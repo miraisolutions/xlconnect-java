@@ -88,16 +88,36 @@ public final class Workbook extends Common {
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
     
+    private Workbook(InputStream in, String password) throws IOException, InvalidFormatException {
+        this.workbook = WorkbookFactory.create(in, password);
+        this.excelFile = null;
+        init();
+    }
+    
+    private Workbook(File excelFile, String password) throws IOException, InvalidFormatException {
+        /* 
+         * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
+         * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         */
+        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
+        this.excelFile = excelFile;
+        init();
+    }
+    
     private Workbook(InputStream in) throws IOException, InvalidFormatException {
         this.workbook = WorkbookFactory.create(in);
         this.excelFile = null;
-        initDefaultDataFormats();
-        initDefaultStyles();
+        init();
     }
     
-    private Workbook(File excelFile) throws FileNotFoundException, IOException, InvalidFormatException {
-        this(new FileInputStream(excelFile));
+    private Workbook(File excelFile) throws IOException, InvalidFormatException {
+        /* 
+         * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
+         * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         */
+        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
         this.excelFile = excelFile;
+        init();
     }
     
     private Workbook(File excelFile, SpreadsheetVersion version) {
@@ -113,6 +133,10 @@ public final class Workbook extends Common {
         }
 
         this.excelFile = excelFile;
+        init();
+    }
+    
+    private void init() {
         initDefaultDataFormats();
         initDefaultStyles();
     }
@@ -952,10 +976,14 @@ public final class Workbook extends Common {
         setRowHeight(workbook.getSheetIndex(sheetName), rowIndex, height);
     }
 
+    public void save(OutputStream os) throws IOException {
+        workbook.write(os);
+    }
+    
     public void save(File f) throws FileNotFoundException, IOException {
-            this.excelFile = f;
+        this.excelFile = f;
         FileOutputStream fos = new FileOutputStream(f, false);
-            workbook.write(fos);
+        save(fos);
         fos.close();
     }
 
@@ -1293,12 +1321,15 @@ public final class Workbook extends Common {
      * @throws IOException
      * @throws InvalidFormatException
      */
-    public static Workbook getWorkbook(File excelFile, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+    public static Workbook getWorkbook(File excelFile, String password, boolean create) throws IOException, InvalidFormatException {
         Workbook wb;
 
-        if(excelFile.exists())
-            wb = new Workbook(excelFile);
-        else {
+        if(excelFile.exists()) {
+            if(password == null)
+              wb = new Workbook(excelFile);
+            else
+              wb = new Workbook(excelFile, password);
+        } else {
             if(create) {
                 String filename = excelFile.getName().toLowerCase();
                 if(filename.endsWith(".xls")) {
@@ -1313,9 +1344,25 @@ public final class Workbook extends Common {
         }
         return wb;
     }
+    
+    public static Workbook getWorkbook(File excelFile, boolean create) throws IOException, InvalidFormatException {
+        return getWorkbook(excelFile, null, create);
+    }
 
+    public static Workbook getWorkbook(String filename, String password, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+        return Workbook.getWorkbook(new File(filename), password, create);
+    }
+    
     public static Workbook getWorkbook(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
         return Workbook.getWorkbook(new File(filename), create);
+    }
+    
+    public static Workbook getWorkbook(InputStream is, String password) throws IOException, InvalidFormatException {
+        return new Workbook(is, password);
+    }
+    
+    public static Workbook getWorkbook(InputStream is) throws IOException, InvalidFormatException {
+        return new Workbook(is, null);
     }
     
     public void setCellFormula(Cell c, String formula) {
