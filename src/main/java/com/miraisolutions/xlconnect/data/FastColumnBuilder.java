@@ -32,10 +32,10 @@ import org.apache.poi.ss.usermodel.FormulaEvaluator;
 public class FastColumnBuilder extends ColumnBuilder {
     
     public FastColumnBuilder(int nrows, boolean forceConversion,
-            FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
             String dateTimeFormat) {
         
-        super(nrows, forceConversion, evaluator, onErrorCell, dateTimeFormat);
+        super(nrows, forceConversion, takeCached, evaluator, onErrorCell, dateTimeFormat);
     }
     
     protected void handleCell(Cell c, CellValue cv) {

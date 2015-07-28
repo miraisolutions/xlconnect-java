@@ -36,10 +36,10 @@ public class DefaultColumnBuilder extends ColumnBuilder {
     protected double[] missingValueNumbers;
     
     public DefaultColumnBuilder(int nrows, boolean forceConversion,
-            FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
             Object[] missingValue, String dateTimeFormat) {
         
-        super(nrows, forceConversion, evaluator, onErrorCell, dateTimeFormat);
+        super(nrows, forceConversion, takeCached, evaluator, onErrorCell, dateTimeFormat);
         
         // Split missing values into missing values for strings and doubles
         // (for better performance later on)
@@ -60,6 +60,7 @@ public class DefaultColumnBuilder extends ColumnBuilder {
         }
     }
     
+    @Override
     protected void handleCell(Cell c, CellValue cv) {
         String msg;
         // Determine (evaluated) cell data type

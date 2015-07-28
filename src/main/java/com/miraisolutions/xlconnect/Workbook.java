@@ -524,13 +524,9 @@ public final class Workbook extends Common {
         DataFrame data = new DataFrame();
         int [] colset;
         
-
         // Formula evaluator - only if we don't want to take cached values
-        FormulaEvaluator evaluator = null;
-        if(!takeCached) { 
-            evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            evaluator.clearAllCachedResultValues();
-        }
+        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+        if(!takeCached) evaluator.clearAllCachedResultValues();
         
         if (subset == null) {
             colset = new int[ncols];
@@ -544,11 +540,11 @@ public final class Workbook extends Common {
         ColumnBuilder cb;
         switch(readStrategy) {
             case DEFAULT:
-                cb = new DefaultColumnBuilder(nrows, forceConversion, evaluator, onErrorCell,
+                cb = new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
                     missingValue, dateTimeFormat);
                 break;
             case FAST:
-                cb = new FastColumnBuilder(nrows, forceConversion, evaluator, onErrorCell,
+                cb = new FastColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
                     dateTimeFormat);
                 break;
             default:
@@ -558,7 +554,7 @@ public final class Workbook extends Common {
         // Determine header column
         String[] columnHeaders = new String[colset.length];
         if(header) {
-            ColumnBuilder cbHeader = new DefaultColumnBuilder(1, true, evaluator, onErrorCell, missingValue, dateTimeFormat);
+            ColumnBuilder cbHeader = new DefaultColumnBuilder(1, true, takeCached, evaluator, onErrorCell, missingValue, dateTimeFormat);
             for(int col : colset) {
                 cbHeader.addCell(getCell(sheet, startRow, startCol + col, false)); 
             }

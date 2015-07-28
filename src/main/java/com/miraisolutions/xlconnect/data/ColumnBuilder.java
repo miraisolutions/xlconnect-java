@@ -48,7 +48,7 @@ public abstract class ColumnBuilder extends Common {
     protected ErrorBehavior onErrorCell;
     
     public ColumnBuilder(int nrows, boolean forceConversion,
-            FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
             String dateTimeFormat) {
         
         this.detectedTypes = new ArrayList<DataType>(nrows);
@@ -56,7 +56,7 @@ public abstract class ColumnBuilder extends Common {
         this.values = new ArrayList<CellValue>(nrows);
         this.forceConversion = forceConversion;
         this.evaluator = evaluator;
-        this.takeCached = evaluator == null;
+        this.takeCached = takeCached;
         this.onErrorCell = onErrorCell;
         this.dateTimeFormat = dateTimeFormat;
     }
@@ -271,7 +271,11 @@ public abstract class ColumnBuilder extends Common {
                     case Boolean:
                     case Numeric:
                         // format according to Excel format
-                        colValues[counter] = fmt.formatCellValue(cell, this.evaluator);
+                        // see also org.apache.poi.ss.usermodel.DataFormatter#formatRawCellContents
+                        int formatIndex = cell.getCellStyle().getDataFormat();
+                        String formatStr = cell.getCellStyle().getDataFormatString();
+                        colValues[counter] = fmt.formatRawCellContents(cv.getNumberValue(), formatIndex, formatStr);
+                        // colValues[counter] = fmt.formatCellValue(cell, this.evaluator);
                         break;
                     case DateTime:
                         // format according to dateTimeFormatter
