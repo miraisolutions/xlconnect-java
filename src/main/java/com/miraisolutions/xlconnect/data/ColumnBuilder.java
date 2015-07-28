@@ -269,6 +269,8 @@ public abstract class ColumnBuilder extends Common {
             } else {
                 switch (detectedTypes.get(counter)) {
                     case Boolean:
+                        colValues[counter] = cv.getBooleanValue() ? "true" : "false";
+                        break;
                     case Numeric:
                         // format according to Excel format
                         // see also org.apache.poi.ss.usermodel.DataFormatter#formatRawCellContents
