@@ -176,7 +176,7 @@ public abstract class ColumnBuilder extends Common {
                     case Numeric:
                         if (forceConversion) {
                             if (DateUtil.isValidExcelDate(cv.getNumberValue())) {
-                                colValues[counter] = DateUtil.getJavaDate(cv.getNumberValue());
+                                colValues[counter] = cell.getDateCellValue();
                             } else {
                                 missing[counter] = true;
                                 addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Numeric to DateTime - returning NA");
@@ -281,7 +281,7 @@ public abstract class ColumnBuilder extends Common {
                         break;
                     case DateTime:
                         // format according to dateTimeFormatter
-                        colValues[counter] = Workbook.dateTimeFormatter.format(DateUtil.getJavaDate(cv.getNumberValue()), dateTimeFormat);
+                        colValues[counter] = Workbook.dateTimeFormatter.format(cell.getDateCellValue(), dateTimeFormat);
                         break;
                     case String:
                         colValues[counter] = cv.getStringValue();
