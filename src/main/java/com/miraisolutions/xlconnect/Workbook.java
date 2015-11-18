@@ -633,7 +633,7 @@ public final class Workbook extends Common {
 
         // Compute bottom right cell coordinates
         int bottomRightRow = Math.max(topLeft.getRow() + data.rows() - 1, topLeft.getRow());
-        if(header) ++bottomRightRow;
+        if(header && data.rows() > 0) ++bottomRightRow;
         int bottomRightCol = Math.max(topLeft.getCol() + data.columns() - 1, topLeft.getCol());
         // Create bottom right cell reference
         CellReference bottomRight = new CellReference(sheet.getSheetName(), bottomRightRow,
@@ -733,7 +733,7 @@ public final class Workbook extends Common {
      * @param header            If true, assume header, otherwise not
      * @param colTypes          Column data types
      * @param forceConversion   Should conversion to a less generic data type be forced?
-     * @param dataTimeFormat    Date/time format used when converting between Date and String
+     * @param dateTimeFormat    Date/time format used when converting between Date and String
      * @return                  Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
@@ -1311,7 +1311,7 @@ public final class Workbook extends Common {
      *
      * Reads the workbook if the file exists, otherwise creates a new workbook of the corresponding format.
      *
-     * @param excelfile Microsoft Excel file to read or create if not existing
+     * @param excelFile Microsoft Excel file to read or create if not existing
      * @return Instance of the workbook
      * @throws FileNotFoundException
      * @throws IOException
