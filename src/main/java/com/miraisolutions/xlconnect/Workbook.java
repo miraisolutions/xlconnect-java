@@ -1609,7 +1609,12 @@ public final class Workbook extends Common {
         }
         
         if(endRow < 0) {
-            endRow = sheet.getLastRowNum();
+            // We interpret this as "all except for the last N rows"
+            // -1 => auto-detect the last row
+            // -2 => all except for the last row
+            // -3 => all except for the last 2 rows
+            // ...
+            endRow = sheet.getLastRowNum() + endRow + 1;
             if(sheet.getRow(endRow) == null) {
                 // There is no row in this sheet
                 endRow = -1;
@@ -1620,6 +1625,8 @@ public final class Workbook extends Common {
         int maxRow = endRow;
         int minCol = startCol;
         int maxCol = endCol < 0 ? mark : endCol;
+        
+        int origEndCol = endCol;
         
         startCol = startCol < 0 ? mark : startCol;
         endCol = endCol < 0 ? -1 : endCol;
@@ -1661,6 +1668,15 @@ public final class Workbook extends Common {
         }
         if((autofitCol || startCol == mark) && !anyCell) {
             startCol = endCol = -1;
+        }
+        
+        if(origEndCol < 0) {
+            // We interpret this as "all except for the last N columns"
+            // -1 => auto-detect the last column
+            // -2 => all except for the last column
+            // -3 => all except for the last 2 columns
+            // ...
+            endCol = endCol + origEndCol + 1;
         }
         
         return new int[] {startRow, startCol, endRow, endCol};
