@@ -25,6 +25,7 @@ import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
 import java.util.*;
+
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -35,10 +36,7 @@ import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFTable;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 
 
 /**
@@ -432,7 +430,7 @@ public final class Workbook extends Common {
             for(int i = 0; i < data.columns(); i++) {
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
                 cell.setCellValue(data.getColumnName(i));
-                cell.setCellType(Cell.CELL_TYPE_STRING);
+                cell.setCellType(CellType.STRING);
                 setCellStyle(cell, styles.get(HEADER + i));
             }
 
@@ -454,11 +452,11 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             if(Double.isInfinite(doubleValues[j])) {
-                              cell.setCellType(Cell.CELL_TYPE_ERROR);
+                              cell.setCellType(CellType.ERROR);
                               cell.setCellErrorValue(FormulaError.NA.getCode());
                             } else {
                               cell.setCellValue(doubleValues[j]);
-                              cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                              cell.setCellType(CellType.NUMERIC);
                             }
                             setCellStyle(cell, cs);
                         }
@@ -472,7 +470,7 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(stringValues[j]);
-                            cell.setCellType(Cell.CELL_TYPE_STRING);
+                            cell.setCellType(CellType.STRING);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -485,7 +483,7 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(booleanValues[j]);
-                            cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                            cell.setCellType(CellType.BOOLEAN);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -498,7 +496,7 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(dateValues[j]);
-                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                            cell.setCellType(CellType.NUMERIC);
                             setCellStyle(cell, cs);
                         }
                     }
@@ -508,11 +506,6 @@ public final class Workbook extends Common {
             }
 
             ++colIndex;
-        }
-
-        // Force formula recalculation for HSSFSheet
-        if(isHSSF()) {
-            ((HSSFSheet)sheet).setForceFormulaRecalculation(true);
         }
     }
 
@@ -627,7 +620,7 @@ public final class Workbook extends Common {
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
 
-        AreaReference aref = new AreaReference(cname.getRefersToFormula());
+        AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get upper left corner
         CellReference topLeft = aref.getFirstCell();
 
@@ -659,7 +652,7 @@ public final class Workbook extends Common {
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
 
-        AreaReference aref = new AreaReference(cname.getRefersToFormula());
+        AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get name corners (top left, bottom right)
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
@@ -811,7 +804,7 @@ public final class Workbook extends Common {
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
         
-        AreaReference aref = new AreaReference(cname.getRefersToFormula());
+        AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get name corners (top left, bottom right)
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
@@ -858,13 +851,13 @@ public final class Workbook extends Common {
         // +1 since we want to include the
         anchor.setRow2(bottomRight.getRow() + 1);
         anchor.setCol2(bottomRight.getCol() + 1);
-        anchor.setAnchorType(ClientAnchor.DONT_MOVE_AND_RESIZE);
+        anchor.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
 
         Picture picture = drawing.createPicture(anchor, imageIndex);
         if(originalSize) picture.resize();
     }
 
-    public void addImage(String filename, String name, boolean originalSize) throws FileNotFoundException, IOException {
+    public void addImage(String filename, String name, boolean originalSize) throws IOException {
         addImage(new File(filename), name, originalSize);
     }
 
@@ -909,9 +902,7 @@ public final class Workbook extends Common {
 
     public void hideSheet(int sheetIndex, boolean veryHidden) {
         setAlternativeActiveSheet(sheetIndex);
-        workbook.setSheetHidden(sheetIndex, veryHidden ? 
-            org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_VERY_HIDDEN :
-            org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_HIDDEN);
+        workbook.setSheetVisibility(sheetIndex, veryHidden ? SheetVisibility.VERY_HIDDEN : SheetVisibility.HIDDEN);
     }
 
     public void hideSheet(String sheetName, boolean veryHidden) {
@@ -919,7 +910,7 @@ public final class Workbook extends Common {
     }
 
     public void unhideSheet(int sheetIndex) {
-        workbook.setSheetHidden(sheetIndex, org.apache.poi.ss.usermodel.Workbook.SHEET_STATE_VISIBLE);
+        workbook.setSheetVisibility(sheetIndex, SheetVisibility.VISIBLE);
     }
 
     public void unhideSheet(String sheetName) {
@@ -976,18 +967,18 @@ public final class Workbook extends Common {
         workbook.write(os);
     }
     
-    public void save(File f) throws FileNotFoundException, IOException {
+    public void save(File f) throws IOException {
         this.excelFile = f;
         FileOutputStream fos = new FileOutputStream(f, false);
         save(fos);
         fos.close();
     }
 
-    public void save(String file) throws FileNotFoundException, IOException {
+    public void save(String file) throws IOException {
         save(new File(file));
     }
 
-    public void save() throws FileNotFoundException, IOException {
+    public void save() throws IOException {
         save(excelFile);
     }
 
@@ -1065,17 +1056,17 @@ public final class Workbook extends Common {
 
     private void setMissing(Cell cell) {
         if(missingValue.length < 1 || missingValue[0] == null)
-            cell.setCellType(Cell.CELL_TYPE_BLANK);
+            cell.setCellType(CellType.BLANK);
         else {
             if(missingValue[0] instanceof String) {
                 cell.setCellValue((String) missingValue[0]);
             } else if(missingValue[0] instanceof Double) {
                 cell.setCellValue(((Double) missingValue[0]).doubleValue());
             } else {
-                cell.setCellType(Cell.CELL_TYPE_BLANK);
+                cell.setCellType(CellType.BLANK);
                 return;
             }
-            cell.setCellType(Cell.CELL_TYPE_STRING);
+            cell.setCellType(CellType.STRING);
             setCellStyle(cell, DataFormatOnlyCellStyle.get(DataType.String));
         }
     }
@@ -1146,7 +1137,7 @@ public final class Workbook extends Common {
     }
     
     public void setCellStyle(String formula, CellStyle cs) {
-        AreaReference aref = new AreaReference(formula);
+        AreaReference aref = new AreaReference(formula, workbook.getSpreadsheetVersion());
         String sheetName = aref.getFirstCell().getSheetName();
         if(sheetName == null) {
             throw new IllegalArgumentException("Invalid formula reference - should be of the form Sheet!A1:B10");
@@ -1345,11 +1336,11 @@ public final class Workbook extends Common {
         return getWorkbook(excelFile, null, create);
     }
 
-    public static Workbook getWorkbook(String filename, String password, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+    public static Workbook getWorkbook(String filename, String password, boolean create) throws IOException, InvalidFormatException {
         return Workbook.getWorkbook(new File(filename), password, create);
     }
     
-    public static Workbook getWorkbook(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+    public static Workbook getWorkbook(String filename, boolean create) throws IOException, InvalidFormatException {
         return Workbook.getWorkbook(new File(filename), create);
     }
     
@@ -1366,7 +1357,7 @@ public final class Workbook extends Common {
     }
     
     public void setCellFormula(String formulaDest, String formulaString) {
-        AreaReference aref = new AreaReference(formulaDest);
+        AreaReference aref = new AreaReference(formulaDest, workbook.getSpreadsheetVersion());
         String sheetName = aref.getFirstCell().getSheetName();
         Sheet sheet = getSheet(sheetName);
         
@@ -1576,19 +1567,14 @@ public final class Workbook extends Common {
     public void setSheetColor(int sheetIndex, int color) {
         if(isXSSF()) {
             Sheet sheet = workbook.getSheetAt(sheetIndex);
-            ((XSSFSheet)sheet).setTabColor(color);
+            ((XSSFSheet)sheet).setTabColor(new XSSFColor(IndexedColors.fromInt(color)));
         } else if(isHSSF()) {
-            
+            addWarning("Setting the sheet color for XLS files is not supported yet.");
         }      
     }
 
     public void setSheetColor(String sheetName, int color) {
-        if(isXSSF()) {
-            Sheet sheet = workbook.getSheet(sheetName);
-            ((XSSFSheet)sheet).setTabColor(color);
-        } else if(isHSSF()) {
-            addWarning("Setting the sheet color for XLS files is not supported yet.");
-        }   
+        setSheetColor(workbook.getSheetIndex(sheetName), color);
     }
     
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
@@ -1641,7 +1627,7 @@ public final class Workbook extends Common {
                 boolean anyNonBlank = false;
                 for(int j = start; j > -1 && j < end; j++) {
                     Cell c = r.getCell(j);
-                    if(c != null && c.getCellType() != Cell.CELL_TYPE_BLANK) {
+                    if(c != null && c.getCellTypeEnum() != CellType.BLANK) {
                         anyCell = true;
                         anyNonBlank = true;
                         if((autofitCol || minCol < 0) && (topLeft == null || j < startCol)) {

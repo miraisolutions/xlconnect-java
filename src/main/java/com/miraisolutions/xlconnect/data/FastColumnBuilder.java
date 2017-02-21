@@ -41,24 +41,24 @@ public class FastColumnBuilder extends ColumnBuilder {
     protected void handleCell(Cell c, CellValue cv) {
         String msg;
         // Determine (evaluated) cell data type
-        switch(cv.getCellType()) {
-            case Cell.CELL_TYPE_BLANK:
+        switch(cv.getCellTypeEnum()) {
+            case BLANK:
                 addMissing();
                 return;
-            case Cell.CELL_TYPE_BOOLEAN:
+            case BOOLEAN:
                 addValue(c, cv, DataType.Boolean);
                 break;
-            case Cell.CELL_TYPE_NUMERIC:
+            case NUMERIC:
                 addValue(c, cv, DataType.Numeric);
                 break;
-            case Cell.CELL_TYPE_STRING:
+            case STRING:
                 addValue(c, cv, DataType.String);
                 break;
-            case Cell.CELL_TYPE_FORMULA:
+            case FORMULA:
                 msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!";
                 cellError(msg);
                 break;
-            case Cell.CELL_TYPE_ERROR:
+            case ERROR:
                 msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
                 cellError(msg);
                 break;

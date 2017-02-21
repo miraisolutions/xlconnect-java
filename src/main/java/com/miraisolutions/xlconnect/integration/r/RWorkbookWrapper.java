@@ -39,11 +39,11 @@ public final class RWorkbookWrapper {
 
     private final Workbook workbook;
 
-    public RWorkbookWrapper(String filename, String password, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+    public RWorkbookWrapper(String filename, String password, boolean create) throws IOException, InvalidFormatException {
         this.workbook = Workbook.getWorkbook(filename, password, create);
     }
     
-    public RWorkbookWrapper(String filename, boolean create) throws FileNotFoundException, IOException, InvalidFormatException {
+    public RWorkbookWrapper(String filename, boolean create) throws IOException, InvalidFormatException {
         this.workbook = Workbook.getWorkbook(filename, create);
     }
 
@@ -357,11 +357,11 @@ public final class RWorkbookWrapper {
             workbook.onErrorCell(ErrorBehavior.WARN);
     }
 
-    public void save(String file) throws FileNotFoundException, IOException {
+    public void save(String file) throws IOException {
         workbook.save(file);
     }
 
-    public void save() throws FileNotFoundException, IOException {
+    public void save() throws IOException {
         workbook.save();
     }
 
