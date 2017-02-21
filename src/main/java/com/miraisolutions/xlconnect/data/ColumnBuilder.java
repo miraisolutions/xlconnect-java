@@ -79,8 +79,8 @@ public abstract class ColumnBuilder extends Common {
         // Try to evaluate cell;
         // report an error if this fails
         try {
-            int cellType = this.takeCached ? c.getCellType() : evaluator.evaluateFormulaCell(c);
-            if (cellType == Cell.CELL_TYPE_ERROR) {
+            CellType cellType = this.takeCached ? c.getCellTypeEnum() : evaluator.evaluateFormulaCellEnum(c);
+            if (cellType == CellType.ERROR) {
                 msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(c.getErrorCellValue());
                 cellError(msg);
                 return;
@@ -323,24 +323,24 @@ public abstract class ColumnBuilder extends Common {
     // extracts the cached value from a cell without re-evaluating
     // the formula. returns null if the cell is blank.
     protected CellValue getCachedCellValue(Cell cell) {
-        int valueType = cell.getCellType();
-        if (valueType == Cell.CELL_TYPE_FORMULA) {
-            valueType = cell.getCachedFormulaResultType();
+        CellType valueType = cell.getCellTypeEnum();
+        if (valueType == CellType.FORMULA) {
+            valueType = cell.getCachedFormulaResultTypeEnum();
         }
         switch (valueType) {
-            case Cell.CELL_TYPE_BLANK:
+            case BLANK:
                 return null;
-            case Cell.CELL_TYPE_BOOLEAN:
+            case BOOLEAN:
                 if (cell.getBooleanCellValue()) {
                     return CellValue.TRUE;
                 } else {
                     return CellValue.FALSE;
                 }
-            case Cell.CELL_TYPE_NUMERIC:
+            case NUMERIC:
                 return new CellValue(cell.getNumericCellValue());
-            case Cell.CELL_TYPE_STRING:
+            case STRING:
                 return new CellValue(cell.getStringCellValue());
-            case Cell.CELL_TYPE_ERROR:
+            case ERROR:
                 return CellValue.getError(cell.getErrorCellValue());
             default:
                 String msg = String.format("Could not extract value from cell with cached value type %d", valueType);

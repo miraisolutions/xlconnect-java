@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.AreaReference;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.ClientAnchor;
@@ -55,6 +55,7 @@ import org.apache.poi.ss.usermodel.Picture;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.WorkbookUtil;
@@ -68,8 +69,15 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
-        String file = "/home/mstuder/test.xlsx";
-        File f = new File(file);
+        String file = "/home/mstuder/Downloads/SEA 05 Staffing Call 2 Test.xlsx";
+        org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook(file);
+        Name name = wb.getName("Data");
+        AreaReference ref = AreaReference.generateContiguous(name.getRefersToFormula())[0];
+
+        // AreaReference ref = new AreaReference(name.getRefersToFormula(), SpreadsheetVersion.EXCEL2007);
+
+
+      /*  File f = new File(file);
         if(f.exists()) f.delete();
         Workbook wb = Workbook.getWorkbook(f, true);
         wb.setStyleAction(StyleAction.DATATYPE);
@@ -84,7 +92,7 @@ public class App
         wb.createSheet("data");
         wb.writeWorksheet(df, "data", true);
         wb.save();
-        printDataFrame(df);
+        printDataFrame(df);*/
         
     }
 
