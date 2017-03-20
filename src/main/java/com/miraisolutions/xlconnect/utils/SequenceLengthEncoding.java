@@ -5,8 +5,9 @@ import java.util.Iterator;
 public class SequenceLengthEncoding {
     private final int[] values;
     private final int[] cumLengths;
+    private final int increment;
 
-    public SequenceLengthEncoding(int[] values, int[] lengths) {
+    public SequenceLengthEncoding(int[] values, int[] lengths, int increment) {
         if(values.length != lengths.length) throw new IllegalArgumentException("Arrays must be of same length");
         for(int i = 0; i < lengths.length; i++) {
             if(lengths[i] < 1) throw new IllegalArgumentException("Lengths must be greater than zero!");
@@ -14,6 +15,7 @@ public class SequenceLengthEncoding {
 
         this.values = values;
         this.cumLengths = cumulativeLengths(lengths);
+        this.increment = increment;
     }
 
     public Iterator<Integer> iterator() {
@@ -49,20 +51,17 @@ public class SequenceLengthEncoding {
             return elems;
         }
 
-        @Override
         public boolean hasNext() {
             return i < length();
         }
 
-        @Override
         public Integer next() {
-            int result = values[chunk] + (i - elemsInPrevChunks());
+            int result = values[chunk] + (i - elemsInPrevChunks()) * increment;
             i += 1;
             if(i >= cumLengths[chunk]) chunk += 1;
             return result;
         }
 
-        @Override
         public void remove() {}
     }
 }
