@@ -26,6 +26,7 @@ import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
 import java.util.*;
 
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -1120,7 +1121,7 @@ public final class Workbook extends Common {
         return new SSCellStyle(workbook, cell.getCellStyle());
     }
 
-    public void setCellStyle(Cell c, CellStyle cs) {
+    private void setCellStyle(Cell c, CellStyle cs) {
         if(cs != null) {
             if(cs instanceof HCellStyle) {
                 HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
@@ -1135,20 +1136,32 @@ public final class Workbook extends Common {
             }
         }
     }
-    
-    public void setCellStyle(String formula, CellStyle cs) {
+
+    private interface CellFunction {
+        void apply(Cell cell);
+    }
+
+    private void foreachReferencedCell(String formula, CellFunction function) {
         AreaReference aref = new AreaReference(formula, workbook.getSpreadsheetVersion());
         String sheetName = aref.getFirstCell().getSheetName();
         if(sheetName == null) {
             throw new IllegalArgumentException("Invalid formula reference - should be of the form Sheet!A1:B10");
         }
         Sheet sheet = getSheet(sheetName);
-        
+
         CellReference[] crefs = aref.getAllReferencedCells();
         for(CellReference cref : crefs) {
-            Cell c = getCell(sheet, cref.getRow(), cref.getCol());
-            setCellStyle(c, cs);
+            Cell cell = getCell(sheet, cref.getRow(), cref.getCol());
+            function.apply(cell);
         }
+    }
+    
+    public void setCellStyle(String formula, final CellStyle cs) {
+        foreachReferencedCell(formula, new CellFunction() {
+            public void apply(Cell cell) {
+                setCellStyle(cell, cs);
+            }
+        });
     }
 
     public void setCellStyle(int sheetIndex, int row, int col, CellStyle cs) {
@@ -1159,6 +1172,30 @@ public final class Workbook extends Common {
     public void setCellStyle(String sheetName, int row, int col, CellStyle cs) {
         Cell c = getCell(getSheet(sheetName), row, col);
         setCellStyle(c, cs);
+    }
+
+    private void setHyperlink(Cell cell, HyperlinkType type, String address) {
+        Hyperlink link = workbook.getCreationHelper().createHyperlink(type);
+        link.setAddress(address);
+        cell.setHyperlink(link);
+    }
+
+    public void setHyperlink(String formula, final HyperlinkType type, final String address) {
+        foreachReferencedCell(formula, new CellFunction() {
+            public void apply(Cell cell) {
+                setHyperlink(cell, type, address);
+            }
+        });
+    }
+
+    public void setHyperlink(int sheetIndex, int row, int col, HyperlinkType type, String address) {
+        Cell cell = getCell(getSheet(sheetIndex), row, col);
+        setHyperlink(cell, type, address);
+    }
+
+    public void setHyperlink(String sheetName, int row, int col, HyperlinkType type, String address) {
+        Cell cell = getCell(getSheet(sheetName), row, col);
+        setHyperlink(cell, type, address);
     }
 
     /**
@@ -1356,16 +1393,12 @@ public final class Workbook extends Common {
         c.setCellFormula(formula);
     }
     
-    public void setCellFormula(String formulaDest, String formulaString) {
-        AreaReference aref = new AreaReference(formulaDest, workbook.getSpreadsheetVersion());
-        String sheetName = aref.getFirstCell().getSheetName();
-        Sheet sheet = getSheet(sheetName);
-        
-        CellReference[] crefs = aref.getAllReferencedCells();
-        for(CellReference cref : crefs) {
-            Cell c = getCell(sheet, cref.getRow(), cref.getCol());
-            setCellFormula(c, formulaString);
-        }
+    public void setCellFormula(String formula, final String formulaString) {
+        foreachReferencedCell(formula, new CellFunction() {
+            public void apply(Cell cell) {
+                setCellFormula(cell, formulaString);
+            }
+        });
     }
 
     public void setCellFormula(int sheetIndex, int row, int col, String formula) {

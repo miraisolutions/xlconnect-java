@@ -2,9 +2,17 @@ package com.miraisolutions.xlconnect.utils;
 
 import java.util.Iterator;
 
+/**
+ * Sequence Length Encoding
+ *
+ * Encodes a sequence of values as a set of sub-sequences with a certain step size (increment).
+ */
 public class SequenceLengthEncoding {
+    // Start values of sub-sequences
     private final int[] values;
+    // Sub-sequence lengths
     private final int[] cumLengths;
+    // Sequence increment / step size
     private final int increment;
 
     public SequenceLengthEncoding(int[] values, int[] lengths, int increment) {
@@ -18,14 +26,17 @@ public class SequenceLengthEncoding {
         this.increment = increment;
     }
 
+    /** Sequence iterator */
     public Iterator<Integer> iterator() {
         return new SequenceIterator();
     }
 
+    /** Sequence length */
     public int length() {
         return cumLengths[cumLengths.length - 1];
     }
 
+    /** Calculates the cumulative length of the sub-sequences */
     private static int[] cumulativeLengths(int[] lengths) {
         int[] cum = new int[lengths.length];
         int total = 0;

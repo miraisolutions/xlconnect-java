@@ -29,6 +29,10 @@ import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Iterator;
+
+import com.miraisolutions.xlconnect.utils.SequenceLengthEncoding;
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 /**
@@ -302,16 +306,58 @@ public final class RWorkbookWrapper {
         workbook.setStyleNamePrefix(prefix);
     }
 
-    public void setCellStyle(String sheetName, int row, int col, RCellStyleWrapper cellStyle) {
-        workbook.setCellStyle(sheetName, row, col, cellStyle.cellStyle);
+    private interface RowColFunction {
+        void apply(int row, int col);
     }
 
-    public void setCellStyle(int sheetIndex, int row, int col, RCellStyleWrapper cellStyle) {
-        workbook.setCellStyle(sheetIndex, row, col, cellStyle.cellStyle);
+    private void foreachRowCol(SequenceLengthEncoding row, SequenceLengthEncoding col, RowColFunction function) {
+        Iterator<Integer> rowIt = row.iterator();
+        Iterator<Integer> colIt = col.iterator();
+        while(rowIt.hasNext() && colIt.hasNext()) function.apply(rowIt.next(), colIt.next());
+    }
+
+    public void setCellStyle(final String sheetName, SequenceLengthEncoding row, SequenceLengthEncoding col,
+        final RCellStyleWrapper cellStyle) {
+        foreachRowCol(row, col, new RowColFunction() {
+            public void apply(int row, int col) {
+                workbook.setCellStyle(sheetName, row, col, cellStyle.cellStyle);
+            }
+        });
+    }
+
+    public void setCellStyle(final int sheetIndex, SequenceLengthEncoding row, SequenceLengthEncoding col,
+        final RCellStyleWrapper cellStyle) {
+        foreachRowCol(row, col, new RowColFunction() {
+            public void apply(int row, int col) {
+                workbook.setCellStyle(sheetIndex, row, col, cellStyle.cellStyle);
+            }
+        });
     }
     
     public void setCellStyle(String formula, RCellStyleWrapper cellStyle) {
         workbook.setCellStyle(formula, cellStyle.cellStyle);
+    }
+
+    public void setHyperlink(final int sheetIndex, SequenceLengthEncoding row, SequenceLengthEncoding col,
+        final String type, final String address) {
+        foreachRowCol(row, col, new RowColFunction() {
+            public void apply(int row, int col) {
+                workbook.setHyperlink(sheetIndex, row, col, HyperlinkType.valueOf(type), address);
+            }
+        });
+    }
+
+    public void setHyperlink(final String sheetName, SequenceLengthEncoding row, SequenceLengthEncoding col,
+                             final String type, final String address) {
+        foreachRowCol(row, col, new RowColFunction() {
+            public void apply(int row, int col) {
+                workbook.setHyperlink(sheetName, row, col, HyperlinkType.valueOf(type), address);
+            }
+        });
+    }
+
+    public void setHyperlink(String formula, String type, String address) {
+        workbook.setHyperlink(formula, HyperlinkType.valueOf(type), address);
     }
 
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
