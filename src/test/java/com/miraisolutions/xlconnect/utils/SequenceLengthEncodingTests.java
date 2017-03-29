@@ -18,24 +18,39 @@ public class SequenceLengthEncodingTests {
         assertArrayEquals(sleToIntArray(sle), expected);
     }
 
-    @Test
-    public void testEncodingIncrement2() {
+    private SequenceLengthEncoding createSleIncrement2() {
         int[] values = { 2, 9, 12 };
         int[] lengths = { 4, 1, 3 };
         int increment = 2;
-        int[] expected = { 2, 4, 6, 8, 9, 12, 14, 16 };
-        SequenceLengthEncoding sle = new SequenceLengthEncoding(values, lengths, increment);
+        return new SequenceLengthEncoding(values, lengths, increment);
+    }
 
+    @Test
+    public void testEncodingIncrement2() {
+        SequenceLengthEncoding sle = createSleIncrement2();
+        int[] expected = { 2, 4, 6, 8, 9, 12, 14, 16 };
         assertArrayEquals(sleToIntArray(sle), expected);
     }
 
-    private static int[] sleToIntArray(SequenceLengthEncoding sle) {
-        int[] values = new int[sle.length()];
-        Iterator<Integer> it = sle.iterator();
-        int i = 0;
-        while(it.hasNext()) {
-            values[i++] = it.next();
+    @Test
+    public void testRepeatingEncodingIncrement2() {
+        SequenceLengthEncoding sle = createSleIncrement2();
+        int[] expected = { 2, 4, 6, 8, 9, 12, 14, 16, 2, 4, 6, 8, 9, 12, 14, 16, 2, 4, 6 };
+        assertArrayEquals(sleToIntArray(sle, expected.length), expected);
+    }
+
+    private static int[] sleToIntArray(SequenceLengthEncoding sle, int collect) {
+        boolean repeating = collect > 0;
+        collect = repeating ? collect : sle.length();
+        int[] values = new int[collect];
+        Iterator<Integer> it = sle.iterator(repeating);
+        for(int i = 0; i < collect; i++) {
+            values[i] = it.next();
         }
         return values;
+    }
+
+    private static int[] sleToIntArray(SequenceLengthEncoding sle) {
+        return sleToIntArray(sle, 0);
     }
 }

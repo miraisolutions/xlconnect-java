@@ -7,7 +7,7 @@ import java.util.Iterator;
  *
  * Encodes a sequence of values as a set of sub-sequences with a certain step size (increment).
  */
-public class SequenceLengthEncoding {
+public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
     // Start values of sub-sequences
     private final int[] values;
     // Sub-sequence lengths
@@ -26,9 +26,20 @@ public class SequenceLengthEncoding {
         this.increment = increment;
     }
 
-    /** Sequence iterator */
+    /**
+     * Creates an iterator which iterates over this sequence.
+     * @param repeating if `true`, the iterator continues to iterate over this sequence (i.e. it 'resets' and loops
+     * over this sequence; `hasNext` always returns `true`); if `false`, the iterator stops when reaching the end
+     * of this sequence
+     * @return Sequence iterator
+     */
+    public Iterator<Integer> iterator(boolean repeating) {
+        return new SequenceIterator(repeating);
+    }
+
+    /** Creates an non-repeating sequence iterator */
     public Iterator<Integer> iterator() {
-        return new SequenceIterator();
+        return iterator(false);
     }
 
     /** Sequence length */
@@ -47,9 +58,15 @@ public class SequenceLengthEncoding {
         return cum;
     }
 
-    public class SequenceIterator implements Iterator<Integer> {
+    private class SequenceIterator implements Iterator<Integer> {
+        // Do we repeat iterating?
+        private boolean repeating = false;
         private int i = 0;
         private int chunk = 0;
+
+        public SequenceIterator(boolean repeating) {
+            this.repeating = repeating;
+        }
 
         // Number of elements in previous chunks
         private int elemsInPrevChunks() {
@@ -63,13 +80,18 @@ public class SequenceLengthEncoding {
         }
 
         public boolean hasNext() {
-            return i < length();
+            return repeating || i < length();
         }
 
         public Integer next() {
             int result = values[chunk] + (i - elemsInPrevChunks()) * increment;
             i += 1;
-            if(i >= cumLengths[chunk]) chunk += 1;
+            if(repeating && i >= SequenceLengthEncoding.this.length()) {
+                i = 0;
+                chunk = 0;
+            } else if(i >= cumLengths[chunk]) {
+                chunk += 1;
+            }
             return result;
         }
 

@@ -29,9 +29,10 @@ import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Iterator;
 
+import com.miraisolutions.xlconnect.utils.RepeatableIterableUtils;
 import com.miraisolutions.xlconnect.utils.SequenceLengthEncoding;
+import com.miraisolutions.xlconnect.utils.SimpleSequence;
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
@@ -306,57 +307,55 @@ public final class RWorkbookWrapper {
         workbook.setStyleNamePrefix(prefix);
     }
 
-    private interface RowColFunction {
-        void apply(int row, int col);
-    }
-
-    private void foreachRowCol(SequenceLengthEncoding row, SequenceLengthEncoding col, RowColFunction function) {
-        Iterator<Integer> rowIt = row.iterator();
-        Iterator<Integer> colIt = col.iterator();
-        while(rowIt.hasNext() && colIt.hasNext()) function.apply(rowIt.next(), colIt.next());
-    }
-
-    public void setCellStyle(final String sheetName, SequenceLengthEncoding row, SequenceLengthEncoding col,
-        final RCellStyleWrapper cellStyle) {
-        foreachRowCol(row, col, new RowColFunction() {
-            public void apply(int row, int col) {
-                workbook.setCellStyle(sheetName, row, col, cellStyle.cellStyle);
+    public void setCellStyleSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
+        SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
+        RepeatableIterableUtils.foreach(sheetName, row, col, cellStyle,
+            new RepeatableIterableUtils.Function4<String, Integer, Integer, RCellStyleWrapper>() {
+                public void apply(String sheet, Integer row, Integer col, RCellStyleWrapper cellStyle) {
+                    workbook.setCellStyle(sheet, row, col, cellStyle.cellStyle);
+                }
             }
-        });
+        );
     }
 
-    public void setCellStyle(final int sheetIndex, SequenceLengthEncoding row, SequenceLengthEncoding col,
-        final RCellStyleWrapper cellStyle) {
-        foreachRowCol(row, col, new RowColFunction() {
-            public void apply(int row, int col) {
-                workbook.setCellStyle(sheetIndex, row, col, cellStyle.cellStyle);
-            }
-        });
+    public void setCellStyleSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
+        SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
+        RepeatableIterableUtils.foreach(sheetIndex, row, col, cellStyle,
+                new RepeatableIterableUtils.Function4<Integer, Integer, Integer, RCellStyleWrapper>() {
+                    public void apply(Integer sheet, Integer row, Integer col, RCellStyleWrapper cellStyle) {
+                        workbook.setCellStyle(sheet, row, col, cellStyle.cellStyle);
+                    }
+                }
+        );
     }
     
-    public void setCellStyle(String formula, RCellStyleWrapper cellStyle) {
+    public void setCellStyleFormula(String formula, RCellStyleWrapper cellStyle) {
         workbook.setCellStyle(formula, cellStyle.cellStyle);
     }
 
-    public void setHyperlink(final int sheetIndex, SequenceLengthEncoding row, SequenceLengthEncoding col,
-        final String type, final String address) {
-        foreachRowCol(row, col, new RowColFunction() {
-            public void apply(int row, int col) {
-                workbook.setHyperlink(sheetIndex, row, col, HyperlinkType.valueOf(type), address);
-            }
-        });
+    public void setHyperlinkSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
+        SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
+        RepeatableIterableUtils.foreach(sheetIndex, row, col, type, address,
+                new RepeatableIterableUtils.Function5<Integer, Integer, Integer, String, String>() {
+                    public void apply(Integer sheet, Integer row, Integer col, String type, String address) {
+                        workbook.setHyperlink(sheet, row, col, HyperlinkType.valueOf(type), address);
+                    }
+                }
+        );
     }
 
-    public void setHyperlink(final String sheetName, SequenceLengthEncoding row, SequenceLengthEncoding col,
-                             final String type, final String address) {
-        foreachRowCol(row, col, new RowColFunction() {
-            public void apply(int row, int col) {
-                workbook.setHyperlink(sheetName, row, col, HyperlinkType.valueOf(type), address);
-            }
-        });
+    public void setHyperlinkSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
+        SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
+        RepeatableIterableUtils.foreach(sheetName, row, col, type, address,
+                new RepeatableIterableUtils.Function5<String, Integer, Integer, String, String>() {
+                    public void apply(String sheet, Integer row, Integer col, String type, String address) {
+                        workbook.setHyperlink(sheet, row, col, HyperlinkType.valueOf(type), address);
+                    }
+                }
+        );
     }
 
-    public void setHyperlink(String formula, String type, String address) {
+    public void setHyperlinkFormula(String formula, String type, String address) {
         workbook.setHyperlink(formula, HyperlinkType.valueOf(type), address);
     }
 
