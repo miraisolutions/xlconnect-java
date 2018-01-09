@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010 Mirai Solutions GmbH
+    Copyright (C) 2010-2018 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
 package com.miraisolutions.xlconnect;
 
 import com.miraisolutions.xlconnect.data.DataType;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+
 import java.util.EnumMap;
 
 /**
@@ -42,19 +45,19 @@ public class DataFormatOnlyCellStyle extends Common implements CellStyle {
         return dataType;
     }
 
-    public void setBorderBottom(short border) {
+    public void setBorderBottom(BorderStyle border) {
         throw new UnsupportedOperationException();
     }
 
-    public void setBorderLeft(short border) {
+    public void setBorderLeft(BorderStyle border) {
         throw new UnsupportedOperationException();
     }
 
-    public void setBorderRight(short border) {
+    public void setBorderRight(BorderStyle border) {
         throw new UnsupportedOperationException();
     }
 
-    public void setBorderTop(short border) {
+    public void setBorderTop(BorderStyle border) {
         throw new UnsupportedOperationException();
     }
 
@@ -74,7 +77,7 @@ public class DataFormatOnlyCellStyle extends Common implements CellStyle {
         throw new UnsupportedOperationException();
     }
 
-    public void setFillPattern(short bg) {
+    public void setFillPattern(FillPatternType bg) {
         throw new UnsupportedOperationException();
     }
 

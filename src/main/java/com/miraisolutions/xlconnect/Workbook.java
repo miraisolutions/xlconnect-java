@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010 Mirai Solutions GmbH
+    Copyright (C) 2010-2018 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ public final class Workbook extends Common {
         CellStyle headerStyle = getCellStyle(HEADER_STYLE);
         if(headerStyle == null) {
             headerStyle = initGeneralStyle(HEADER_STYLE);
-            headerStyle.setFillPattern(org.apache.poi.ss.usermodel.CellStyle.SOLID_FOREGROUND);
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         }
 
@@ -365,19 +365,19 @@ public final class Workbook extends Common {
     public int[] getReferenceCoordinates(String name) {
         return getReferenceCoordinatesForName(name);
     }
-    
+
     public int[] getReferenceCoordinatesForName(String name) {
         Name cname = getName(name);
-        AreaReference aref = new AreaReference(cname.getRefersToFormula());
+        AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get upper left corner
-	CellReference first = aref.getFirstCell();
+        CellReference first = aref.getFirstCell();
         // Get lower right corner
-	CellReference last = aref.getLastCell();
-	int top = first.getRow();
-	int bottom = last.getRow();
-	int left = first.getCol();
-	int right = last.getCol();
-        return new int[] {top, left, bottom, right};
+        CellReference last = aref.getLastCell();
+        int top = first.getRow();
+        int bottom = last.getRow();
+        int left = first.getCol();
+        int right = last.getCol();
+        return new int[]{top, left, bottom, right};
     }
     
     public String[] getTables(int sheetIndex) {
@@ -1552,7 +1552,7 @@ public final class Workbook extends Common {
     }
     
     public void clearRangeFromReference(String reference) {
-        AreaReference ref = new AreaReference(reference);
+        AreaReference ref = new AreaReference(reference, workbook.getSpreadsheetVersion());
         CellReference firstCell = ref.getFirstCell();
         CellReference lastCell = ref.getLastCell();
         String sheetName = firstCell.getSheetName();
@@ -1604,8 +1604,10 @@ public final class Workbook extends Common {
     
     public void setSheetColor(int sheetIndex, int color) {
         if(isXSSF()) {
-            Sheet sheet = workbook.getSheetAt(sheetIndex);
-            ((XSSFSheet)sheet).setTabColor(new XSSFColor(IndexedColors.fromInt(color)));
+            XSSFWorkbook wb = (XSSFWorkbook) workbook;
+            Sheet sheet = wb.getSheetAt(sheetIndex);
+            ((XSSFSheet)sheet).setTabColor(
+                    new XSSFColor(IndexedColors.fromInt(color), wb.getStylesSource().getIndexedColors()));
         } else if(isHSSF()) {
             addWarning("Setting the sheet color for XLS files is not supported yet.");
         }      

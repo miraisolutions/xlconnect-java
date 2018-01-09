@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010 Mirai Solutions GmbH
+    Copyright (C) 2010-2018 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@ package com.miraisolutions.xlconnect;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
 
 public class HCellStyle extends Common implements CellStyle {
 
@@ -35,19 +37,19 @@ public class HCellStyle extends Common implements CellStyle {
         this.cellStyle = cellStyle;
     }
     
-    public void setBorderBottom(short border) {
+    public void setBorderBottom(BorderStyle border) {
         cellStyle.setBorderBottom(border);
     }
 
-    public void setBorderLeft(short border) {
+    public void setBorderLeft(BorderStyle border) {
         cellStyle.setBorderLeft(border);
     }
 
-    public void setBorderRight(short border) {
+    public void setBorderRight(BorderStyle border) {
         cellStyle.setBorderRight(border);
     }
 
-    public void setBorderTop(short border) {
+    public void setBorderTop(BorderStyle border) {
         cellStyle.setBorderTop(border);
     }
 
@@ -80,7 +82,7 @@ public class HCellStyle extends Common implements CellStyle {
         cellStyle.setFillForegroundColor(fp);
     }
 
-    public void setFillPattern(short bg) {
+    public void setFillPattern(FillPatternType bg) {
         cellStyle.setFillPattern(bg);
     }
 
@@ -95,9 +97,8 @@ public class HCellStyle extends Common implements CellStyle {
     }
 
     public static HCellStyle get(HSSFWorkbook workbook, String name) {
-        HSSFWorkbook wb = (HSSFWorkbook) workbook;
         for(short i = 0; i < workbook.getNumCellStyles(); i++) {
-            HSSFCellStyle cs = wb.getCellStyleAt(i);
+            HSSFCellStyle cs = workbook.getCellStyleAt(i);
             String userStyleName = cs.getUserStyleName();
             if(userStyleName != null && cs.getUserStyleName().equals(name))
                 return new HCellStyle(workbook, cs);

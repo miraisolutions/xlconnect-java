@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010 Mirai Solutions GmbH
+    Copyright (C) 2010-2018 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 package com.miraisolutions.xlconnect.integration.r;
 
 import com.miraisolutions.xlconnect.CellStyle;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
 
 public class RCellStyleWrapper {
 
@@ -34,18 +36,21 @@ public class RCellStyleWrapper {
         assert border.length == side.length && color.length == side.length;
 
         for(int i = 0; i < side.length; i++) {
+            BorderStyle bs = BorderStyle.valueOf((short) border[i]);
+            short bc = (short) color[i];
+
             if("bottom".equals(side[i])) {
-                cellStyle.setBorderBottom((short) border[i]);
-                cellStyle.setBottomBorderColor((short) color[i]);
+                cellStyle.setBorderBottom(bs);
+                cellStyle.setBottomBorderColor(bc);
             } else if("left".equals(side[i])) {
-                cellStyle.setBorderLeft((short) border[i]);
-                cellStyle.setLeftBorderColor((short) color[i]);
+                cellStyle.setBorderLeft(bs);
+                cellStyle.setLeftBorderColor(bc);
             } else if("right".equals(side[i])) {
-                cellStyle.setBorderRight((short) border[i]);
-                cellStyle.setRightBorderColor((short) color[i]);
+                cellStyle.setBorderRight(bs);
+                cellStyle.setRightBorderColor(bc);
             } else if("top".equals(side[i])) {
-                cellStyle.setBorderTop((short) border[i]);
-                cellStyle.setTopBorderColor((short) color[i]);
+                cellStyle.setBorderTop(bs);
+                cellStyle.setTopBorderColor(bc);
             } else
                 throw new IllegalArgumentException("Undefined border side: '" + side[i] + "'");
         }
@@ -64,9 +69,7 @@ public class RCellStyleWrapper {
         cellStyle.setFillForegroundColor((short) fp);
     }
 
-    public void setFillPattern(int bg) {
-        cellStyle.setFillPattern((short) bg);
-    }
+    public void setFillPattern(int bg) { cellStyle.setFillPattern(FillPatternType.forInt(bg)); }
 
     public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);

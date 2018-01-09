@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010 Mirai Solutions GmbH
+    Copyright (C) 2010-2018 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,9 @@
 
 package com.miraisolutions.xlconnect;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -115,11 +117,11 @@ public class XCellStyle extends Common implements CellStyle {
         return xf.getAlignment();
     }
 
-    public void setBorderBottom(short border) {
+    public void setBorderBottom(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetBottom() ? ct.getBottom() : ct.addNewBottom();
-        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetBottom();
-        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+        if(border == BorderStyle.NONE) ct.unsetBottom();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
 
@@ -129,11 +131,11 @@ public class XCellStyle extends Common implements CellStyle {
         getCoreXf().setBorderId(idx);
     }
 
-    public void setBorderLeft(short border) {
+    public void setBorderLeft(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetLeft() ? ct.getLeft() : ct.addNewLeft();
-        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetLeft();
-        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+        if(border == BorderStyle.NONE) ct.unsetLeft();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
 
@@ -143,11 +145,11 @@ public class XCellStyle extends Common implements CellStyle {
         getCoreXf().setBorderId(idx);
     }
 
-    public void setBorderRight(short border) {
+    public void setBorderRight(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetRight() ? ct.getRight() : ct.addNewRight();
-        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetRight();
-        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+        if(border == BorderStyle.NONE) ct.unsetRight();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
 
@@ -157,11 +159,11 @@ public class XCellStyle extends Common implements CellStyle {
         getCoreXf().setBorderId(idx);
     }
 
-    public void setBorderTop(short border) {
+    public void setBorderTop(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetTop() ? ct.getTop() : ct.addNewTop();
-        if(border == org.apache.poi.ss.usermodel.CellStyle.BORDER_NONE) ct.unsetTop();
-        else pr.setStyle(STBorderStyle.Enum.forInt(border + 1));
+        if(border == BorderStyle.NONE) ct.unsetTop();
+        else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
 
@@ -279,7 +281,8 @@ public class XCellStyle extends Common implements CellStyle {
             ptrn.setBgColor(color.getCTColor());
         }
 
-        int idx = workbook.getStylesSource().putFill(new XSSFCellFill(ct));
+        StylesTable stylesTable = workbook.getStylesSource();
+        int idx = stylesTable.putFill(new XSSFCellFill(ct, stylesTable.getIndexedColors()));
 
         CTXf xf = getXf();
         xf.setFillId(idx);
@@ -304,7 +307,8 @@ public class XCellStyle extends Common implements CellStyle {
             ptrn.setFgColor(color.getCTColor());
         }
 
-        int idx = workbook.getStylesSource().putFill(new XSSFCellFill(ct));
+        StylesTable stylesTable = workbook.getStylesSource();
+        int idx = stylesTable.putFill(new XSSFCellFill(ct, stylesTable.getIndexedColors()));
 
         CTXf xf = getXf();
         xf.setFillId(idx);
@@ -318,13 +322,14 @@ public class XCellStyle extends Common implements CellStyle {
         setFillForegroundColor(clr);
     }
 
-    public void setFillPattern(short fp) {
+    public void setFillPattern(FillPatternType fp) {
         CTFill ct = getCTFill();
         CTPatternFill ptrn = ct.isSetPatternFill() ? ct.getPatternFill() : ct.addNewPatternFill();
-        if(fp == org.apache.poi.ss.usermodel.CellStyle.NO_FILL && ptrn.isSetPatternType()) ptrn.unsetPatternType();
-        else ptrn.setPatternType(STPatternType.Enum.forInt(fp + 1));
+        if(fp == FillPatternType.NO_FILL && ptrn.isSetPatternType()) ptrn.unsetPatternType();
+        else ptrn.setPatternType(STPatternType.Enum.forInt(fp.getCode() + 1));
 
-        int idx = workbook.getStylesSource().putFill(new XSSFCellFill(ct));
+        StylesTable stylesTable = workbook.getStylesSource();
+        int idx = stylesTable.putFill(new XSSFCellFill(ct, stylesTable.getIndexedColors()));
 
         CTXf xf = getXf();
         xf.setFillId(idx);
