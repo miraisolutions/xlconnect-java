@@ -1126,6 +1126,10 @@ public final class Workbook extends Common {
         return new SSCellStyle(workbook, cell.getCellStyle());
     }
 
+    public boolean existsCellStyle(String name) {
+        return getCellStyle(name) != null;
+    }
+
     private void setCellStyle(Cell c, CellStyle cs) {
         if(cs != null) {
             if(cs instanceof HCellStyle) {
