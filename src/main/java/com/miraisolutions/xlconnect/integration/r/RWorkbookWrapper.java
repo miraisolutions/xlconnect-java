@@ -117,10 +117,10 @@ public final class RWorkbookWrapper {
         return ctypes;
     }
 
-    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
+    public RDataFrameWrapper readNamedRegion(String worksheetName, String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
                                              String readStrategy) {
-        DataFrame dataFrame = workbook.readNamedRegion(name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
+        DataFrame dataFrame = workbook.readNamedRegion(worksheetName, name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
