@@ -117,9 +117,9 @@ public final class RWorkbookWrapper {
         return ctypes;
     }
 
-    public RDataFrameWrapper readNamedRegion(String worksheetName, String name, boolean header, String[] colTypes,
+    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
-                                             String readStrategy) {
+                                             String readStrategy, String worksheetName) {
         DataFrame dataFrame = workbook.readNamedRegion(worksheetName, name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
@@ -413,8 +413,8 @@ public final class RWorkbookWrapper {
         return workbook.getReferenceCoordinates(name);
     }
 
-    public int[] getReferenceCoordinatesForName(String name) {
-        return workbook.getReferenceCoordinatesForName(name);
+    public int[] getReferenceCoordinatesForName(String name, String worksheetName) {
+        return workbook.getReferenceCoordinatesForName(worksheetName, name);
     }
 
     public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
