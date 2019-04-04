@@ -325,11 +325,11 @@ public final class Workbook {
 
     // Keep for backwards compatibility
     public int[] getReferenceCoordinates(String name) {
-        return getReferenceCoordinatesForName(name);
+        return getReferenceCoordinatesForName(null, name);
     }
 
-    public int[] getReferenceCoordinatesForName(String name) {
-        Name cname = getName(name);
+    public int[] getReferenceCoordinatesForName(String worksheetName, String name) {
+        Name cname = worksheetName == null ? getName(name) : getNameForWorksheet(worksheetName, name);
         AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get upper left corner
         CellReference first = aref.getFirstCell();
