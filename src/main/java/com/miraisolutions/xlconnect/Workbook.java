@@ -639,7 +639,7 @@ public final class Workbook extends Common {
                 bottomRightCol, true, true);
 
         // Define named range area
-        aref = new AreaReference(topLeft, bottomRight);
+        aref = new AreaReference(topLeft, bottomRight, workbook.getSpreadsheetVersion());
         // Redefine named range
         cname.setRefersToFormula(aref.formatAsString());
 

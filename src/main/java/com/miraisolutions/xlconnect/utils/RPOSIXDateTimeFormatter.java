@@ -20,10 +20,15 @@
 
 package com.miraisolutions.xlconnect.utils;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import org.joda.time.format.DateTimeFormatterBuilder;
 
 /**
  * Inspired by http://code.google.com/p/renjin/source/browse/trunk/core/src/main/java/r/base/Time.java?spec=svn379&r=379
@@ -31,9 +36,9 @@ import org.joda.time.format.DateTimeFormatterBuilder;
  */
 public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
 
-    private Map<String, org.joda.time.format.DateTimeFormatter> cache = new HashMap<String, org.joda.time.format.DateTimeFormatter>();
+    private Map<String, java.time.format.DateTimeFormatter> cache = new HashMap<>();
 
-    private org.joda.time.format.DateTimeFormatter getFormatter(String format) {
+    private java.time.format.DateTimeFormatter getFormatter(String format) {
         if(cache.containsKey(format))
             return cache.get(format);
         
@@ -49,22 +54,22 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
             case 'a':
               // Abbreviated weekday name in the current locale. (Also matches
               // full name on input.)
-              builder.appendDayOfWeekShortText();
+              builder.appendText(ChronoField.DAY_OF_WEEK, TextStyle.SHORT);
               break;
             case 'A':
               // Full weekday name in the current locale.  (Also matches
               // abbreviated name on input.)
-              builder.appendDayOfWeekText();
+              builder.appendText(ChronoField.DAY_OF_WEEK, TextStyle.FULL);
               break;
             case 'b':
               // Abbreviated month name in the current locale. (Also matches
               // full name on input.)
-              builder.appendMonthOfYearShortText();
+                builder.appendText(ChronoField.MONTH_OF_YEAR, TextStyle.SHORT);
               break;
             case 'B':
               // Full month name in the current locale.  (Also matches
               // abbreviated name on input.)
-              builder.appendMonthOfYearText();
+                builder.appendText(ChronoField.MONTH_OF_YEAR, TextStyle.FULL);
               break;
             case 'c':
               //  Date and time.  Locale-specific on output, �"%a %b %e
@@ -72,32 +77,32 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               throw new UnsupportedOperationException("%c not yet implemented");
             case 'd':
               // Day of the month as decimal number (01-31).
-              builder.appendDayOfMonth(2);
+                builder.appendValue(ChronoField.DAY_OF_MONTH,2);
               break;
             case 'H':
               // Hours as decimal number (00-23).
-              builder.appendHourOfDay(2);
+              builder.appendValue(ChronoField.HOUR_OF_DAY, 2);
               break;
             case 'I':
               // Hours as decimal number (01-12).
-              builder.appendHourOfHalfday(2);
+              builder.appendValue(ChronoField.CLOCK_HOUR_OF_AMPM, 2);
               break;
             case 'j':
               // Day of year as decimal number (001-366).
-              builder.appendDayOfYear(3);
+              builder.appendValue(ChronoField.DAY_OF_YEAR,3);
               break;
             case 'm':
               // Month as decimal number (01-12).
-              builder.appendMonthOfYear(2);
+                builder.appendValue(ChronoField.MONTH_OF_YEAR, 2);
               break;
             case 'M':
               // Minute as decimal number (00-59).
-              builder.appendMinuteOfHour(2);
+                builder.appendValue(ChronoField.MINUTE_OF_HOUR, 2);
               break;
             case 'p':
               // AM/PM indicator in the locale.  Used in conjunction with �%I�
               // and *not* with �%H�.  An empty string in some locales.
-              builder.appendHalfdayOfDayText();
+              builder.appendText(ChronoField.AMPM_OF_DAY);
               break;
             case 'O':
               if(i+1>=format.length()) {
@@ -110,10 +115,10 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
                       n = Integer.parseInt(Character.toString(format.charAt(++i)));
                   }
                   
-                  builder.appendSecondOfMinute(2);
+                  builder.appendValue(ChronoField.SECOND_OF_MINUTE);
                   if(n > 0) {
                       builder.appendLiteral('.');
-                      builder.appendFractionOfSecond(n, n);
+                      builder.appendFraction(ChronoField.SECOND_OF_MINUTE,2,2, true);
                   }
                   
                   break;
@@ -128,7 +133,7 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               // leap seconds).
               // TODO: I have no idea what the docs are talking about in relation
               // to leap seconds
-              builder.appendSecondOfMinute(2);
+              builder.appendValue(ChronoField.SECOND_OF_MINUTE,2);
               break;
               // case 'U':
               // Week of the year as decimal number (00-53) using Sunday as
@@ -153,24 +158,21 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               // the 2004 POSIX standard, but it does also say �it is expected
               // that in a future version the default century inferred from a
               // 2-digit year will change�.
-              builder.appendTwoDigitYear(1968, true);
+              builder.appendValueReduced(ChronoField.YEAR, 2, 2, 1969);
               break;
             case 'Y':
               // Year with century
-              builder.appendYear(1,4);
+              builder.appendValue(ChronoField.YEAR,4);
               break;
             case 'z':
               // Signed offset in hours and minutes from UTC, so �-0800� is 8
               // hours behind UTC.
-              builder.appendTimeZoneOffset(null /* always show offset, even when zero */,
-                  true /* show seperators */,
-                  1 /* min fields (hour, minute, etc) */,
-                  2 /* max fields */ );
+                builder.appendOffset("+HH:mm", "+0000");
               break;
             case 'Z':
               // (output only.) Time zone as a character string (empty if not
               // available).
-              builder.appendTimeZoneName();
+              builder.appendZoneOrOffsetId();
               break;
             default:
               throw new UnsupportedOperationException("%" + specifier + " not yet implemented");
@@ -179,19 +181,19 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
             builder.appendLiteral(format.substring(i,i+1));
           }
         }
-        org.joda.time.format.DateTimeFormatter formatter = builder.toFormatter();
+        java.time.format.DateTimeFormatter formatter = builder.toFormatter();
         cache.put(format, formatter);
         return formatter;
     }
 
     public String format(Date d, String format) {
         StringBuffer sb = new StringBuffer();
-        getFormatter(format).printTo(sb, new org.joda.time.DateTime(d));
+        getFormatter(format).formatTo(ZonedDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault()), sb);
         return sb.toString();
     }
 
     public Date parse(String s, String format) {
-        return getFormatter(format).parseDateTime(s).toDate();
+        return new Date(Instant.from(getFormatter(format).parse(s)).toEpochMilli());
     }
 
 }
