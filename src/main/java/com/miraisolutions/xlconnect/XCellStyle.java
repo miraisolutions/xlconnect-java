@@ -24,10 +24,7 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.model.StylesTable;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellAlignment;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellFill;
@@ -52,6 +49,7 @@ public class XCellStyle extends Common implements CellStyle {
     private final XSSFWorkbook workbook;
     private final int xfId, styleXfId;
     private XSSFCellAlignment cellAlignment;
+    private IndexedColorMap defaultIndexedColorMap = new DefaultIndexedColorMap();
 
     public XCellStyle(XSSFWorkbook workbook, int xfId, int styleXfId) {
         this.workbook = workbook;
@@ -190,7 +188,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public void setBottomBorderColor(short color) {
-        XSSFColor clr = new XSSFColor();
+        XSSFColor clr = new XSSFColor(defaultIndexedColorMap);
         clr.setIndexed(color);
         setBottomBorderColor(clr);
     }
@@ -212,7 +210,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public void setLeftBorderColor(short color) {
-        XSSFColor clr = new XSSFColor();
+        XSSFColor clr = new XSSFColor(defaultIndexedColorMap);
         clr.setIndexed(color);
         setLeftBorderColor(clr);
     }
@@ -234,7 +232,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public void setRightBorderColor(short color) {
-        XSSFColor clr = new XSSFColor();
+        XSSFColor clr = new XSSFColor(defaultIndexedColorMap);
         clr.setIndexed(color);
         setRightBorderColor(clr);
     }
@@ -256,7 +254,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public void setTopBorderColor(short color) {
-        XSSFColor clr = new XSSFColor();
+        XSSFColor clr = new XSSFColor(defaultIndexedColorMap);
         clr.setIndexed(color);
         setTopBorderColor(clr);
     }
@@ -291,7 +289,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public void setFillBackgroundColor(short bg) {
-        XSSFColor clr = new XSSFColor();
+        XSSFColor clr = new XSSFColor(defaultIndexedColorMap);
         clr.setIndexed(bg);
         setFillBackgroundColor(clr);
     }
@@ -317,7 +315,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public void setFillForegroundColor(short fg) {
-        XSSFColor clr = new XSSFColor();
+        XSSFColor clr = new XSSFColor(defaultIndexedColorMap);
         clr.setIndexed(fg);
         setFillForegroundColor(clr);
     }
