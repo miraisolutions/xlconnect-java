@@ -201,9 +201,7 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
             TemporalAccessor parsed = formatter.parse(s);
             zoned = ZonedDateTime.of(LocalDateTime.from(parsed), ZoneId.systemDefault());
         }
-        if (zoned.isSupported(ChronoField.NANO_OF_SECOND) && zoned.isSupported(ChronoField.INSTANT_SECONDS)) {
-            return new Date(Instant.from(zoned).toEpochMilli());
-        } else throw new DateTimeException("Parsed Temporal is missing NANO_OF_SECOND or INSTANT_SECONDS field");
+        return new Date(Instant.from(zoned).toEpochMilli());
     }
 
 }
