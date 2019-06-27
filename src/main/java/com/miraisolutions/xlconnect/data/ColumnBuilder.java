@@ -191,7 +191,8 @@ public abstract class ColumnBuilder extends Common {
                                 colValues[counter] = Workbook.dateTimeFormatter.parse(cv.getStringValue(), dateTimeFormat);
                             } catch (Exception e) {
                                 missing[counter] = true;
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from String to DateTime - returning NA");
+                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from " +
+                                        "String to DateTime - returning NA - cause: " + e.getClass() + ":" + e.getMessage());
                             }
                         } else {
                             missing[counter] = true;

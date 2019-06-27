@@ -20,12 +20,12 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -193,7 +193,17 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
     }
 
     public Date parse(String s, String format) {
-        return new Date(Instant.from(getFormatter(format).parse(s)).toEpochMilli());
+        java.time.format.DateTimeFormatter formatter = getFormatter(format);
+        ZonedDateTime zoned;
+        try {
+          zoned = ZonedDateTime.parse(s, formatter);
+        } catch(DateTimeParseException e) {
+            TemporalAccessor parsed = formatter.parse(s);
+            zoned = ZonedDateTime.of(LocalDateTime.from(parsed), ZoneId.systemDefault());
+        }
+        if (zoned.isSupported(ChronoField.NANO_OF_SECOND) && zoned.isSupported(ChronoField.INSTANT_SECONDS)) {
+            return new Date(Instant.from(zoned).toEpochMilli());
+        } else throw new DateTimeException("Parsed Temporal is missing NANO_OF_SECOND or INSTANT_SECONDS field");
     }
 
 }
