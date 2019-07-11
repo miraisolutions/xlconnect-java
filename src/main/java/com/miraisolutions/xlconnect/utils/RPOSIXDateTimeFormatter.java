@@ -20,12 +20,13 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -188,20 +189,15 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
 
     public String format(Date d, String format) {
         StringBuffer sb = new StringBuffer();
-        getFormatter(format).formatTo(ZonedDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault()), sb);
+        getFormatter(format).formatTo(LocalDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault()), sb);
         return sb.toString();
     }
 
     public Date parse(String s, String format) {
         java.time.format.DateTimeFormatter formatter = getFormatter(format);
-        ZonedDateTime zoned;
-        try {
-          zoned = ZonedDateTime.parse(s, formatter);
-        } catch(DateTimeParseException e) {
-            TemporalAccessor parsed = formatter.parse(s);
-            zoned = ZonedDateTime.of(LocalDateTime.from(parsed), ZoneId.systemDefault());
-        }
-        return new Date(Instant.from(zoned).toEpochMilli());
+        LocalDateTime local = LocalDateTime.parse(s, formatter);
+        ZoneOffset defaultOffset = OffsetDateTime.now(ZoneId.systemDefault()).getOffset();
+        return new Date(local.toInstant(defaultOffset).toEpochMilli());
     }
 
 }
