@@ -119,7 +119,7 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
                   builder.appendValue(ChronoField.SECOND_OF_MINUTE);
                   if(n > 0) {
                       builder.appendLiteral('.');
-                      builder.appendFraction(ChronoField.SECOND_OF_MINUTE,2,2, true);
+                      builder.appendFraction(ChronoField.SECOND_OF_MINUTE,n,n, true);
                   }
                   
                   break;
