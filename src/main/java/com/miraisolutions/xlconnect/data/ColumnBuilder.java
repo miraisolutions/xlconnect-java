@@ -79,7 +79,7 @@ public abstract class ColumnBuilder extends Common {
         // Try to evaluate cell;
         // report an error if this fails
         try {
-            CellType cellType = this.takeCached ? c.getCellTypeEnum() : evaluator.evaluateFormulaCellEnum(c);
+            CellType cellType = this.takeCached ? c.getCellType() : evaluator.evaluateFormulaCell(c);
             if (cellType == CellType.ERROR) {
                 msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(c.getErrorCellValue());
                 cellError(msg);
@@ -191,7 +191,8 @@ public abstract class ColumnBuilder extends Common {
                                 colValues[counter] = Workbook.dateTimeFormatter.parse(cv.getStringValue(), dateTimeFormat);
                             } catch (Exception e) {
                                 missing[counter] = true;
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from String to DateTime - returning NA");
+                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from " +
+                                        "String to DateTime - returning NA - cause: " + e.getClass() + ":" + e.getMessage());
                             }
                         } else {
                             missing[counter] = true;
@@ -323,9 +324,9 @@ public abstract class ColumnBuilder extends Common {
     // extracts the cached value from a cell without re-evaluating
     // the formula. returns null if the cell is blank.
     protected CellValue getCachedCellValue(Cell cell) {
-        CellType valueType = cell.getCellTypeEnum();
+        CellType valueType = cell.getCellType();
         if (valueType == CellType.FORMULA) {
-            valueType = cell.getCachedFormulaResultTypeEnum();
+            valueType = cell.getCachedFormulaResultType();
         }
         switch (valueType) {
             case BLANK:

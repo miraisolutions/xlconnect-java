@@ -72,7 +72,7 @@ public class App
         String file = "/home/mstuder/Downloads/SEA 05 Staffing Call 2 Test.xlsx";
         org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook(file);
         Name name = wb.getName("Data");
-        AreaReference ref = AreaReference.generateContiguous(name.getRefersToFormula())[0];
+        AreaReference ref = AreaReference.generateContiguous(wb.getSpreadsheetVersion(), name.getRefersToFormula())[0];
 
         // AreaReference ref = new AreaReference(name.getRefersToFormula(), SpreadsheetVersion.EXCEL2007);
 

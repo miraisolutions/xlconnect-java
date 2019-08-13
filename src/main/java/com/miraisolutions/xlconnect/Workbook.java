@@ -255,6 +255,8 @@ public final class Workbook extends Common {
     }
 
     public String[] getDefinedNames(boolean validOnly) {
+        //TODO getNameAt is deprecated in POI 4.0 -
+        // "New projects should avoid accessing named ranges by index."
         int count = workbook.getNumberOfNames();
         // String[] nameNames = new String[count];
         ArrayList<String> nameNames = new ArrayList<String>();
@@ -354,7 +356,7 @@ public final class Workbook extends Common {
     public void removeName(String name) {
         Name cname = workbook.getName(name);
         if(cname != null)
-            workbook.removeName(name);
+            workbook.removeName(cname);
     }
 
     public String getReferenceFormula(String name) {
@@ -436,7 +438,6 @@ public final class Workbook extends Common {
             for(int i = 0; i < data.columns(); i++) {
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
                 cell.setCellValue(data.getColumnName(i));
-                cell.setCellType(CellType.STRING);
                 setCellStyle(cell, styles.get(HEADER + i));
             }
 
@@ -458,11 +459,11 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             if(Double.isInfinite(doubleValues[j])) {
-                              cell.setCellType(CellType.ERROR);
+
                               cell.setCellErrorValue(FormulaError.NA.getCode());
                             } else {
                               cell.setCellValue(doubleValues[j]);
-                              cell.setCellType(CellType.NUMERIC);
+
                             }
                             setCellStyle(cell, cs);
                         }
@@ -476,7 +477,7 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(stringValues[j]);
-                            cell.setCellType(CellType.STRING);
+
                             setCellStyle(cell, cs);
                         }
                     }
@@ -489,7 +490,7 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(booleanValues[j]);
-                            cell.setCellType(CellType.BOOLEAN);
+
                             setCellStyle(cell, cs);
                         }
                     }
@@ -502,7 +503,7 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(dateValues[j]);
-                            cell.setCellType(CellType.NUMERIC);
+
                             setCellStyle(cell, cs);
                         }
                     }
@@ -639,7 +640,7 @@ public final class Workbook extends Common {
                 bottomRightCol, true, true);
 
         // Define named range area
-        aref = new AreaReference(topLeft, bottomRight);
+        aref = new AreaReference(topLeft, bottomRight, workbook.getSpreadsheetVersion());
         // Redefine named range
         cname.setRefersToFormula(aref.formatAsString());
 
@@ -1062,17 +1063,17 @@ public final class Workbook extends Common {
 
     private void setMissing(Cell cell) {
         if(missingValue.length < 1 || missingValue[0] == null)
-            cell.setCellType(CellType.BLANK);
+            cell.setBlank();
         else {
             if(missingValue[0] instanceof String) {
                 cell.setCellValue((String) missingValue[0]);
             } else if(missingValue[0] instanceof Double) {
                 cell.setCellValue(((Double) missingValue[0]).doubleValue());
             } else {
-                cell.setCellType(CellType.BLANK);
+                cell.setBlank();
                 return;
             }
-            cell.setCellType(CellType.STRING);
+
             setCellStyle(cell, DataFormatOnlyCellStyle.get(DataType.String));
         }
     }
@@ -1671,7 +1672,7 @@ public final class Workbook extends Common {
                 boolean anyNonBlank = false;
                 for(int j = start; j > -1 && j < end; j++) {
                     Cell c = r.getCell(j);
-                    if(c != null && c.getCellTypeEnum() != CellType.BLANK) {
+                    if(c != null && c.getCellType() != CellType.BLANK) {
                         anyCell = true;
                         anyNonBlank = true;
                         if((autofitCol || minCol < 0) && (topLeft == null || j < startCol)) {

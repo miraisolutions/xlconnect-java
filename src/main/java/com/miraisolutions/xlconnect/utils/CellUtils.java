@@ -31,7 +31,7 @@ import org.apache.poi.ss.util.CellReference;
 public abstract class CellUtils {
 
     public static boolean isCellValueOfType(CellValue cv, DataType type) {
-        switch(cv.getCellTypeEnum()) {
+        switch(cv.getCellType()) {
             case BOOLEAN:
                 return DataType.Boolean.equals(type);
             case NUMERIC:

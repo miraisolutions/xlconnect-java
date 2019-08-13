@@ -64,7 +64,7 @@ public class DefaultColumnBuilder extends ColumnBuilder {
     protected void handleCell(Cell c, CellValue cv) {
         String msg;
         // Determine (evaluated) cell data type
-        switch(cv.getCellTypeEnum()) {
+        switch(cv.getCellType()) {
             case BLANK:
                 addMissing();
                 return;
