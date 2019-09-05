@@ -912,11 +912,7 @@ public final class Workbook {
     }
 
     List<Name> getNames(String name) {
-        List names = workbook.getNames(name);
-        List<Name> cNames = new ArrayList<Name>();
-        for(Object n : names)
-            cNames.add((Name)n);
-        return cNames;
+        return Collections.unmodifiableList(workbook.getNames(name));
     }
 
     private Name getNameForWorksheet(String worksheetName, String name) {
@@ -924,7 +920,10 @@ public final class Workbook {
         for (Name n : cNames)
             if (n.getSheetName().equals(worksheetName))
                 return n;
-        throw new IllegalArgumentException("Name '" + name + "' does not exist in worksheet '" + worksheetName + "'!");
+        StringBuffer names = new StringBuffer();
+        cNames.forEach(n -> names.append(n.getSheetName()).append(";"));
+        throw new IllegalArgumentException("Name '" + name + "' does not exist in worksheet '" + worksheetName + "'! " +
+                "Found in sheets: " + names);
     }
 
     // Checks only if the reference as such is valid
