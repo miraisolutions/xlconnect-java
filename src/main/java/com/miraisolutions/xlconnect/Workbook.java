@@ -247,9 +247,19 @@ public final class Workbook {
         return workbook.getSheet(name) != null;
     }
 
-    public boolean existsName(String name) {
-        return workbook.getName(name) != null;
+    public boolean existsName(String name, String worksheetName) {
+        try {
+            if(worksheetName == null)
+                getName(name);
+            else
+                getNameForWorksheet(worksheetName, name);
+            return true;
+        }
+        catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
+
 
     public void createSheet(String name) {
         if (name.length() > 31)
@@ -287,8 +297,8 @@ public final class Workbook {
         workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
     }
 
-    public void createName(String name, String formula, boolean overwrite) {
-        if (existsName(name)) {
+    public void createName(String name,  String worksheetName, String formula, boolean overwrite) {
+        if (existsName(name, worksheetName)) {
             if (overwrite) {
                 // Name already exists but we overwrite --> remove
                 removeName(name);
@@ -1390,17 +1400,18 @@ public final class Workbook {
         return getLastColumn(getSheet(sheetName));
     }
 
-    public void appendNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells) {
+    public void appendNamedRegion(DataFrame data, String name, String worksheetName, boolean header, boolean overwriteFormulaCells) {
         Sheet sheet = workbook.getSheet(getName(name).getSheetName());
         // top, left, bottom, right
-        int[] coord = getReferenceCoordinates(name);
+        int[] coord = getReferenceCoordinatesForName(worksheetName, name);
         writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
         int bottom = coord[2] + data.rows();
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
         CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
         String formula = cra.formatAsString(sheet.getSheetName(), true);
-        createName(name, formula, true);
+        createName(name, worksheetName, formula, true);
     }
+
 
     public void appendWorksheet(DataFrame data, int worksheetIndex, boolean header) {
         Sheet sheet = getSheet(worksheetIndex);
