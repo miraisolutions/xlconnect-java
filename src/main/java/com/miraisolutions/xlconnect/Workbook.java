@@ -577,8 +577,8 @@ public final class Workbook {
         this.onErrorCell = eb;
     }
 
-    public void writeNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells) {
-        Name cname = getName(name);
+    public void writeNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells, String worksheetName) {
+        Name cname = worksheetName == null ? getName(name) : getNameForWorksheet(worksheetName, name);
         checkName(cname);
 
         // Get sheet where name is defined in
