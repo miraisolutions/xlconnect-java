@@ -498,8 +498,8 @@ public final class RWorkbookWrapper {
         workbook.clearRangeFromReference(reference);
     }
 
-    public void clearNamedRegion(String name) {
-        workbook.clearNamedRegion(name);
+    public void clearNamedRegion(String name, String worksheetName) {
+        workbook.clearNamedRegion(name, worksheetName);
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {

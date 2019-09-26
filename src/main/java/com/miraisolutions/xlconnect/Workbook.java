@@ -1483,9 +1483,9 @@ public final class Workbook {
         clearRange(sheetName, coords);
     }
 
-    public void clearNamedRegion(String name) {
-        String sheetName = getName(name).getSheetName();
-        int[] coords = getReferenceCoordinates(name);
+    public void clearNamedRegion(String name, String worksheetName) {
+        String sheetName = worksheetName == null ? getName(name).getSheetName() : worksheetName;
+        int[] coords = getReferenceCoordinatesForName(sheetName, name);
         clearRange(sheetName, coords);
     }
 
