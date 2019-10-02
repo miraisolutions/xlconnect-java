@@ -307,6 +307,13 @@ public final class Workbook {
         }
 
         Name cname = workbook.createName();
+        if(worksheetName != null) {
+            int sheetIndex = workbook.getSheetIndex(worksheetName);
+            if(sheetIndex < 0)
+                throw new NoSuchElementException("Worksheet "+worksheetName+" does not exist!");
+            else
+                cname.setSheetIndex(sheetIndex);
+        }
         try {
             cname.setNameName(name);
             cname.setRefersToFormula(formula);
