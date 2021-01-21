@@ -1460,7 +1460,7 @@ public final class Workbook extends Common {
     }
 
     public int getLastRow(int sheetIndex) {
-        return Math.max(getSheet(sheetIndex).getLastRowNum(), 0);
+        return getSheet(sheetIndex).getLastRowNum();
     }
 
     public int getLastRow(String sheetName) {
