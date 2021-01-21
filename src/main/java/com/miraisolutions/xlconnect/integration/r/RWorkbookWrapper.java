@@ -471,13 +471,11 @@ public final class RWorkbookWrapper {
     }
 
     public int getLastRow(int sheetIndex) {
-        int lastRow = Math.max(workbook.getLastRow(sheetIndex), 0);
-        //if (lastRow < 0) throw new IllegalStateException();
-        return lastRow;
+        return Math.max(workbook.getLastRow(sheetIndex), 0);
     }
 
     public int getLastRow(String sheetName) {
-        return workbook.getLastRow(sheetName);
+        return Math.max(workbook.getLastRow(sheetName), 0);
     }
 
     public int getLastColumn(int sheetIndex) {
