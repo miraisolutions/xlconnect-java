@@ -471,11 +471,11 @@ public final class RWorkbookWrapper {
     }
 
     public int getLastRow(int sheetIndex) {
-        return workbook.getLastRow(sheetIndex);
+        return Math.max(workbook.getLastRow(sheetIndex), 0);
     }
 
     public int getLastRow(String sheetName) {
-        return workbook.getLastRow(sheetName);
+        return Math.max(workbook.getLastRow(sheetName), 0);
     }
 
     public int getLastColumn(int sheetIndex) {
