@@ -31,4 +31,15 @@ public class RPOSIXDateTimeFormatterTest {
         assertEquals(23, cal.get(Calendar.SECOND));
         assertEquals(2012, cal.get(Calendar.YEAR));
     }
+
+    @Test
+    public void parseDateInDST() {
+        Date result = underTest.parse("06.07.2012 16:15:23", "%d.%m.%Y %H:%M:%S");
+        //s of JDK version 1.1, replaced by Calendar.get(Calendar.YEAR) - 1900.
+        Calendar cal = Calendar.getInstance(TimeZone.getDefault());
+        cal.setTime(result);
+        assertEquals(16, cal.get(Calendar.HOUR_OF_DAY));
+        assertEquals(23, cal.get(Calendar.SECOND));
+        assertEquals(2012, cal.get(Calendar.YEAR));
+    }
 }
