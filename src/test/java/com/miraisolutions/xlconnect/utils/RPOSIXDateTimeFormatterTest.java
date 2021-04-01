@@ -1,16 +1,13 @@
 package com.miraisolutions.xlconnect.utils;
 
-import org.junit.After;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class RPOSIXDateTimeFormatterTest {
 
@@ -28,7 +25,10 @@ public class RPOSIXDateTimeFormatterTest {
         Calendar cal = Calendar.getInstance(TimeZone.getDefault());
         cal.setTime(result);
         assertEquals(16, cal.get(Calendar.HOUR_OF_DAY));
+        assertEquals(15, cal.get(Calendar.MINUTE));
         assertEquals(23, cal.get(Calendar.SECOND));
+        assertEquals(6, cal.get(Calendar.DAY_OF_MONTH));
+        assertEquals(Calendar.FEBRUARY, cal.get(Calendar.MONTH));
         assertEquals(2012, cal.get(Calendar.YEAR));
     }
 
@@ -39,7 +39,10 @@ public class RPOSIXDateTimeFormatterTest {
         Calendar cal = Calendar.getInstance(TimeZone.getDefault());
         cal.setTime(result);
         assertEquals(16, cal.get(Calendar.HOUR_OF_DAY));
+        assertEquals(15, cal.get(Calendar.MINUTE));
         assertEquals(23, cal.get(Calendar.SECOND));
+        assertEquals(6, cal.get(Calendar.DAY_OF_MONTH));
+        assertEquals(Calendar.JULY, cal.get(Calendar.MONTH));
         assertEquals(2012, cal.get(Calendar.YEAR));
     }
 }
