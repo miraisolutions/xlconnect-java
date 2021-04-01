@@ -108,23 +108,20 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               if(i+1>=format.length()) {
                 builder.appendLiteral("%O");
               } else {
-                switch(format.charAt(++i)) {
-                case 'S':
-                  int n = 3;
-                  if(i+1 < format.length()) {
-                      n = Integer.parseInt(Character.toString(format.charAt(++i)));
+                  if (format.charAt(++i) == 'S') {
+                      int n = 3;
+                      if (i + 1 < format.length()) {
+                          n = Integer.parseInt(Character.toString(format.charAt(++i)));
+                      }
+
+                      builder.appendValue(ChronoField.SECOND_OF_MINUTE);
+                      if (n > 0) {
+                          builder.appendLiteral('.');
+                          builder.appendFraction(ChronoField.SECOND_OF_MINUTE, n, n, true);
+                      }
+                  } else {
+                      throw new UnsupportedOperationException("%O[dHImMUVwWy] not yet implemented");
                   }
-                  
-                  builder.appendValue(ChronoField.SECOND_OF_MINUTE);
-                  if(n > 0) {
-                      builder.appendLiteral('.');
-                      builder.appendFraction(ChronoField.SECOND_OF_MINUTE,n,n, true);
-                  }
-                  
-                  break;
-                default:
-                  throw new UnsupportedOperationException("%O[dHImMUVwWy] not yet implemented");
-                }
               }
               break;
             case 'S':
