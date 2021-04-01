@@ -5,7 +5,7 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, bugfix/#126-time-parse-dst ]
   pull_request:
     branches: [ master ]
 
