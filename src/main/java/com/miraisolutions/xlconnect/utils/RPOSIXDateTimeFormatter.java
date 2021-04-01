@@ -194,17 +194,14 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
 
     public Date parse(String s, String format) {
         java.time.format.DateTimeFormatter formatter = getFormatter(format);
-        LocalDateTime local = LocalDateTime.parse(s, formatter);
-        ZoneOffset defaultOffset = OffsetDateTime.now(ZoneId.systemDefault()).getOffset();
-        return new Date(local.toInstant(defaultOffset).toEpochMilli());
-        /* ZonedDateTime zoned;
+        ZonedDateTime zoned;
         try {
             zoned = ZonedDateTime.parse(s, formatter);
         } catch(DateTimeParseException e) {
             TemporalAccessor parsed = formatter.parse(s);
             zoned = ZonedDateTime.of(LocalDateTime.from(parsed), ZoneId.systemDefault());
         }
-        return new Date(Instant.from(zoned).toEpochMilli()); */
+        return new Date(Instant.from(zoned).toEpochMilli());
     }
 
 }
