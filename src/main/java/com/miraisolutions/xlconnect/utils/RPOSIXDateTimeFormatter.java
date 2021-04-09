@@ -20,13 +20,12 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,23 +108,20 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
               if(i+1>=format.length()) {
                 builder.appendLiteral("%O");
               } else {
-                switch(format.charAt(++i)) {
-                case 'S':
-                  int n = 3;
-                  if(i+1 < format.length()) {
-                      n = Integer.parseInt(Character.toString(format.charAt(++i)));
+                  if (format.charAt(++i) == 'S') {
+                      int n = 3;
+                      if (i + 1 < format.length()) {
+                          n = Integer.parseInt(Character.toString(format.charAt(++i)));
+                      }
+
+                      builder.appendValue(ChronoField.SECOND_OF_MINUTE);
+                      if (n > 0) {
+                          builder.appendLiteral('.');
+                          builder.appendFraction(ChronoField.SECOND_OF_MINUTE, n, n, true);
+                      }
+                  } else {
+                      throw new UnsupportedOperationException("%O[dHImMUVwWy] not yet implemented");
                   }
-                  
-                  builder.appendValue(ChronoField.SECOND_OF_MINUTE);
-                  if(n > 0) {
-                      builder.appendLiteral('.');
-                      builder.appendFraction(ChronoField.SECOND_OF_MINUTE,n,n, true);
-                  }
-                  
-                  break;
-                default:
-                  throw new UnsupportedOperationException("%O[dHImMUVwWy] not yet implemented");
-                }
               }
               break;
             case 'S':
@@ -195,9 +191,14 @@ public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
 
     public Date parse(String s, String format) {
         java.time.format.DateTimeFormatter formatter = getFormatter(format);
-        LocalDateTime local = LocalDateTime.parse(s, formatter);
-        ZoneOffset defaultOffset = OffsetDateTime.now(ZoneId.systemDefault()).getOffset();
-        return new Date(local.toInstant(defaultOffset).toEpochMilli());
+        ZonedDateTime zoned;
+        try {
+            zoned = ZonedDateTime.parse(s, formatter);
+        } catch(DateTimeParseException e) {
+            TemporalAccessor parsed = formatter.parse(s);
+            zoned = ZonedDateTime.of(LocalDateTime.from(parsed), ZoneId.systemDefault());
+        }
+        return new Date(Instant.from(zoned).toEpochMilli());
     }
 
 }
