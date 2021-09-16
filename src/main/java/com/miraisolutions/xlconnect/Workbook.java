@@ -290,9 +290,11 @@ public final class Workbook {
         Sheet sheet = workbook.cloneSheet(index);
         String originalName = workbook.getSheetName(index);
         workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
-        List<Name> names = workbook.getAllNames().stream().filter(name -> name.getSheetIndex() == index).collect(Collectors.toList());
-        names.forEach(name ->
-                createName(name.getNameName(), newName, name.getRefersToFormula().replace(originalName, newName), false));
+        //Copy names (named ranges) that are scoped to the original sheet, adapting the formula and scope.
+        List<Name> originalNamedRanges = workbook.getAllNames().stream().filter(name -> name.getSheetIndex() == index).collect(Collectors.toList());
+        // we have to collect the original names *then* add the new names, otherwise we get concurrency issues creating names while iterating over them
+        originalNamedRanges.forEach(namedRange ->
+                createName(namedRange.getNameName(), newName, namedRange.getRefersToFormula().replace(originalName, newName), false));
     }
 
     public void cloneSheet(String name, String newName) {
