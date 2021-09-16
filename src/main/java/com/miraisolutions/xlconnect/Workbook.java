@@ -40,6 +40,7 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 
 /**
@@ -287,12 +288,16 @@ public final class Workbook {
     }
 
     public void cloneSheet(int index, String newName) {
-        cloneSheet(workbook.getSheetName(index), newName);
+        Sheet sheet = workbook.cloneSheet(index);
+        String originalName = workbook.getSheetName(index);
+        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
+        List<Name> names = workbook.getAllNames().stream().filter(name -> name.getSheetIndex() == index).collect(Collectors.toList());
+        names.forEach(name ->
+                createName(name.getNameName(), newName, name.getRefersToFormula().replace(originalName, newName), false));
     }
 
     public void cloneSheet(String name, String newName) {
-        Sheet sheet = workbook.cloneSheet(workbook.getSheetIndex(name));
-        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
+        cloneSheet(workbook.getSheetIndex(name), newName);
     }
 
     public void createName(String name,  String worksheetName, String formula, boolean overwrite) {
