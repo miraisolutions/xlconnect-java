@@ -937,12 +937,13 @@ public final class Workbook {
     private Name getNameForWorksheet(String worksheetName, String name) {
         if (worksheetName == null)
             return getName(name);
+        int sheetIndex = workbook.getSheetIndex(worksheetName);
         List<Name> cNames = getNames(name);
         for (Name n : cNames)
-            if (n.getSheetName().equals(worksheetName))
+            if (n.getSheetIndex() == sheetIndex)
                 return n;
         StringBuffer names = new StringBuffer();
-        cNames.forEach(n -> names.append(n.getSheetName()).append(";"));
+        cNames.forEach(n -> names.append(workbook.getSheetName(n.getSheetIndex())).append(";"));
         throw new IllegalArgumentException("Name '" + name + "' does not exist in worksheet '" + worksheetName + "'! " +
                 "Found in sheets: " + names);
     }
@@ -1489,9 +1490,9 @@ public final class Workbook {
     }
 
     public void clearNamedRegion(String name, String worksheetName) {
-        String sheetName = worksheetName == null ? getName(name).getSheetName() : worksheetName;
-        int[] coords = getReferenceCoordinatesForName(sheetName, name);
-        clearRange(sheetName, coords);
+        String dataSourceSheetName = getName(name).getSheetName();
+        int[] coords = getReferenceCoordinatesForName(worksheetName, name);
+        clearRange(dataSourceSheetName, coords);
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
