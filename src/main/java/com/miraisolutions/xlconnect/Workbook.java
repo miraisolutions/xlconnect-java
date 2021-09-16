@@ -939,9 +939,15 @@ public final class Workbook {
             return getName(name);
         int sheetIndex = workbook.getSheetIndex(worksheetName);
         List<Name> cNames = getNames(name);
-        for (Name n : cNames)
+        Name globallyScoped = null;
+        for (Name n : cNames) {
             if (n.getSheetIndex() == sheetIndex)
                 return n;
+            else if (n.getSheetIndex() == -1)
+                globallyScoped = n;
+        }
+        if(globallyScoped != null)
+            return globallyScoped;
         StringBuffer names = new StringBuffer();
         cNames.forEach(n -> names.append(workbook.getSheetName(n.getSheetIndex())).append(";"));
         throw new IllegalArgumentException("Name '" + name + "' does not exist in worksheet '" + worksheetName + "'! " +
