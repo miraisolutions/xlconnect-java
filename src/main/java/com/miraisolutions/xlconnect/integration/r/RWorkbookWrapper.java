@@ -59,8 +59,8 @@ public final class RWorkbookWrapper {
         workbook.setSheetPos(sheetName, pos);
     }
 
-    public String[] getDefinedNames(boolean validOnly) {
-        return workbook.getDefinedNames(validOnly);
+    public String[] getDefinedNames(boolean validOnly, String worksheetScope) {
+        return workbook.getDefinedNames(validOnly, worksheetScope);
     }
 
     public void createSheet(String name) {
