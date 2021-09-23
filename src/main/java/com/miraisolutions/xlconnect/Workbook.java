@@ -343,12 +343,11 @@ public final class Workbook {
         }
     }
 
-    public void removeName(String name) {
-        if (name == null)
-                return;
-        Name cname = workbook.getName(name);
-        if (cname != null)
+    public void removeName(String name, String worksheetScope) {
+        if (existsName(worksheetScope, name)) {
+            Name cname = getNameInWorksheetScope(worksheetScope, name);
             workbook.removeName(cname);
+        }
     }
 
     public String getReferenceFormula(String name, String worksheetScope) {
@@ -1431,7 +1430,7 @@ public final class Workbook {
     }
 
     public void appendNamedRegion(DataFrame data, String name, String worksheetScope, boolean header, boolean overwriteFormulaCells) {
-        Sheet sheet = workbook.getSheet(getName(name).getSheetName());
+        Sheet sheet = workbook.getSheet(getNameInWorksheetScope(worksheetScope, name).getSheetName());
         // top, left, bottom, right
         int[] coord = getReferenceCoordinatesForName(worksheetScope, name);
         writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
@@ -1507,9 +1506,9 @@ public final class Workbook {
         clearRange(sheetName, coords);
     }
 
-    public void clearNamedRegion(String name, String worksheetName) {
-        String dataSourceSheetName = getName(name).getSheetName();
-        int[] coords = getReferenceCoordinatesForName(worksheetName, name);
+    public void clearNamedRegion(String name, String worksheetScope) {
+        String dataSourceSheetName = getNameInWorksheetScope(worksheetScope, name).getSheetName();
+        int[] coords = getReferenceCoordinatesForName(worksheetScope, name);
         clearRange(dataSourceSheetName, coords);
     }
 
