@@ -242,7 +242,7 @@ public final class Workbook {
      * @throws NoSuchElementException if no worksheet exists with this name
      */
     private int getSheetIndexForScope(String worksheetScope) {
-        if (worksheetScope.equals("")) return -1;
+        if (worksheetScope.isEmpty()) return -1;
         int index = workbook.getSheetIndex(worksheetScope);
         if (index < 0) throw new NoSuchElementException("Worksheet " + worksheetScope + " was not found!");
         else return index;
@@ -263,7 +263,7 @@ public final class Workbook {
 
     public boolean existsName(String name, String worksheetScope) {
         try {
-            getNameInWorksheetScope(worksheetScope, name);
+            getName(name, worksheetScope);
             return true;
         }
         catch (IllegalArgumentException ignored) {
@@ -318,7 +318,7 @@ public final class Workbook {
         if (existsName(name, worksheetScope)) {
             if (overwrite) {
                 // Name already exists but we overwrite --> remove
-                removeName(name);
+                removeName(name, worksheetScope);
             } else {
                 // Name already exists, but we don't want to overwrite --> error
                 throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
@@ -336,31 +336,29 @@ public final class Workbook {
         } catch (Exception e) {
             // --> Clean up (= remove) name
             // Need to set dummy name in order to be able to remove it ...
-            String dummyNameName = "XLConnectDummyName";
-            cname.setNameName(dummyNameName);
-            removeName(dummyNameName);
+            workbook.removeName(cname);
             throw new IllegalArgumentException(e);
         }
     }
 
     public void removeName(String name, String worksheetScope) {
-        if (existsName(worksheetScope, name)) {
-            Name cname = getNameInWorksheetScope(worksheetScope, name);
+        if (existsName(name, worksheetScope)) {
+            Name cname = getName(name, worksheetScope);
             workbook.removeName(cname);
         }
     }
 
     public String getReferenceFormula(String name, String worksheetScope) {
-        return getNameInWorksheetScope(worksheetScope, name).getRefersToFormula();
+        return getName(name, worksheetScope).getRefersToFormula();
     }
 
     // Keep for backwards compatibility
     public int[] getReferenceCoordinates(String name) {
-        return getReferenceCoordinatesForName(null, name);
+        return getReferenceCoordinatesForName(name, null);
     }
 
-    public int[] getReferenceCoordinatesForName(String worksheetScope, String name) {
-        Name cname = getNameInWorksheetScope(worksheetScope, name);
+    public int[] getReferenceCoordinatesForName(String name, String worksheetScope) {
+        Name cname = getName(name, worksheetScope);
         AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get upper left corner
         CellReference first = aref.getFirstCell();
@@ -609,7 +607,7 @@ public final class Workbook {
     }
 
     public void writeNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
-        Name cname = getNameInWorksheetScope(worksheetScope, name);
+        Name cname = getName(name, worksheetScope);
         checkName(cname);
 
         // Get sheet where name is defined in
@@ -635,9 +633,9 @@ public final class Workbook {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
-    public DataFrame readNamedRegion(String worksheetScope, String name, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
-        Name cname = getNameInWorksheetScope(worksheetScope, name);
+    public DataFrame readNamedRegion(String name, String worksheetScope, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
+                                     boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+        Name cname = getName(name, worksheetScope);
         checkName(cname);
 
         // Get sheet where name is defined in
@@ -950,7 +948,7 @@ public final class Workbook {
         return Collections.unmodifiableList(workbook.getNames(name));
     }
 
-    private Name getNameInWorksheetScope(String worksheetScope, String name) {
+    private Name getName(String name, String worksheetScope) {
         if (worksheetScope == null)
             return getName(name);
         int sheetIndex = getSheetIndexForScope(worksheetScope);
@@ -960,8 +958,9 @@ public final class Workbook {
                 return n;
 
         StringBuffer names = new StringBuffer();
+        String worksheetScopeDisplay = worksheetScope.isEmpty() ? "global scope" : worksheetScope;
         cNames.forEach(n -> names.append(n.getSheetIndex() >= 0 ? workbook.getSheetName(n.getSheetIndex()) : "global scope").append(";"));
-        throw new IllegalArgumentException("Name '" + name + "' was not specified in worksheet '" + worksheetScope + "'! " +
+        throw new IllegalArgumentException("Name '" + name + "' was not specified in worksheet '" + worksheetScopeDisplay + "'! " +
                 "Found in sheets: " + names);
     }
 
@@ -1430,9 +1429,9 @@ public final class Workbook {
     }
 
     public void appendNamedRegion(DataFrame data, String name, String worksheetScope, boolean header, boolean overwriteFormulaCells) {
-        Sheet sheet = workbook.getSheet(getNameInWorksheetScope(worksheetScope, name).getSheetName());
+        Sheet sheet = workbook.getSheet(getName(name, worksheetScope).getSheetName());
         // top, left, bottom, right
-        int[] coord = getReferenceCoordinatesForName(worksheetScope, name);
+        int[] coord = getReferenceCoordinatesForName(name, worksheetScope);
         writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
         int bottom = coord[2] + data.rows();
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
@@ -1507,8 +1506,8 @@ public final class Workbook {
     }
 
     public void clearNamedRegion(String name, String worksheetScope) {
-        String dataSourceSheetName = getNameInWorksheetScope(worksheetScope, name).getSheetName();
-        int[] coords = getReferenceCoordinatesForName(worksheetScope, name);
+        String dataSourceSheetName = getName(name, worksheetScope).getSheetName();
+        int[] coords = getReferenceCoordinatesForName(name, worksheetScope);
         clearRange(dataSourceSheetName, coords);
     }
 
