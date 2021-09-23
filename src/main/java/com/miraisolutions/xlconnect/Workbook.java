@@ -236,8 +236,13 @@ public final class Workbook {
         return !region.isDeleted() && hasValidWorkSheet(region);
     }
 
+    /**
+     * Returns the sheet index for the worksheet name or -1 if the sheet name is ""
+     * @param worksheetScope the worksheet name
+     * @throws NoSuchElementException if no worksheet exists with this name
+     */
     private int getSheetIndexForScope(String worksheetScope) {
-        if (worksheetScope == "") return -1;
+        if (worksheetScope.equals("")) return -1;
         int index = workbook.getSheetIndex(worksheetScope);
         if (index < 0) throw new NoSuchElementException("Worksheet " + worksheetScope + " was not found!");
         else return index;
@@ -322,11 +327,8 @@ public final class Workbook {
 
         Name cname = workbook.createName();
         if(worksheetScope != null) {
-            int sheetIndex = workbook.getSheetIndex(worksheetScope);
-            if(sheetIndex < 0)
-                throw new NoSuchElementException("Worksheet "+worksheetScope+" does not exist!");
-            else
-                cname.setSheetIndex(sheetIndex);
+            int sheetIndex = getSheetIndexForScope(worksheetScope);
+            if(sheetIndex >= 0) cname.setSheetIndex(sheetIndex);
         }
         try {
             cname.setNameName(name);
@@ -952,7 +954,7 @@ public final class Workbook {
     private Name getNameInWorksheetScope(String worksheetScope, String name) {
         if (worksheetScope == null)
             return getName(name);
-        int sheetIndex = workbook.getSheetIndex(worksheetScope);
+        int sheetIndex = getSheetIndexForScope(worksheetScope);
         List<Name> cNames = getNames(name);
         for (Name n : cNames)
             if (n.getSheetIndex() == sheetIndex)
