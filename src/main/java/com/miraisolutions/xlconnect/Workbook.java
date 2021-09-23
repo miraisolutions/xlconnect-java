@@ -223,16 +223,24 @@ public final class Workbook {
         workbook.setSheetOrder(sheetName, pos);
     }
 
-    public String[] getDefinedNames(boolean validOnly) {
+    public String[] getDefinedNames(boolean validOnly, String worksheetScope) {
+
         return workbook.getAllNames().stream()
-                .filter(namedRegion -> !validOnly || isValidNamedRegion(namedRegion))
-                .map(Name::getNameName)
-                .toArray(String[]::new);
+                .filter(n -> (!validOnly || isValidNamedRegion(n)) &&
+                        (worksheetScope == null || n.getSheetIndex() == getSheetIndexForScope(worksheetScope)))
+                .map(Name::getNameName).toArray(String[]::new);
     }
 
 
     private boolean isValidNamedRegion(Name region) {
         return !region.isDeleted() && hasValidWorkSheet(region);
+    }
+
+    private int getSheetIndexForScope(String worksheetScope) {
+        if (worksheetScope == "") return -1;
+        int index = workbook.getSheetIndex(worksheetScope);
+        if (index < 0) throw new NoSuchElementException("Worksheet " + worksheetScope + " was not found!");
+        else return index;
     }
 
     private boolean hasValidWorkSheet(Name region) {
