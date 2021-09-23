@@ -71,8 +71,8 @@ public final class RWorkbookWrapper {
         workbook.createName(name, worksheetScope, formula, overwrite);
     }
 
-    public void removeName(String name) {
-        workbook.removeName(name);
+    public void removeName(String name, String worksheetScope) {
+        workbook.removeName(name, worksheetScope);
     }
 
     public String getReferenceFormula(String name, String worksheetScope) {
@@ -120,7 +120,7 @@ public final class RWorkbookWrapper {
     public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
                                              String readStrategy, String worksheetScope) {
-        DataFrame dataFrame = workbook.readNamedRegion(worksheetScope, name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
+        DataFrame dataFrame = workbook.readNamedRegion(name, worksheetScope, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
@@ -414,7 +414,7 @@ public final class RWorkbookWrapper {
     }
 
     public int[] getReferenceCoordinatesForName(String name, String worksheetScope) {
-        return workbook.getReferenceCoordinatesForName(worksheetScope, name);
+        return workbook.getReferenceCoordinatesForName(name, worksheetScope);
     }
 
     public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
