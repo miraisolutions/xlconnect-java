@@ -229,7 +229,7 @@ public final class RWorkbookWrapper {
         return workbook.isSheetVeryHidden(sheetName);
     }
 
-    public void addImage(String filename, String name, String worksheetScope, boolean originalSize)
+    public void addImage(String filename, String name, boolean originalSize, String worksheetScope)
             throws IOException {
         workbook.addImage(filename, name, worksheetScope, originalSize);
     }
