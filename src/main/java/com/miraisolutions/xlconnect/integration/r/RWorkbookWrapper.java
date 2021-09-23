@@ -75,8 +75,8 @@ public final class RWorkbookWrapper {
         workbook.removeName(name);
     }
 
-    public String getReferenceFormula(String name) {
-        return workbook.getReferenceFormula(name);
+    public String getReferenceFormula(String name, String worksheetScope) {
+        return workbook.getReferenceFormula(name, worksheetScope);
     }
 
     public void removeSheet(String name) {
