@@ -748,8 +748,29 @@ public final class Workbook {
                 colTypes, forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
     }
 
-    public void addImage(File imageFile, String name, boolean originalSize) throws IOException {
-        Name cname = getName(name);
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT, 
+                null, false, "", false, null, true, true);
+    }
+    
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
+            boolean autofitRow, boolean autofitCol) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
+                null, false, "", false, null, autofitRow, autofitCol);
+    }
+
+    public DataFrame readWorksheet(String worksheetName, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
+            boolean forceConversion, String dateTimeFormat) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion, 
+                dateTimeFormat, false, null, true, true);
+    }
+
+    public DataFrame readWorksheet(String worksheetName, boolean header) {
+        return readWorksheet(worksheetName, header, ReadStrategy.DEFAULT, null, false, "");
+    }
+
+    public void addImage(File imageFile, String name, String worksheetScope, boolean originalSize) throws IOException {
+        Name cname = getName(name, worksheetScope);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
@@ -759,7 +780,23 @@ public final class Workbook {
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
 
-        int imageType = getImageType(imageFile);
+        // Determine image type
+        int imageType;
+        String filename = imageFile.getName().toLowerCase();
+        if(filename.endsWith("jpg") || filename.endsWith("jpeg")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
+        } else if(filename.endsWith("png")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
+        } else if(filename.endsWith("wmf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
+        } else if(filename.endsWith("emf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
+        } else if(filename.endsWith("bmp") || filename.endsWith("dib")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
+        } else if(filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
+        } else
+            throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
         InputStream is = Files.newInputStream(imageFile.toPath());
         byte[] bytes = IOUtils.toByteArray(is);
         int imageIndex = workbook.addPicture(bytes, imageType);
@@ -787,31 +824,11 @@ public final class Workbook {
         anchor.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
 
         Picture picture = drawing.createPicture(anchor, imageIndex);
-        if (originalSize) picture.resize();
+        if(originalSize) picture.resize();
     }
 
-    private static int getImageType(File imageFile) {
-        int imageType;
-        String filename = imageFile.getName().toLowerCase();
-        if (filename.endsWith("jpg") || filename.endsWith("jpeg")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
-        } else if (filename.endsWith("png")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
-        } else if (filename.endsWith("wmf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
-        } else if (filename.endsWith("emf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
-        } else if (filename.endsWith("bmp") || filename.endsWith("dib")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
-        } else if (filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
-        } else
-            throw new IllegalArgumentException("Image type \"" + filename.substring(filename.lastIndexOf('.') + 1) + "\" not supported!");
-        return imageType;
-    }
-
-    public void addImage(String filename, String name, boolean originalSize) throws IOException {
-        addImage(new File(filename), name, originalSize);
+    public void addImage(String filename, String name, String worksheetScope, boolean originalSize) throws IOException {
+        addImage(new File(filename), name, worksheetScope, originalSize);
     }
 
     public CellStyle createCellStyle(String name) {
