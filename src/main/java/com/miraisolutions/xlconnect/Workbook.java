@@ -351,8 +351,8 @@ public final class Workbook {
             workbook.removeName(cname);
     }
 
-    public String getReferenceFormula(String name) {
-        return getName(name).getRefersToFormula();
+    public String getReferenceFormula(String name, String worksheetScope) {
+        return getNameInWorksheetScope(worksheetScope, name).getRefersToFormula();
     }
 
     // Keep for backwards compatibility
