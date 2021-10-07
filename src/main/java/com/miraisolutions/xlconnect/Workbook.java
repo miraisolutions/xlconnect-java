@@ -322,7 +322,7 @@ public final class Workbook {
                 removeName(name, worksheetScope);
             } else {
                 // Name already exists, but we don't want to overwrite --> error
-                throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
+                throw new IllegalArgumentException("Specified name '" + name + "' already exists in " + worksheetScope);
             }
         }
 
