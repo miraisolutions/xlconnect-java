@@ -27,4 +27,8 @@ class ResultWithAttributes {
     public String[] getAttributeValues() {
         return attributes.values().toArray(new String[0]);
     }
+
+    public String getAttributeValue(String attributeName){
+        return attributes.get(attributeName);
+    }
 }
