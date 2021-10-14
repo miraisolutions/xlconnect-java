@@ -1,8 +1,8 @@
 package com.miraisolutions.xlconnect;
 
-public class BooleanWithAttributes extends ResultWithAttributes {
+public class BooleanWithAttributes extends ResultWithAttributes implements WithJNI{
 
-    private boolean value;
+    private final boolean value;
 
     public BooleanWithAttributes(Attribute attributeName, String attributeValue, boolean value) {
         super(attributeName, attributeValue);
@@ -11,5 +11,10 @@ public class BooleanWithAttributes extends ResultWithAttributes {
 
     public boolean getValue() {
         return value;
+    }
+
+    @Override
+    public String jni() {
+        return "Z";
     }
 }
