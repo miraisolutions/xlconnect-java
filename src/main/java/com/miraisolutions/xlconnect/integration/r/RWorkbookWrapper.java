@@ -20,10 +20,7 @@
 
 package com.miraisolutions.xlconnect.integration.r;
 
-import com.miraisolutions.xlconnect.CellStyle;
-import com.miraisolutions.xlconnect.ErrorBehavior;
-import com.miraisolutions.xlconnect.StyleAction;
-import com.miraisolutions.xlconnect.Workbook;
+import com.miraisolutions.xlconnect.*;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
@@ -34,6 +31,8 @@ import org.apache.poi.common.usermodel.HyperlinkType;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
 
 public final class RWorkbookWrapper {
 
@@ -139,8 +138,9 @@ public final class RWorkbookWrapper {
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public boolean existsName(String name, String worksheetScope) {
-        return workbook.existsName(name, worksheetScope);
+    public BooleanWithAttributes existsName(String name, String worksheetScope) {
+        boolean resultValue = workbook.existsName(name, worksheetScope);
+        return new BooleanWithAttributes(WORKSHEET_SCOPE, worksheetScope, resultValue);
     }
 
     public boolean existsSheet(String name) {
