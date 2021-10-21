@@ -322,7 +322,7 @@ public final class Workbook {
                 removeName(name, worksheetScope);
             } else {
                 // Name already exists, but we don't want to overwrite --> error
-                throw new IllegalArgumentException("Specified name '" + name + "' already exists in " + worksheetScope);
+                throw new IllegalArgumentException("Specified name '" + name + "' already exists " + displayWorksheetScope(worksheetScope));
             }
         }
 
@@ -977,10 +977,14 @@ public final class Workbook {
                 return n;
 
         StringBuffer names = new StringBuffer();
-        String worksheetScopeDisplay = worksheetScope.isEmpty() ? "global scope" : worksheetScope;
+        String worksheetScopeDisplay = displayWorksheetScope(worksheetScope);
         cNames.forEach(n -> names.append(n.getSheetIndex() >= 0 ? workbook.getSheetName(n.getSheetIndex()) : "global scope").append(";"));
-        throw new IllegalArgumentException("Name '" + name + "' was not specified in worksheet '" + worksheetScopeDisplay + "'! " +
+        throw new IllegalArgumentException("Name '" + name + "' was not specified '" + worksheetScopeDisplay + "'! " +
                 "Found in sheets: " + names);
+    }
+
+    private String displayWorksheetScope(String worksheetScope) {
+        return null == worksheetScope ? "" : worksheetScope.isEmpty() ? "in global scope" : "in " +worksheetScope;
     }
 
     // Checks only if the reference as such is valid
