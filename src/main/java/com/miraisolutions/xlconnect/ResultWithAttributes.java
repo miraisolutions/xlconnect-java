@@ -24,6 +24,10 @@ class ResultWithAttributes {
         this(Collections.singletonMap(attributeName.toString(), attributeValue));
     }
 
+    public Map<String, String> getAttributes() {
+        return Collections.unmodifiableMap(attributes);
+    }
+
     public String[] getAttributeNames() {
         return attributes.keySet().toArray(new String[0]);
     }
