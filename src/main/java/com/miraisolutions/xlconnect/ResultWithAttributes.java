@@ -10,9 +10,9 @@ import java.util.*;
  */
 class ResultWithAttributes {
 
-    private final Map<String,String> attributes;
+    private final Map<String,String[]> attributes;
 
-    public ResultWithAttributes(Map<String,String> theAttributes) {
+    public ResultWithAttributes(Map<String,String[]> theAttributes) {
         this.attributes = theAttributes;
     }
 
@@ -21,10 +21,10 @@ class ResultWithAttributes {
     }
 
     public ResultWithAttributes(Attribute attributeName, String attributeValue) {
-        this(Collections.singletonMap(attributeName.toString(), attributeValue));
+        this(Collections.singletonMap(attributeName.toString(), new String[]{attributeValue}));
     }
 
-    public Map<String, String> getAttributes() {
+    public Map<String, String[]> getAttributes() {
         return Collections.unmodifiableMap(attributes);
     }
 
@@ -32,11 +32,11 @@ class ResultWithAttributes {
         return attributes.keySet().toArray(new String[0]);
     }
 
-    public String[] getAttributeValues() {
+    /* public String[] getAttributeValues() {
         return attributes.values().toArray(new String[0]);
-    }
+    }*/
 
-    public String getAttributeValue(String attributeName){
+    public String[] getAttributeValue(String attributeName){
         return attributes.get(attributeName);
     }
 }
