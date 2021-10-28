@@ -11,10 +11,6 @@ public class DataFrameWithAttributes extends ResultWithAttributes{
         this.value = value;
     }
 
-    public DataFrameWithAttributes(DataFrame value) {
-        super();
-        this.value = value;
-    }
 
     public DataFrame getValue() {
         return value;

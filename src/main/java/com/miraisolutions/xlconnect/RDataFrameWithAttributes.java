@@ -13,11 +13,6 @@ public class RDataFrameWithAttributes extends ResultWithAttributes{
         this.value = value;
     }
 
-    public RDataFrameWithAttributes(RDataFrameWrapper value) {
-        super();
-        this.value = value;
-    }
-
     public RDataFrameWrapper getValue() {
         return value;
     }
