@@ -267,11 +267,15 @@ public final class Workbook {
     public BooleanWithAttributes existsName(String name, String worksheetScope) {
         try {
             Name found = getName(name, worksheetScope);
-            String foundInScope = worksheetScope != null ? worksheetScope : getSheet(found.getSheetIndex()).getSheetName();
+            String foundInScope = effectiveScope(worksheetScope, found);
             return new BooleanWithAttributes(WORKSHEET_SCOPE, foundInScope, true);
         } catch (IllegalArgumentException ignored) {
             return worksheetScope != null ? new BooleanWithAttributes(WORKSHEET_SCOPE, worksheetScope, false) : new BooleanWithAttributes(false);
         }
+    }
+
+    private String effectiveScope(String worksheetScope, Name found) {
+        return worksheetScope != null ? worksheetScope : found.getSheetIndex() >= 0 ? getSheet(found.getSheetIndex()).getSheetName() : "";
     }
 
 
@@ -636,10 +640,11 @@ public final class Workbook {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
-    public DataFrame readNamedRegion(String name, String worksheetScope, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
-                                     boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+    public DataFrameWithAttributes readNamedRegion(String name, String worksheetScope, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
+                                                   boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
         Name cname = getName(name, worksheetScope);
         checkName(cname);
+        String foundInScope = effectiveScope(worksheetScope, cname);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
@@ -653,8 +658,8 @@ public final class Workbook {
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
-        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
-                forceConversion, dateTimeFormat, takeCached, subset);
+        return new DataFrameWithAttributes(WORKSHEET_SCOPE, foundInScope, readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
+                forceConversion, dateTimeFormat, takeCached, subset));
     }
 
     public DataFrame readTable(int worksheetIndex, String tableName, boolean header, ReadStrategy readStrategy,
