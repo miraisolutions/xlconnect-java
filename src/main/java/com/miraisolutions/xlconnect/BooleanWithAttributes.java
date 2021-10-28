@@ -9,6 +9,11 @@ public class BooleanWithAttributes extends ResultWithAttributes implements WithJ
         this.value = value;
     }
 
+    public BooleanWithAttributes(boolean value) {
+        super();
+        this.value = value;
+    }
+
     public boolean getValue() {
         return value;
     }
