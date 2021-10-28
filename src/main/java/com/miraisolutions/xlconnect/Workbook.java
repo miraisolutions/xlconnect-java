@@ -42,6 +42,8 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
+import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
+
 
 /**
  * Class representing a Microsoft Excel Workbook for XLConnect
@@ -262,13 +264,13 @@ public final class Workbook {
         return workbook.getSheet(name) != null;
     }
 
-    public boolean existsName(String name, String worksheetScope) {
+    public BooleanWithAttributes existsName(String name, String worksheetScope) {
         try {
-            getName(name, worksheetScope);
-            return true;
-        }
-        catch (IllegalArgumentException ignored) {
-            return false;
+            Name found = getName(name, worksheetScope);
+            String foundInScope = worksheetScope != null ? worksheetScope : getSheet(found.getSheetIndex()).getSheetName();
+            return new BooleanWithAttributes(WORKSHEET_SCOPE, foundInScope, true);
+        } catch (IllegalArgumentException ignored) {
+            return worksheetScope != null ? new BooleanWithAttributes(WORKSHEET_SCOPE, worksheetScope, false) : new BooleanWithAttributes(false);
         }
     }
 
@@ -316,7 +318,7 @@ public final class Workbook {
     }
 
     public void createName(String name,  String worksheetScope, String formula, boolean overwrite) {
-        if (existsName(name, worksheetScope)) {
+        if (existsName(name, worksheetScope).getValue()) {
             if (overwrite) {
                 // Name already exists but we overwrite --> remove
                 removeName(name, worksheetScope);
@@ -343,7 +345,7 @@ public final class Workbook {
     }
 
     public void removeName(String name, String worksheetScope) {
-        if (existsName(name, worksheetScope)) {
+        if (existsName(name, worksheetScope).getValue()) {
             Name cname = getName(name, worksheetScope);
             workbook.removeName(cname);
         }

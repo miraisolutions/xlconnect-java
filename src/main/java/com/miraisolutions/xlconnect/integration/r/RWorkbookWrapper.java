@@ -139,8 +139,7 @@ public final class RWorkbookWrapper {
     }
 
     public BooleanWithAttributes existsName(String name, String worksheetScope) {
-        boolean resultValue = workbook.existsName(name, worksheetScope);
-        return new BooleanWithAttributes(WORKSHEET_SCOPE, worksheetScope, resultValue);
+        return workbook.existsName(name, worksheetScope);
     }
 
     public boolean existsSheet(String name) {

@@ -16,6 +16,10 @@ class ResultWithAttributes {
         this.attributes = theAttributes;
     }
 
+    public ResultWithAttributes() {
+        this(Collections.emptyMap());
+    }
+
     public ResultWithAttributes(Attribute attributeName, String attributeValue) {
         this(Collections.singletonMap(attributeName.toString(), attributeValue));
     }
