@@ -8,7 +8,7 @@ public class RDataFrameWithAttributes extends ResultWithAttributes{
 
     private final RDataFrameWrapper value;
 
-    public RDataFrameWithAttributes(Map<String, String> attributes, RDataFrameWrapper value) {
+    public RDataFrameWithAttributes(Map<String, String[]> attributes, RDataFrameWrapper value) {
         super(attributes);
         this.value = value;
     }
