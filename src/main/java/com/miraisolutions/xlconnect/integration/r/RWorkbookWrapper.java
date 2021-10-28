@@ -32,7 +32,7 @@ import org.apache.poi.common.usermodel.HyperlinkType;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
+import java.io.IOException;
 
 public final class RWorkbookWrapper {
 
@@ -116,12 +116,12 @@ public final class RWorkbookWrapper {
         return ctypes;
     }
 
-    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
+    public RDataFrameWithAttributes readNamedRegion(String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
                                              String readStrategy, String worksheetScope) {
-        DataFrame dataFrame = workbook.readNamedRegion(name, worksheetScope, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
+        DataFrameWithAttributes dataFrame = workbook.readNamedRegion(name, worksheetScope, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
-        return new RDataFrameWrapper(dataFrame);
+        return new RDataFrameWithAttributes(dataFrame.getAttributes(), new RDataFrameWrapper(dataFrame.getValue()));
     }
 
     public RDataFrameWrapper readTable(int worksheetIndex, String tableName, boolean header, String[] colTypes,
