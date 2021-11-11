@@ -1,5 +1,6 @@
 package com.miraisolutions.xlconnect.utils;
 
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -94,5 +95,11 @@ public class RPOSIXDateTimeFormatterTest {
         Date input = Date.from(Instant.ofEpochSecond(1341584123));
         String result = underTest.format(input, "%d.%m.%Y %H:%M:%S");
         assertEquals("06.07.2012 16:15:23", result);
+    }
+
+    @Test
+    public void thresholdXlRoundTrip() {
+        Date input = Date.from(Instant.from(ZonedDateTime.of(2021,10,31,0,0,0,0, ZoneId.of("UTC"))));
+        assertEquals(input, DateUtil.getJavaDate(DateUtil.getExcelDate(input)));
     }
 }
