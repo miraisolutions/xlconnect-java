@@ -255,12 +255,7 @@ public final class Workbook extends Common {
     }
 
     public String[] getDefinedNames(boolean validOnly) {
-        //TODO getNameAt is deprecated in POI 4.0 -
-        // "New projects should avoid accessing named ranges by index."
-        int count = workbook.getNumberOfNames();
-        // String[] nameNames = new String[count];
         ArrayList<String> nameNames = new ArrayList<String>();
-
         for(Name namedRegion : workbook.getAllNames()) {
             // if valid only, check corresponding reference formula validity
             if(validOnly && !isValidNamedRegion(namedRegion)) continue;
