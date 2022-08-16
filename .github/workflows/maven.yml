@@ -28,9 +28,8 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - name: Upload successfully built JAR
-        if: success()
-        uses: actions/upload-artifact@main
-        with:
-          name: xlconnect_jar
-          path: | 
-            /home/runner/work/xlconnect-java/xlconnect-java/target/XLConnect-*.jar
+      uses: actions/upload-artifact@main
+      with:
+        name: xlconnect_jar
+        path: | 
+          /home/runner/work/xlconnect-java/xlconnect-java/target/XLConnect-*.jar
