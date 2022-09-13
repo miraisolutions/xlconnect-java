@@ -108,8 +108,8 @@ public final class RWorkbookWrapper {
         workbook.cloneSheet(name, newName);
     }
 
-    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header) {
-        workbook.writeNamedRegion(dataFrame.dataFrame, name, header);
+    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header, boolean overwriteFormulaCells) {
+        workbook.writeNamedRegion(dataFrame.dataFrame, name, header, overwriteFormulaCells);
     }
 
     private static DataType[] dataTypeFromString(String[] colTypes) {
@@ -170,20 +170,20 @@ public final class RWorkbookWrapper {
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, int startRow, int startCol, boolean header) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, startRow, startCol, header);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, startRow, startCol, header, overwriteFormulaCells);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, int startRow, int startCol, boolean header) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, startRow, startCol, header);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, startRow, startCol, header, overwriteFormulaCells);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, boolean header) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, header);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, int worksheetIndex, boolean header, boolean overwriteFormulaCells) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetIndex, header, overwriteFormulaCells);
     }
 
-    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, boolean header) {
-        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, header);
+    public void writeWorksheet(RDataFrameWrapper dataFrame, String worksheetName, boolean header, boolean overwriteFormulaCells) {
+        workbook.writeWorksheet(dataFrame.dataFrame, worksheetName, header, overwriteFormulaCells);
     }
 
     public int getActiveSheetIndex() {
@@ -487,16 +487,16 @@ public final class RWorkbookWrapper {
     }
 
 
-    public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header) {
-        workbook.appendNamedRegion(data.dataFrame, name, header);
+    public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header, boolean overwriteFormulaCells) {
+        workbook.appendNamedRegion(data.dataFrame, name, header, overwriteFormulaCells);
     }
 
-    public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header) {
-        workbook.appendWorksheet(data.dataFrame, worksheetIndex, header);
+    public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header, boolean overwriteFormulaCells) {
+        workbook.appendWorksheet(data.dataFrame, worksheetIndex, header, overwriteFormulaCells);
     }
 
-    public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header) {
-        workbook.appendWorksheet(data.dataFrame, worksheetName, header);
+    public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header, boolean overwriteFormulaCells) {
+        workbook.appendWorksheet(data.dataFrame, worksheetName, header, overwriteFormulaCells);
     }
     
     public void clearSheet(int sheetIndex) {
