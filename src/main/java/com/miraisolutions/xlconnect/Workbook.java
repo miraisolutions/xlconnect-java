@@ -422,7 +422,13 @@ public final class Workbook extends Common {
         // Get styles
         Map<String, CellStyle> styles = getStyles(data, sheet, startRow, startCol);
 
-        Consumer<Cell> formulaClear = overwriteFormulaCells ? Cell::removeFormula : (cell -> {});
+        Consumer<Cell> formulaClear = overwriteFormulaCells ? (cell -> 
+            {
+                if(cell.isFormulaCell()){
+                    cell.removeFormula();
+                }
+            }
+            ) : (cell -> {});
         // Define row & column index variables
         int rowIndex = startRow;
         int colIndex = startCol;
