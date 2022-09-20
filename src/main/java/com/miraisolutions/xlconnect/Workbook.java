@@ -450,13 +450,13 @@ public final class Workbook extends Common {
             // Get column style
             CellStyle cs = styles.get(COLUMN + i);
             Column col = data.getColumn(i);
-            Cell cell = null;
             // Depending on column type ...
             switch(data.getColumnType(i)) {
                 case Numeric:
                     double[] doubleValues = col.getNumericData();
                     for(int j = 0; j < data.rows(); j++) {
-                        cell = getCell(sheet, rowIndex + j, colIndex);
+                        Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        formulaClear.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -474,7 +474,8 @@ public final class Workbook extends Common {
                 case String:
                     String[] stringValues = col.getStringData();
                     for(int j = 0; j < data.rows(); j++) {
-                        cell = getCell(sheet, rowIndex + j, colIndex);
+                        Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        formulaClear.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -487,7 +488,8 @@ public final class Workbook extends Common {
                 case Boolean:
                     boolean[] booleanValues = col.getBooleanData();
                     for(int j = 0; j < data.rows(); j++) {
-                        cell = getCell(sheet, rowIndex + j, colIndex);
+                        Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        formulaClear.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -500,7 +502,8 @@ public final class Workbook extends Common {
                 case DateTime:
                     Date[] dateValues = col.getDateTimeData();
                     for(int j = 0; j < data.rows(); j++) {
-                        cell = getCell(sheet, rowIndex + j, colIndex);
+                        Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        formulaClear.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -513,7 +516,6 @@ public final class Workbook extends Common {
                 default:
                     throw new IllegalArgumentException("Unknown column type detected!");
             }
-            formulaClear.accept(cell);
 
             ++colIndex;
         }
