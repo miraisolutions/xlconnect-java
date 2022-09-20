@@ -424,7 +424,7 @@ public final class Workbook extends Common {
 
         Consumer<Cell> formulaClear = overwriteFormulaCells ? (cell -> 
             {
-                if(cell.isFormulaCell()){
+                if(cell.getCellType() != CellType.FORMULA){
                     cell.removeFormula();
                 }
             }
