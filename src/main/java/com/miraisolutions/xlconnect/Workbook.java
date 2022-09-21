@@ -422,7 +422,7 @@ public final class Workbook extends Common {
         // Get styles
         Map<String, CellStyle> styles = getStyles(data, sheet, startRow, startCol);
 
-        Consumer<Cell> formulaClear = overwriteFormulaCells ? (cell -> 
+        Consumer<Cell> maybeClearFormula = overwriteFormulaCells ? (cell -> 
             {
                 if(cell.getCellType() == CellType.FORMULA){
                     cell.removeFormula();
@@ -456,7 +456,7 @@ public final class Workbook extends Common {
                     double[] doubleValues = col.getNumericData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        formulaClear.accept(cell);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -475,7 +475,7 @@ public final class Workbook extends Common {
                     String[] stringValues = col.getStringData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        formulaClear.accept(cell);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -489,7 +489,7 @@ public final class Workbook extends Common {
                     boolean[] booleanValues = col.getBooleanData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        formulaClear.accept(cell);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -503,7 +503,7 @@ public final class Workbook extends Common {
                     Date[] dateValues = col.getDateTimeData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
-                        formulaClear.accept(cell);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -1499,7 +1499,7 @@ public final class Workbook extends Common {
         Sheet sheet = workbook.getSheet(getName(name).getSheetName());
         // top, left, bottom, right
         int[] coord = getReferenceCoordinates(name);
-        writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells); // TODO needed ?
+        writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
         int bottom = coord[2] + data.rows();
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
         CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
@@ -1507,7 +1507,7 @@ public final class Workbook extends Common {
         createName(name, formula, true);
     }
 
-    public void appendWorksheet(DataFrame data, int worksheetIndex, boolean header, boolean overwriteFormulaCells) {
+    public void appendWorksheet(DataFrame data, int worksheetIndex, boolean header) {
         Sheet sheet = getSheet(worksheetIndex);
         int lastRow = getLastRow(worksheetIndex);
         int firstCol = Integer.MAX_VALUE;
@@ -1519,11 +1519,11 @@ public final class Workbook extends Common {
         if(firstCol == Integer.MAX_VALUE)
             firstCol = 0;
 
-        writeWorksheet(data, worksheetIndex, getLastRow(worksheetIndex) + 1, firstCol, header, overwriteFormulaCells);
+        writeWorksheet(data, worksheetIndex, getLastRow(worksheetIndex) + 1, firstCol, header, false);
     }
 
-    public void appendWorksheet(DataFrame data, String worksheetName, boolean header, boolean overwriteFormulaCells) {
-        appendWorksheet(data, workbook.getSheetIndex(worksheetName), header, overwriteFormulaCells);
+    public void appendWorksheet(DataFrame data, String worksheetName, boolean header) {
+        appendWorksheet(data, workbook.getSheetIndex(worksheetName), header);
     }
 
     public void clearSheet(int sheetIndex) {

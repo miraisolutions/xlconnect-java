@@ -491,12 +491,12 @@ public final class RWorkbookWrapper {
         workbook.appendNamedRegion(data.dataFrame, name, header, overwriteFormulaCells);
     }
 
-    public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header, boolean overwriteFormulaCells) {
-        workbook.appendWorksheet(data.dataFrame, worksheetIndex, header, overwriteFormulaCells);
+    public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header) {
+        workbook.appendWorksheet(data.dataFrame, worksheetIndex, header);
     }
 
-    public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header, boolean overwriteFormulaCells) {
-        workbook.appendWorksheet(data.dataFrame, worksheetName, header, overwriteFormulaCells);
+    public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header) {
+        workbook.appendWorksheet(data.dataFrame, worksheetName, header);
     }
     
     public void clearSheet(int sheetIndex) {
