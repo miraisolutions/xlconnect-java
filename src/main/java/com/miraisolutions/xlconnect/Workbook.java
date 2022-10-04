@@ -25,6 +25,7 @@ import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
 import java.util.*;
+import java.util.function.Consumer;
 
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -417,10 +418,17 @@ public final class Workbook extends Common {
         return getReferenceCoordinatesForTable(workbook.getSheetIndex(sheetName), tableName);
     }
 
-    private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header) {
+    private void writeData(DataFrame data, Sheet sheet, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
         // Get styles
         Map<String, CellStyle> styles = getStyles(data, sheet, startRow, startCol);
 
+        Consumer<Cell> maybeClearFormula = overwriteFormulaCells ? (cell -> 
+            {
+                if(cell.getCellType() == CellType.FORMULA){
+                    cell.removeFormula();
+                }
+            }
+            ) : (cell -> {});
         // Define row & column index variables
         int rowIndex = startRow;
         int colIndex = startCol;
@@ -448,6 +456,7 @@ public final class Workbook extends Common {
                     double[] doubleValues = col.getNumericData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -466,6 +475,7 @@ public final class Workbook extends Common {
                     String[] stringValues = col.getStringData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -479,6 +489,7 @@ public final class Workbook extends Common {
                     boolean[] booleanValues = col.getBooleanData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -492,6 +503,7 @@ public final class Workbook extends Common {
                     Date[] dateValues = col.getDateTimeData();
                     for(int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
+                        maybeClearFormula.accept(cell);
                         if(col.isMissing(j))
                             setMissing(cell);
                         else {
@@ -613,7 +625,7 @@ public final class Workbook extends Common {
         this.onErrorCell = eb;
     }
 
-    public void writeNamedRegion(DataFrame data, String name, boolean header) {
+    public void writeNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -637,7 +649,7 @@ public final class Workbook extends Common {
         // Redefine named range
         cname.setRefersToFormula(aref.formatAsString());
 
-        writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header);
+        writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
     public DataFrame readNamedRegion(String name, boolean header) {
@@ -691,21 +703,21 @@ public final class Workbook extends Common {
      * @param startCol          Start column (column index of top left cell)
      * @param header            If true, column headers are written, otherwise not
      */
-    public void writeWorksheet(DataFrame data, int worksheetIndex, int startRow, int startCol, boolean header) {
+    public void writeWorksheet(DataFrame data, int worksheetIndex, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
-        writeData(data, sheet, startRow, startCol, header);
+        writeData(data, sheet, startRow, startCol, header, overwriteFormulaCells);
     }
 
-    public void writeWorksheet(DataFrame data, String worksheetName, int startRow, int startCol, boolean header) {
-        writeWorksheet(data, workbook.getSheetIndex(worksheetName), startRow, startCol, header);
+    public void writeWorksheet(DataFrame data, String worksheetName, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
+        writeWorksheet(data, workbook.getSheetIndex(worksheetName), startRow, startCol, header, overwriteFormulaCells);
     }
 
-    public void writeWorksheet(DataFrame data, int worksheetIndex, boolean header) {
-        writeWorksheet(data, worksheetIndex, 0, 0, header);
+    public void writeWorksheet(DataFrame data, int worksheetIndex, boolean header, boolean overwriteFormulaCells) {
+        writeWorksheet(data, worksheetIndex, 0, 0, header, overwriteFormulaCells);
     }
 
-    public void writeWorksheet(DataFrame data, String worksheetName, boolean header) {
-        writeWorksheet(data, worksheetName, 0, 0, header);
+    public void writeWorksheet(DataFrame data, String worksheetName, boolean header, boolean overwriteFormulaCells) {
+        writeWorksheet(data, worksheetName, 0, 0, header, overwriteFormulaCells);
     }
 
     /**
@@ -1483,11 +1495,11 @@ public final class Workbook extends Common {
         return getLastColumn(getSheet(sheetName));
     }
 
-    public void appendNamedRegion(DataFrame data, String name, boolean header) {
+    public void appendNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells) {
         Sheet sheet = workbook.getSheet(getName(name).getSheetName());
         // top, left, bottom, right
         int[] coord = getReferenceCoordinates(name);
-        writeData(data, sheet, coord[2] + 1, coord[1], header);
+        writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
         int bottom = coord[2] + data.rows();
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
         CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
@@ -1507,7 +1519,7 @@ public final class Workbook extends Common {
         if(firstCol == Integer.MAX_VALUE)
             firstCol = 0;
 
-        writeWorksheet(data, worksheetIndex, getLastRow(worksheetIndex) + 1, firstCol, header);
+        writeWorksheet(data, worksheetIndex, getLastRow(worksheetIndex) + 1, firstCol, header, false);
     }
 
     public void appendWorksheet(DataFrame data, String worksheetName, boolean header) {
