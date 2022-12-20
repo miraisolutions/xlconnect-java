@@ -83,8 +83,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
-            <artifactId>ooxml-schemas</artifactId>
-            <version>1.4</version>
+            <artifactId>poi-ooxml-full</artifactId>
+            <version>5.2.3</version>
         </dependency>
     </dependencies>
     <properties>
