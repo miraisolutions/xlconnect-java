@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: 'szenius/set-timezone@v1.0'
+    - uses: 'szenius/set-timezone@v1.2'
       with:
         timezoneLinux: Europe/Zurich
         timezoneMacos: Europe/Zurich
