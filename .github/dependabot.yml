@@ -11,3 +11,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      poi:
+        patterns:
+        - "org.apache.poi*"
