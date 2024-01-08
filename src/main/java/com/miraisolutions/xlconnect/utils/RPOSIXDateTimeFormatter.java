@@ -31,12 +31,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Inspired by http://code.google.com/p/renjin/source/browse/trunk/core/src/main/java/r/base/Time.java?spec=svn379&r=379
+ * Inspired by <a href="http://code.google.com/p/renjin/source/browse/trunk/core/src/main/java/r/base/Time.java?spec=svn379&r=379">Time.java</a>
  * @author Martin Studer, Mirai Solutions GmbH
  */
 public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
 
-    private Map<String, java.time.format.DateTimeFormatter> cache = new HashMap<>();
+    private final Map<String, java.time.format.DateTimeFormatter> cache = new HashMap<>();
 
     private java.time.format.DateTimeFormatter getFormatter(String format) {
         if(cache.containsKey(format))

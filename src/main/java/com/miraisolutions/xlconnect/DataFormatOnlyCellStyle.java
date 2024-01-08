@@ -33,9 +33,8 @@ import java.util.EnumMap;
  */
 public class DataFormatOnlyCellStyle extends Common implements CellStyle {
 
-    // private static DataFormatOnlyCellStyle instance = null;
-    private static EnumMap<DataType, DataFormatOnlyCellStyle> instances = new EnumMap<DataType, DataFormatOnlyCellStyle>(DataType.class);
-    private DataType dataType;
+    private static final EnumMap<DataType, DataFormatOnlyCellStyle> instances = new EnumMap<>(DataType.class);
+    private final DataType dataType;
     
     private DataFormatOnlyCellStyle(DataType type) {
         this.dataType = type;

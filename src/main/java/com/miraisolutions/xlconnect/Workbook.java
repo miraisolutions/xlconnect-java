@@ -26,12 +26,12 @@ import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
@@ -83,23 +83,23 @@ public final class Workbook extends Common {
     private final Map<String, CellStyle> defaultStyles =
             new HashMap<String, CellStyle>(5);
     // Styles per data type
-    private final Map<DataType, CellStyle> dataTypeStyles = new EnumMap(DataType.class);
+    private final Map<DataType, CellStyle> dataTypeStyles = new EnumMap<>(DataType.class);
     
     // Data format map
-    private final Map<DataType, String> dataFormatMap = new EnumMap(DataType.class);
+    private final Map<DataType, String> dataFormatMap = new EnumMap<>(DataType.class);
 
 
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
     
-    private Workbook(InputStream in, String password) throws IOException, InvalidFormatException {
+    private Workbook(InputStream in, String password) throws IOException {
         this.workbook = WorkbookFactory.create(in, password);
         this.excelFile = null;
         init();
     }
     
-    private Workbook(File excelFile, String password) throws IOException, InvalidFormatException {
+    private Workbook(File excelFile, String password) throws IOException {
         /* 
          * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
@@ -109,13 +109,7 @@ public final class Workbook extends Common {
         init();
     }
     
-    private Workbook(InputStream in) throws IOException, InvalidFormatException {
-        this.workbook = WorkbookFactory.create(in);
-        this.excelFile = null;
-        init();
-    }
-    
-    private Workbook(File excelFile) throws IOException, InvalidFormatException {
+    private Workbook(File excelFile) throws IOException {
         /* 
          * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
@@ -153,25 +147,17 @@ public final class Workbook extends Common {
         dataFormatMap.put(DataType.String, "General");
     }
     
-    private CellStyle initGeneralStyle(String name, DataType type) {
+    private CellStyle initGeneralStyle(String name) {
         CellStyle style = getCellStyle(name);
-         if(style == null) {
+         if (style == null) {
             style = createCellStyle(name);
-            if(type == null)
-                style.setDataFormat("General");
-            else
-                style.setDataFormat(dataFormatMap.get(type));
+            style.setDataFormat("General");
             style.setWrapText(true);
         }
         return style;
     }
-    
-    private CellStyle initGeneralStyle(String name) {
-        return initGeneralStyle(name, null);
-    }
 
     private void initDefaultStyles() {
-
         // Header style
         CellStyle headerStyle = getCellStyle(HEADER_STYLE);
         if(headerStyle == null) {
@@ -214,7 +200,6 @@ public final class Workbook extends Common {
 
     public void setDataFormat(DataType type, String format) {
         dataFormatMap.put(type, format);
-        
     }
 
     public String getDataFormat(DataType type) {
@@ -238,13 +223,9 @@ public final class Workbook extends Common {
     }
     
     public String[] getSheets() {
-        int count = workbook.getNumberOfSheets();
-        String[] sheetNames = new String[count];
-
-        for(int i = 0; i < count; i++)
-            sheetNames[i] = workbook.getSheetName(i);
-
-        return sheetNames;
+        return IntStream.range(0, workbook.getNumberOfSheets())
+                .mapToObj(workbook::getSheetName)
+                .toArray(String[]::new);
     }
 
     public int getSheetPos(String sheetName) {
@@ -256,13 +237,10 @@ public final class Workbook extends Common {
     }
 
     public String[] getDefinedNames(boolean validOnly) {
-        ArrayList<String> nameNames = new ArrayList<String>();
-        for(Name namedRegion : workbook.getAllNames()) {
-            // if valid only, check corresponding reference formula validity
-            if(validOnly && !isValidNamedRegion(namedRegion)) continue;
-            nameNames.add(namedRegion.getNameName());
-        }
-        return nameNames.toArray(new String[0]);
+        return workbook.getAllNames().stream()
+                .filter(namedRegion -> !validOnly || isValidNamedRegion(namedRegion))
+                .map(Name::getNameName)
+                .toArray(String[]::new);
     }
     
     
@@ -274,8 +252,8 @@ public final class Workbook extends Common {
         String sheetName = null;
         try {
             sheetName = region.getSheetName();
-        } catch(Exception e) {}
-        return (sheetName != null && !"".equals(sheetName));
+        } catch(Exception ignored) {}
+        return (sheetName != null && !sheetName.isEmpty());
     }
     
     public boolean existsSheet(String name) {
@@ -328,7 +306,7 @@ public final class Workbook extends Common {
                 // Name already exists but we overwrite --> remove
                 removeName(name);
             } else {
-                // Name already exists but we don't want to overwrite --> error
+                // Name already exists, but we don't want to overwrite --> error
                 throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
             }
         }
@@ -379,13 +357,9 @@ public final class Workbook extends Common {
     public String[] getTables(int sheetIndex) {
         if(isXSSF()) {
             XSSFSheet s = (XSSFSheet) getSheet(sheetIndex);
-            String[] tables = new String[s.getTables().size()];
-            int i = 0;
-            Iterator<XSSFTable> it = s.getTables().iterator();
-            while(it.hasNext()) {
-                tables[i++] = it.next().getName();
-            }
-            return tables;
+            return s.getTables().stream()
+                    .map(XSSFTable::getName)
+                    .toArray(String[]::new);
         } else {
             return new String[0];
         }
@@ -461,11 +435,9 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             if(Double.isInfinite(doubleValues[j])) {
-
                               cell.setCellErrorValue(FormulaError.NA.getCode());
                             } else {
                               cell.setCellValue(doubleValues[j]);
-
                             }
                             setCellStyle(cell, cs);
                         }
@@ -480,7 +452,6 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(stringValues[j]);
-
                             setCellStyle(cell, cs);
                         }
                     }
@@ -494,7 +465,6 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(booleanValues[j]);
-
                             setCellStyle(cell, cs);
                         }
                     }
@@ -508,7 +478,6 @@ public final class Workbook extends Common {
                             setMissing(cell);
                         else {
                             cell.setCellValue(dateValues[j]);
-
                             setCellStyle(cell, cs);
                         }
                     }
@@ -724,7 +693,7 @@ public final class Workbook extends Common {
      * Reads data from a worksheet. Data regions can be narrowed down by specifying corresponding row and column ranges.
      * Limits specified as negative integers will be automatically determined. The rules for automatically determining
      * the ranges are as follows:
-     *
+     * <p>
      * - If start row < 0: get first row on sheet
      * - If end row < 0: get last row on sheet
      * - If start column < 0: get column of first (non-null) cell in start row
@@ -879,8 +848,9 @@ public final class Workbook extends Common {
                 return HCellStyle.create((HSSFWorkbook) workbook, name);
             } else if(isXSSF()) {
                 return XCellStyle.create((XSSFWorkbook) workbook, name);
+            } else {
+                throw new RuntimeException("Unsupported workbook format.");
             }
-            return null;
         } else
             throw new IllegalArgumentException("Cell style with name '" + name + "' already exists!");
     }
@@ -1073,7 +1043,7 @@ public final class Workbook extends Common {
             if(missingValue[0] instanceof String) {
                 cell.setCellValue((String) missingValue[0]);
             } else if(missingValue[0] instanceof Double) {
-                cell.setCellValue(((Double) missingValue[0]).doubleValue());
+                cell.setCellValue((Double) missingValue[0]);
             } else {
                 cell.setBlank();
                 return;
@@ -1356,11 +1326,8 @@ public final class Workbook extends Common {
      *
      * @param excelFile Microsoft Excel file to read or create if not existing
      * @return Instance of the workbook
-     * @throws FileNotFoundException
-     * @throws IOException
-     * @throws InvalidFormatException
      */
-    public static Workbook getWorkbook(File excelFile, String password, boolean create) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(File excelFile, String password, boolean create) throws IOException {
         Workbook wb;
 
         if(excelFile.exists()) {
@@ -1384,23 +1351,23 @@ public final class Workbook extends Common {
         return wb;
     }
     
-    public static Workbook getWorkbook(File excelFile, boolean create) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(File excelFile, boolean create) throws IOException {
         return getWorkbook(excelFile, null, create);
     }
 
-    public static Workbook getWorkbook(String filename, String password, boolean create) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(String filename, String password, boolean create) throws IOException {
         return Workbook.getWorkbook(new File(filename), password, create);
     }
     
-    public static Workbook getWorkbook(String filename, boolean create) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(String filename, boolean create) throws IOException {
         return Workbook.getWorkbook(new File(filename), create);
     }
     
-    public static Workbook getWorkbook(InputStream is, String password) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(InputStream is, String password) throws IOException {
         return new Workbook(is, password);
     }
     
-    public static Workbook getWorkbook(InputStream is) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(InputStream is) throws IOException {
         return new Workbook(is, null);
     }
     
@@ -1409,11 +1376,7 @@ public final class Workbook extends Common {
     }
     
     public void setCellFormula(String formula, final String formulaString) {
-        foreachReferencedCell(formula, new CellFunction() {
-            public void apply(Cell cell) {
-                setCellFormula(cell, formulaString);
-            }
-        });
+        foreachReferencedCell(formula, cell -> setCellFormula(cell, formulaString));
     }
 
     public void setCellFormula(int sheetIndex, int row, int col, String formula) {
@@ -1597,7 +1560,7 @@ public final class Workbook extends Common {
     }
 
     public void createSplitPane(int sheetIndex, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
-        getSheet(sheetIndex).createSplitPane(xSplitPos, ySplitPos, leftColumn, topRow, Sheet.PANE_LOWER_RIGHT);
+        getSheet(sheetIndex).createSplitPane(xSplitPos, ySplitPos, leftColumn, topRow, PaneType.LOWER_RIGHT);
     }
 
     public void createSplitPane(String sheetName, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {

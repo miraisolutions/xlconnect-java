@@ -24,10 +24,10 @@ import java.util.Iterator;
 
 /**
  * Sequence Length Encoding
- *
+ * <p>
  * Encodes a sequence of values as a set of sub-sequences with a certain step size (increment).
  */
-public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
+public final class SequenceLengthEncoding implements RepeatableIterable<Integer> {
     // Start values of sub-sequences
     private final int[] values;
     // Sub-sequence lengths
@@ -37,8 +37,8 @@ public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
 
     public SequenceLengthEncoding(int[] values, int[] lengths, int increment) {
         if(values.length != lengths.length) throw new IllegalArgumentException("Arrays must be of same length");
-        for(int i = 0; i < lengths.length; i++) {
-            if(lengths[i] < 1) throw new IllegalArgumentException("Lengths must be greater than zero!");
+        for (int length : lengths) {
+            if (length < 1) throw new IllegalArgumentException("Lengths must be greater than zero!");
         }
 
         this.values = values;
@@ -57,7 +57,7 @@ public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
         return new SequenceIterator(repeating);
     }
 
-    /** Creates an non-repeating sequence iterator */
+    /** Creates a non-repeating sequence iterator */
     public Iterator<Integer> iterator() {
         return iterator(false);
     }
@@ -78,9 +78,9 @@ public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
         return cum;
     }
 
-    private class SequenceIterator implements Iterator<Integer> {
+    private final class SequenceIterator implements Iterator<Integer> {
         // Do we repeat iterating?
-        private boolean repeating = false;
+        private final boolean repeating;
         private int i = 0;
         private int chunk = 0;
 
@@ -90,13 +90,7 @@ public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
 
         // Number of elements in previous chunks
         private int elemsInPrevChunks() {
-            int elems;
-            if(chunk == 0) {
-                elems = 0;
-            } else {
-                elems = cumLengths[chunk - 1];
-            }
-            return elems;
+            return (chunk == 0) ? 0 : cumLengths[chunk - 1];
         }
 
         public boolean hasNext() {
@@ -105,16 +99,14 @@ public class SequenceLengthEncoding implements RepeatableIterable<Integer> {
 
         public Integer next() {
             int result = values[chunk] + (i - elemsInPrevChunks()) * increment;
-            i += 1;
-            if(repeating && i >= SequenceLengthEncoding.this.length()) {
+            i++;
+            if (repeating && i >= SequenceLengthEncoding.this.length()) {
                 i = 0;
                 chunk = 0;
             } else if(i >= cumLengths[chunk]) {
-                chunk += 1;
+                chunk++;
             }
             return result;
         }
-
-        public void remove() {}
     }
 }

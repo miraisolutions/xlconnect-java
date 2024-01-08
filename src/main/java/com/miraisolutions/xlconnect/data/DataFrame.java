@@ -22,14 +22,14 @@ package com.miraisolutions.xlconnect.data;
 
 import java.util.ArrayList;
 
-public class DataFrame {
+public final class DataFrame {
     
-    protected ArrayList<String> columnNames;
-    protected ArrayList<Column> columns;
+    private final ArrayList<String> columnNames;
+    private final ArrayList<Column> columns;
 
     public DataFrame() {
-        this.columnNames = new ArrayList<String>();
-        this.columns = new ArrayList<Column>();
+        this.columnNames = new ArrayList<>();
+        this.columns = new ArrayList<>();
     }
 
     public int columns() {
@@ -49,8 +49,8 @@ public class DataFrame {
 
     public boolean hasColumnHeader() {
         boolean hasHeader = false;
-        for(int i = 0; i < columnNames.size(); i++) {
-            if(columnNames.get(i) != null) {
+        for (String columnName : columnNames) {
+            if (columnName != null) {
                 hasHeader = true;
                 break;
             }

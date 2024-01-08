@@ -314,22 +314,14 @@ public final class RWorkbookWrapper {
     public void setCellStyleSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
         SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
         RepeatableIterableUtils.foreach(sheetName, row, col, cellStyle,
-            new RepeatableIterableUtils.Function4<String, Integer, Integer, RCellStyleWrapper>() {
-                public void apply(String sheet, Integer row, Integer col, RCellStyleWrapper cellStyle) {
-                    workbook.setCellStyle(sheet, row, col, cellStyle.cellStyle);
-                }
-            }
+                (RepeatableIterableUtils.Function4<String, Integer, Integer, RCellStyleWrapper>) (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
         );
     }
 
     public void setCellStyleSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
         SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
         RepeatableIterableUtils.foreach(sheetIndex, row, col, cellStyle,
-                new RepeatableIterableUtils.Function4<Integer, Integer, Integer, RCellStyleWrapper>() {
-                    public void apply(Integer sheet, Integer row, Integer col, RCellStyleWrapper cellStyle) {
-                        workbook.setCellStyle(sheet, row, col, cellStyle.cellStyle);
-                    }
-                }
+                (RepeatableIterableUtils.Function4<Integer, Integer, Integer, RCellStyleWrapper>) (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
         );
     }
     
@@ -340,22 +332,14 @@ public final class RWorkbookWrapper {
     public void setHyperlinkSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
         SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
         RepeatableIterableUtils.foreach(sheetIndex, row, col, type, address,
-                new RepeatableIterableUtils.Function5<Integer, Integer, Integer, String, String>() {
-                    public void apply(Integer sheet, Integer row, Integer col, String type, String address) {
-                        workbook.setHyperlink(sheet, row, col, HyperlinkType.valueOf(type), address);
-                    }
-                }
+                (RepeatableIterableUtils.Function5<Integer, Integer, Integer, String, String>) (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
         );
     }
 
     public void setHyperlinkSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
         SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
         RepeatableIterableUtils.foreach(sheetName, row, col, type, address,
-                new RepeatableIterableUtils.Function5<String, Integer, Integer, String, String>() {
-                    public void apply(String sheet, Integer row, Integer col, String type, String address) {
-                        workbook.setHyperlink(sheet, row, col, HyperlinkType.valueOf(type), address);
-                    }
-                }
+                (RepeatableIterableUtils.Function5<String, Integer, Integer, String, String>) (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
         );
     }
 

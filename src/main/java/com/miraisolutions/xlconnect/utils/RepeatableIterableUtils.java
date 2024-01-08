@@ -21,7 +21,6 @@
 package com.miraisolutions.xlconnect.utils;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -44,7 +43,7 @@ public class RepeatableIterableUtils {
      */
     public static <T1, T2, T3, T4> void foreach(RepeatableIterable<T1> r1, RepeatableIterable<T2> r2,
                                                 RepeatableIterable<T3> r3, RepeatableIterable<T4> r4,
-                                                Function4 function) {
+                                                Function4<T1, T2, T3, T4> function) {
 
         int maxLen = getMaxLength(new RepeatableIterable[]{r1, r2, r3, r4});
         Iterator<T1> i1 = r1.iterator(true);
@@ -60,7 +59,7 @@ public class RepeatableIterableUtils {
      */
     public static <T1, T2, T3, T4, T5> void foreach(RepeatableIterable<T1> r1, RepeatableIterable<T2> r2,
                                                     RepeatableIterable<T3> r3, RepeatableIterable<T4> r4,
-                                                    RepeatableIterable<T5> r5, Function5 function) {
+                                                    RepeatableIterable<T5> r5, Function5<T1, T2, T3, T4, T5> function) {
 
         int maxLen = getMaxLength(new RepeatableIterable[]{r1, r2, r3, r4, r5});
         Iterator<T1> i1 = r1.iterator(true);
@@ -71,9 +70,10 @@ public class RepeatableIterableUtils {
         for (int i = 0; i < maxLen; i++) function.apply(i1.next(), i2.next(), i3.next(), i4.next(), i5.next());
     }
 
-    private static int getMaxLength(RepeatableIterable<?> it[]) {
-        Integer[] lengths = new Integer[it.length];
-        for (int i = 0; i < it.length; i++) lengths[i] = it[i].length();
-        return Collections.max(Arrays.asList(lengths));
+    private static int getMaxLength(RepeatableIterable<?>[] it) {
+        return Arrays.stream(it)
+                .mapToInt(RepeatableIterable::length)
+                .max()
+                .orElse(0);
     }
 }

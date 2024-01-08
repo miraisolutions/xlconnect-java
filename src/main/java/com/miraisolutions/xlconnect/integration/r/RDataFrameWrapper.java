@@ -24,6 +24,7 @@ import com.miraisolutions.xlconnect.data.Column;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Date;
 
 public final class RDataFrameWrapper {
@@ -39,26 +40,23 @@ public final class RDataFrameWrapper {
     }
 
     public void addNumericColumn(String name, double[] column, boolean[] na) {
-        dataFrame.addColumn(name, new Column(column, na, DataType.Numeric));
+        dataFrame.addColumn(name, new Column(column, toBitSet(na), DataType.Numeric));
     }
 
     public void addBooleanColumn(String name, boolean[] column, boolean[] na) {
-        dataFrame.addColumn(name, new Column(column, na, DataType.Boolean));
+        dataFrame.addColumn(name, new Column(column, toBitSet(na), DataType.Boolean));
     }
 
     public void addStringColumn(String name, String[] column, boolean[] na) {
-        dataFrame.addColumn(name, new Column(column, na, DataType.String));
+        dataFrame.addColumn(name, new Column(column, toBitSet(na), DataType.String));
     }
 
     public void addDateTimeColumn(String name, long[] column, boolean[] na) {
         Date[] elements = new Date[column.length];
-        for(int i = 0; i < column.length; i++) {
-            if(na[i])
-                elements[i] = null;
-            else
-                elements[i] = new Date(column[i]);
+        for (int i = 0; i < column.length; i++) {
+            elements[i] = na[i] ? null : new Date(column[i]);
         }
-        dataFrame.addColumn(name, new Column(elements, na, DataType.DateTime));
+        dataFrame.addColumn(name, new Column(elements, toBitSet(na), DataType.DateTime));
     }
 
     public String[] getColumnTypes() {
@@ -72,7 +70,7 @@ public final class RDataFrameWrapper {
 
     public String[] getColumnNames() {
         ArrayList<String> columnNames = dataFrame.getColumnNames();
-        return columnNames.toArray(new String[columnNames.size()]);
+        return columnNames.toArray(new String[0]);
     }
 
     public double[] getNumericColumn(int col) {
@@ -92,16 +90,24 @@ public final class RDataFrameWrapper {
         long[] values = new long[v.length];
 
         for(int i = 0; i < v.length; i++) {
-            if(v[i] == null)
-                values[i] = 0;
-            else
-                values[i] = v[i].getTime();
+            values[i] = (v[i] == null) ? 0 : v[i].getTime();
         }
 
         return values;
     }
 
     public boolean[] isMissing(int col) {
-        return dataFrame.getColumn(col).getMissing();
+        BitSet missing = dataFrame.getColumn(col).getMissing();
+        boolean[] na = new boolean[missing.length()];
+        missing.stream().forEach(i -> na[i] = true);
+        return na;
+    }
+
+    private static BitSet toBitSet(boolean[] bits) {
+        BitSet bs = new BitSet(bits.length);
+        for (int i = 0; i < bits.length; i++) {
+            bs.set(i, bits[i]);
+        }
+        return bs;
     }
 }

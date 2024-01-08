@@ -40,8 +40,8 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.STBorderStyle;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
 
 /**
- * This class uses parts from XSSFCellStyle.java at
- * http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java
+ * This class uses parts from
+ * <a href="http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java">XSSFCellStyle.java</a>
  * by The Apache Software Foundation
  */
 public class XCellStyle extends Common implements CellStyle {
@@ -49,7 +49,7 @@ public class XCellStyle extends Common implements CellStyle {
     private final XSSFWorkbook workbook;
     private final int xfId, styleXfId;
     private XSSFCellAlignment cellAlignment;
-    private IndexedColorMap defaultIndexedColorMap = new DefaultIndexedColorMap();
+    private final IndexedColorMap defaultIndexedColorMap = new DefaultIndexedColorMap();
 
     public XCellStyle(XSSFWorkbook workbook, int xfId, int styleXfId) {
         this.workbook = workbook;
@@ -385,9 +385,6 @@ public class XCellStyle extends Common implements CellStyle {
 
     /**
      * Used for querying user-named cell styles (style xf only).
-     *
-     * @param workbook
-     * @param name
      * @return          XCellStyle with corresponding (named) style xf
      */
     public static XCellStyle get(XSSFWorkbook workbook, String name) {

@@ -29,7 +29,7 @@ import org.apache.poi.ss.usermodel.FormulaEvaluator;
  *
  * @author mstuder
  */
-public class FastColumnBuilder extends ColumnBuilder {
+public final class FastColumnBuilder extends ColumnBuilder {
     
     public FastColumnBuilder(int nrows, boolean forceConversion,
             boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
@@ -39,12 +39,10 @@ public class FastColumnBuilder extends ColumnBuilder {
     }
     
     protected void handleCell(Cell c, CellValue cv) {
-        String msg;
-        // Determine (evaluated) cell data type
         switch(cv.getCellType()) {
             case BLANK:
                 addMissing();
-                return;
+                break;
             case BOOLEAN:
                 addValue(c, cv, DataType.Boolean);
                 break;
@@ -55,16 +53,13 @@ public class FastColumnBuilder extends ColumnBuilder {
                 addValue(c, cv, DataType.String);
                 break;
             case FORMULA:
-                msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!";
-                cellError(msg);
+                cellError("Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!");
                 break;
             case ERROR:
-                msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
-                cellError(msg);
+                cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue()));
                 break;
             default:
-                msg = "Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!";
-                cellError(msg);
+                cellError("Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!");
         }
     }
 }

@@ -27,14 +27,14 @@ public class Common implements SupportsWarnings {
     /* Warnings -
      * This is used to support the warnings mechanism on the R side
      */
-    private final ArrayList<String> warnings = new ArrayList<String>();
+    private final ArrayList<String> warnings = new ArrayList<>();
 
     public void addWarning(String warning) {
         warnings.add(warning);
     }
 
     public String[] retrieveWarnings() {
-        String[] warn = warnings.toArray(new String[warnings.size()]);
+        String[] warn = warnings.toArray(new String[0]);
         warnings.clear();
         return warn;
     }

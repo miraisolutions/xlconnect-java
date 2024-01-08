@@ -19,14 +19,15 @@
  */
 package com.miraisolutions.xlconnect.data;
 
+import java.util.BitSet;
 import java.util.Date;
 
-public class Column {
-    private Object data;
-    private boolean[] missing;
-    private DataType type;
+public final class Column {
+    private final Object data;
+    private final BitSet missing;
+    private final DataType type;
     
-    public Column(Object data, boolean[] missing, DataType type) {
+    public Column(Object data, BitSet missing, DataType type) {
         this.data = data;
         this.missing = missing;
         this.type = type;
@@ -34,10 +35,6 @@ public class Column {
     
     public DataType getDataType() {
         return type;
-    }
-    
-    public Object getData() {
-        return data;
     }
     
     public boolean[] getBooleanData() {
@@ -56,15 +53,15 @@ public class Column {
         return (String[]) data;
     }
     
-    public boolean[] getMissing() {
+    public BitSet getMissing() {
         return missing;
     }
     
     public boolean isMissing(int i) {
-        return missing[i];
+        return missing.get(i);
     }
     
     public int size() {
-        return missing.length;
+        return missing.length();
     }
 }
