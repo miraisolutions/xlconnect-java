@@ -46,7 +46,7 @@ public abstract class ColumnBuilder {
     protected final ErrorBehavior onErrorCell;
 
     // This is used to support the warnings mechanism on the R side
-    protected ArrayList<String> warnings = new ArrayList<>();
+    protected final ArrayList<String> warnings = new ArrayList<>();
 
     public ColumnBuilder(int nrows, boolean forceConversion,
                          boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
@@ -66,29 +66,25 @@ public abstract class ColumnBuilder {
         detectedTypes.clear();
         cells.clear();
         values.clear();
+        warnings.clear();
     }
 
     public void addCell(Cell c) {
-        CellValue cv = null;
-
         try {
-            cv = (c != null) ? getCellValue(c) : null;
-
-            if (cv == null) {
-                this.addMissing();
-                return;
-            }
-
-            if (cv.getCellType() == CellType.ERROR) {
-                cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " +
-                        CellUtils.getErrorMessage(c.getErrorCellValue()));
-                return;
-            }
+            Optional.ofNullable(c)
+                    .map(this::getCellValue)
+                    .ifPresentOrElse(cv -> {
+                        if (cv.getCellType() == CellType.ERROR) {
+                            assert c != null;
+                            cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " +
+                                    CellUtils.getErrorMessage(c.getErrorCellValue()));
+                        } else {
+                            handleCell(c, cv);
+                        }
+                    }, this::addMissing);
         } catch (Exception e) {
             cellError("Error when trying to evaluate cell " + CellUtils.formatAsString(c) + " - " + e.getMessage());
         }
-
-        handleCell(c, cv);
     }
 
     protected void addMissing() {
@@ -137,7 +133,7 @@ public abstract class ColumnBuilder {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.Boolean);
+        return new Column(colValues, size, missing, DataType.Boolean);
     }
 
     public Column buildDateTimeColumn() {
@@ -193,7 +189,7 @@ public abstract class ColumnBuilder {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.DateTime);
+        return new Column(colValues, size, missing, DataType.DateTime);
     }
 
     public Column buildNumericColumn() {
@@ -239,7 +235,7 @@ public abstract class ColumnBuilder {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.Numeric);
+        return new Column(colValues, size, missing, DataType.Numeric);
     }
 
     public Column buildStringColumn() {
@@ -281,7 +277,7 @@ public abstract class ColumnBuilder {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.String);
+        return new Column(colValues, size, missing, DataType.String);
     }
 
     protected void cellError(String msg) {

@@ -516,7 +516,7 @@ public final class Workbook {
             colset = subset;
         }
 
-        ColumnBuilder cb;  // TODO: introduce ColumnBuilderFactory
+        ColumnBuilder cb;
         switch (readStrategy) {
             case DEFAULT:
                 cb = new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,

@@ -24,11 +24,13 @@ import java.util.Date;
 
 public final class Column {
     private final Object data;
+    private final int size;
     private final BitSet missing;
     private final DataType type;
 
-    public Column(Object data, BitSet missing, DataType type) {
+    public Column(Object data, int size, BitSet missing, DataType type) {
         this.data = data;
+        this.size = size;
         this.missing = missing;
         this.type = type;
     }
@@ -62,6 +64,6 @@ public final class Column {
     }
 
     public int size() {
-        return missing.length();
+        return size;
     }
 }

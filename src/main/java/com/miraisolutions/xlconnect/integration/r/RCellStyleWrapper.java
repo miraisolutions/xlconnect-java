@@ -26,6 +26,8 @@ import org.apache.poi.ss.usermodel.FillPatternType;
 
 public final class RCellStyleWrapper {
 
+    private final static String[] WARNINGS = new String[0]; // TODO: can we get rid of that
+
     final CellStyle cellStyle;
 
     public RCellStyleWrapper(CellStyle cellStyle) {
@@ -75,5 +77,9 @@ public final class RCellStyleWrapper {
 
     public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);
+    }
+
+    public String[] retrieveWarnings() {
+        return WARNINGS;
     }
 }

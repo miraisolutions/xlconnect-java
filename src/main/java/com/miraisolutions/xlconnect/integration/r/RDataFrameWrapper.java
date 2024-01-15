@@ -42,22 +42,22 @@ public final class RDataFrameWrapper {
     }
 
     public void addNumericColumn(String name, double[] column, boolean[] na) {
-        dataFrame.addColumn(name, new Column(column, toBitSet(na), DataType.Numeric));
+        dataFrame.addColumn(name, new Column(column, column.length, toBitSet(na), DataType.Numeric));
     }
 
     public void addBooleanColumn(String name, boolean[] column, boolean[] na) {
-        dataFrame.addColumn(name, new Column(column, toBitSet(na), DataType.Boolean));
+        dataFrame.addColumn(name, new Column(column, column.length, toBitSet(na), DataType.Boolean));
     }
 
     public void addStringColumn(String name, String[] column, boolean[] na) {
-        dataFrame.addColumn(name, new Column(column, toBitSet(na), DataType.String));
+        dataFrame.addColumn(name, new Column(column, column.length, toBitSet(na), DataType.String));
     }
 
     public void addDateTimeColumn(String name, long[] column, boolean[] na) {
         Date[] elements = IntStream.range(0, column.length)
                 .mapToObj(i -> na[i] ? null : new Date(column[i]))
                 .toArray(Date[]::new);
-        dataFrame.addColumn(name, new Column(elements, toBitSet(na), DataType.DateTime));
+        dataFrame.addColumn(name, new Column(elements, column.length, toBitSet(na), DataType.DateTime));
     }
 
     public String[] getColumnTypes() {
@@ -89,8 +89,9 @@ public final class RDataFrameWrapper {
     }
 
     public boolean[] isMissing(int col) {
-        BitSet missing = dataFrame.getColumn(col).getMissing();
-        boolean[] na = new boolean[missing.length()];
+        Column column = dataFrame.getColumn(col);
+        BitSet missing = column.getMissing();
+        boolean[] na = new boolean[column.size()];
         missing.stream().forEach(i -> na[i] = true);
         return na;
     }

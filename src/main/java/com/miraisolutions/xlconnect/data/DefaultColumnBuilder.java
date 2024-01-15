@@ -36,8 +36,8 @@ import java.util.stream.Collectors;
 public final class DefaultColumnBuilder extends ColumnBuilder {
 
     // The following split is done for performance reasons
-    private final String[] missingValueStrings;
-    private final double[] missingValueNumbers;
+    private final List<Object> missingValueStrings;
+    private final List<Object> missingValueNumbers;
 
     public DefaultColumnBuilder(int nrows, boolean forceConversion,
                                 boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
@@ -50,8 +50,8 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
         Map<Boolean, List<Object>> partitioned = Arrays.stream(missingValue)
                 .collect(Collectors.partitioningBy(o -> o instanceof String));
 
-        missingValueStrings = partitioned.get(true).toArray(String[]::new);
-        missingValueNumbers = partitioned.get(false).stream().mapToDouble(o -> (Double) o).toArray();
+        missingValueStrings = partitioned.get(true);
+        missingValueNumbers = partitioned.get(false);
     }
 
     @Override
@@ -68,29 +68,16 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
                 if (DateUtil.isCellDateFormatted(c))
                     addValue(c, cv, DataType.DateTime);
                 else {
-                    boolean missing = false;
-                    for (double missingValueNumber : missingValueNumbers) {
-                        if (cv.getNumberValue() == missingValueNumber) {
-                            missing = true;
-                            break;
-                        }
-                    }
-                    if (missing)
+                    double value = cv.getNumberValue();
+                    if (missingValueNumbers.contains(value))
                         addMissing();
                     else
                         addValue(c, cv, DataType.Numeric);
                 }
                 break;
             case STRING:
-                boolean missing = false;
-                for (String missingValueString : missingValueStrings) {
-                    String value = cv.getStringValue();
-                    if (value == null || value.equals(missingValueString)) {
-                        missing = true;
-                        break;
-                    }
-                }
-                if (missing)
+                String value = cv.getStringValue();
+                if ((value == null) || missingValueStrings.contains(value))
                     addMissing();
                 else
                     addValue(c, cv, DataType.String);
