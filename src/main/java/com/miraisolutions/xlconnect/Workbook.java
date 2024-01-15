@@ -37,10 +37,7 @@ import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -48,7 +45,7 @@ import java.util.stream.IntStream;
 /**
  * Class representing a Microsoft Excel Workbook for XLConnect
  */
-public final class Workbook extends Common {
+public final class Workbook {
 
     // Prefix
     private final static String HEADER = "Header";
@@ -95,6 +92,9 @@ public final class Workbook extends Common {
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
+
+    // This is used to support the warnings mechanism on the R side
+    private ArrayList<String> warnings = new ArrayList<>();
 
     private Workbook(InputStream in, String password) throws IOException {
         this.workbook = WorkbookFactory.create(in, password);
@@ -584,11 +584,8 @@ public final class Workbook extends Common {
                     throw new IllegalArgumentException("Unknown data type detected!");
 
             }
-            // ArrayList columnValues = cb.build(columnType);
-            // data.addColumn(columnHeader, columnType, columnValues);
-            // Copy warnings
-            for (String w : cb.retrieveWarnings())
-                this.addWarning(w);
+            // Collect column builder warnings
+            this.warnings.addAll(cb.getWarnings());
         }
 
         return data;
@@ -728,7 +725,7 @@ public final class Workbook extends Common {
         int nrows = startRow < 0 ? 0 : (endRow - startRow) + 1;
         int ncols = startCol < 0 ? 0 : (endCol - startCol) + 1;
         if (nrows == 0 || ncols == 0) {
-            this.addWarning("Data frame contains " + nrows + " rows and " + ncols + " columns!");
+            this.warnings.add("Data frame contains " + nrows + " rows and " + ncols + " columns!");
         }
 
         return readData(sheet, startRow, startCol, nrows, ncols, header, readStrategy, colTypes, forceConversion, dateTimeFormat,
@@ -1577,7 +1574,7 @@ public final class Workbook extends Common {
             sheet.setTabColor(
                     new XSSFColor(IndexedColors.fromInt(color), wb.getStylesSource().getIndexedColors()));
         } else if (isHSSF()) {
-            addWarning("Setting the sheet color for XLS files is not supported yet.");
+            this.warnings.add("Setting the sheet color for XLS files is not supported yet.");
         }
     }
 
@@ -1684,5 +1681,11 @@ public final class Workbook extends Common {
 
     public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
         return getBoundingBox(sheetName, startRow, startCol, endRow, endCol, true, true);
+    }
+
+    public List<String> getAndClearWarnings() {
+        List<String> warnings = this.warnings;
+        this.warnings = new ArrayList<>();
+        return warnings;
     }
 }

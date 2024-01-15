@@ -20,8 +20,16 @@
 
 package com.miraisolutions.xlconnect;
 
-public interface SupportsWarnings {
-    void addWarning(String warning);
+import java.util.List;
 
-    String[] retrieveWarnings();
+/**
+ * Interface to support R's warning mechanism.
+ */
+public interface SupportsWarnings {
+    /**
+     * Retrieves the current list of warnings.
+     *
+     * @param clear If true, existing warnings be cleared after retrieving them.
+     */
+    List<String> getWarnings(boolean clear);
 }

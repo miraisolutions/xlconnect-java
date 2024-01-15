@@ -19,19 +19,14 @@
  */
 package com.miraisolutions.xlconnect.data;
 
-import com.miraisolutions.xlconnect.Common;
 import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
-
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Date;
-import java.util.Iterator;
-
 import org.apache.poi.ss.usermodel.*;
 
-public abstract class ColumnBuilder extends Common {
+import java.util.*;
+
+public abstract class ColumnBuilder {
 
     // Collection to hold detected data types for each value in a column
     // --> will be used to determine actual final data type for column
@@ -49,6 +44,9 @@ public abstract class ColumnBuilder extends Common {
     protected final boolean takeCached;
     protected final FormulaEvaluator evaluator;
     protected final ErrorBehavior onErrorCell;
+
+    // This is used to support the warnings mechanism on the R side
+    protected ArrayList<String> warnings = new ArrayList<>();
 
     public ColumnBuilder(int nrows, boolean forceConversion,
                          boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
@@ -131,7 +129,7 @@ public abstract class ColumnBuilder extends Common {
                         break;
                     case DateTime:
                         missing.set(counter);
-                        addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from DateTime to Boolean - returning NA");
+                        this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from DateTime to Boolean - returning NA");
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown data type detected!");
@@ -159,7 +157,7 @@ public abstract class ColumnBuilder extends Common {
                 switch (detectedTypes.get(counter)) {
                     case Boolean:
                         missing.set(counter);
-                        addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Boolean to DateTime - returning NA");
+                        this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Boolean to DateTime - returning NA");
                         break;
                     case Numeric:
                         if (forceConversion) {
@@ -167,7 +165,7 @@ public abstract class ColumnBuilder extends Common {
                                 colValues[counter] = cell.getDateCellValue();
                             } else {
                                 missing.set(counter);
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Numeric to DateTime - returning NA");
+                                this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Numeric to DateTime - returning NA");
                             }
                         } else {
                             missing.set(counter);
@@ -179,7 +177,7 @@ public abstract class ColumnBuilder extends Common {
                                 colValues[counter] = Workbook.dateTimeFormatter.parse(cv.getStringValue(), dateTimeFormat);
                             } catch (Exception e) {
                                 missing.set(counter);
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from " +
+                                this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from " +
                                         "String to DateTime - returning NA - cause: " + e.getClass() + ":" + e.getMessage());
                             }
                         } else {
@@ -221,7 +219,7 @@ public abstract class ColumnBuilder extends Common {
                                 colValues[counter] = Double.parseDouble(cv.getStringValue());
                             } catch (NumberFormatException e) {
                                 missing.set(counter);
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) +
+                                this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) +
                                         " cannot be converted from String to Numeric - returning NA");
                             }
                         } else {
@@ -289,7 +287,7 @@ public abstract class ColumnBuilder extends Common {
     protected void cellError(String msg) {
         if (this.onErrorCell.equals(ErrorBehavior.WARN)) {
             this.addMissing();
-            this.addWarning(msg);
+            this.warnings.add(msg);
         } else {
             throw new IllegalArgumentException(msg);
         }
@@ -351,4 +349,7 @@ public abstract class ColumnBuilder extends Common {
 
     protected abstract void handleCell(Cell c, CellValue cv);
 
+    public List<String> getWarnings() {
+        return this.warnings;
+    }
 }
