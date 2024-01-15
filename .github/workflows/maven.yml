@@ -15,24 +15,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: 'szenius/set-timezone@v1.2'
-      with:
-        timezoneLinux: Europe/Zurich
-        timezoneMacos: Europe/Zurich
-        timezoneWindows: W. Europe Standard Time
-    - uses: actions/checkout@v4
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v4
-      with:
-        java-version: 8
-        distribution: 'zulu'
-        java-package: jdk
-        architecture: x64
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-    - name: Upload successfully built JAR
-      uses: actions/upload-artifact@main
-      with:
-        name: xlconnect_jar
-        path: | 
-          /home/runner/work/xlconnect-java/xlconnect-java/target/XLConnect-*.jar
+      - uses: 'szenius/set-timezone@v1.2'
+        with:
+          timezoneLinux: Europe/Zurich
+          timezoneMacos: Europe/Zurich
+          timezoneWindows: W. Europe Standard Time
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+          java-package: jdk
+          architecture: x64
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+      - name: Upload successfully built JAR
+        uses: actions/upload-artifact@main
+        with:
+          name: xlconnect_jar
+          path: |
+            /home/runner/work/xlconnect-java/xlconnect-java/target/XLConnect-*.jar
