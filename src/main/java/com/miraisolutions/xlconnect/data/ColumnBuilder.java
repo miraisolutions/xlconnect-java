@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2013-2018 Mirai Solutions GmbH
+    Copyright (C) 2013-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,10 +23,12 @@ import com.miraisolutions.xlconnect.Common;
 import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
+
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Date;
 import java.util.Iterator;
+
 import org.apache.poi.ss.usermodel.*;
 
 public abstract class ColumnBuilder extends Common {
@@ -47,11 +49,11 @@ public abstract class ColumnBuilder extends Common {
     protected final boolean takeCached;
     protected final FormulaEvaluator evaluator;
     protected final ErrorBehavior onErrorCell;
-    
+
     public ColumnBuilder(int nrows, boolean forceConversion,
-            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
-            String dateTimeFormat) {
-        
+                         boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+                         String dateTimeFormat) {
+
         this.detectedTypes = new ArrayList<>(nrows);
         this.cells = new ArrayList<>(nrows);
         this.values = new ArrayList<>(nrows);
@@ -61,7 +63,7 @@ public abstract class ColumnBuilder extends Common {
         this.onErrorCell = onErrorCell;
         this.dateTimeFormat = dateTimeFormat;
     }
-    
+
     public void clear() {
         detectedTypes.clear();
         cells.clear();
@@ -108,7 +110,7 @@ public abstract class ColumnBuilder extends Common {
     public Column buildBooleanColumn() {
         int size = values.size();
         boolean[] colValues = new boolean[size];
-        BitSet missing =  new BitSet(size);
+        BitSet missing = new BitSet(size);
 
         int counter = 0;
         for (CellValue cv : values) {
@@ -348,5 +350,5 @@ public abstract class ColumnBuilder extends Common {
     }
 
     protected abstract void handleCell(Cell c, CellValue cv);
-    
+
 }

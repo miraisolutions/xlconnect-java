@@ -1,3 +1,23 @@
+/*
+ *
+    XLConnect
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package com.miraisolutions.xlconnect.utils;
 
 import org.junit.Before;
@@ -49,14 +69,14 @@ public class RPOSIXDateTimeFormatterTest {
 
     @Test
     public void formatDate() {
-        Date input = Date.from(Instant.from(ZonedDateTime.of(2012,2,6,16,15,23,0, ZoneId.systemDefault())));
+        Date input = Date.from(Instant.from(ZonedDateTime.of(2012, 2, 6, 16, 15, 23, 0, ZoneId.systemDefault())));
         String result = underTest.format(input, "%d.%m.%Y %H:%M:%S");
         assertEquals("06.02.2012 16:15:23", result);
     }
 
     @Test
     public void formatDateInDST() {
-        Date input = Date.from(Instant.from(ZonedDateTime.of(2012,7,6,16,15,23,0, ZoneId.systemDefault())));
+        Date input = Date.from(Instant.from(ZonedDateTime.of(2012, 7, 6, 16, 15, 23, 0, ZoneId.systemDefault())));
         String result = underTest.format(input, "%d.%m.%Y %H:%M:%S");
         assertEquals("06.07.2012 16:15:23", result);
     }

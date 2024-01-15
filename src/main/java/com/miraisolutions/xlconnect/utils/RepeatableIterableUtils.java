@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2017-2018 Mirai Solutions GmbH
+    Copyright (C) 2017-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,12 +27,16 @@ import java.util.Iterator;
  * Repeatable iterable utilities
  */
 public class RepeatableIterableUtils {
-    /** Function with four type parameters */
+    /**
+     * Function with four type parameters
+     */
     public interface Function4<T1, T2, T3, T4> {
         void apply(T1 t1, T2 t2, T3 t3, T4 t4);
     }
 
-    /** Function with five type parameters */
+    /**
+     * Function with five type parameters
+     */
     public interface Function5<T1, T2, T3, T4, T5> {
         void apply(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5);
     }

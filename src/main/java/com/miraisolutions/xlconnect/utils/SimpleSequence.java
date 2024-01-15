@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2017-2018 Mirai Solutions GmbH
+    Copyright (C) 2017-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.util.Iterator;
 
 /**
  * A repeatable iterable sequence wrapper around an array of elements
+ *
  * @param <T> Element type
  */
 public final class SimpleSequence<T> implements RepeatableIterable<T> {

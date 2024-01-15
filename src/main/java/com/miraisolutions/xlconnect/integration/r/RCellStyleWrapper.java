@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,20 +35,20 @@ public class RCellStyleWrapper {
     public void setBorder(String[] side, int[] border, int[] color) {
         assert border.length == side.length && color.length == side.length;
 
-        for(int i = 0; i < side.length; i++) {
+        for (int i = 0; i < side.length; i++) {
             BorderStyle bs = BorderStyle.valueOf((short) border[i]);
             short bc = (short) color[i];
 
-            if("bottom".equals(side[i])) {
+            if ("bottom".equals(side[i])) {
                 cellStyle.setBorderBottom(bs);
                 cellStyle.setBottomBorderColor(bc);
-            } else if("left".equals(side[i])) {
+            } else if ("left".equals(side[i])) {
                 cellStyle.setBorderLeft(bs);
                 cellStyle.setLeftBorderColor(bc);
-            } else if("right".equals(side[i])) {
+            } else if ("right".equals(side[i])) {
                 cellStyle.setBorderRight(bs);
                 cellStyle.setRightBorderColor(bc);
-            } else if("top".equals(side[i])) {
+            } else if ("top".equals(side[i])) {
                 cellStyle.setBorderTop(bs);
                 cellStyle.setTopBorderColor(bc);
             } else
@@ -69,7 +69,9 @@ public class RCellStyleWrapper {
         cellStyle.setFillForegroundColor((short) fp);
     }
 
-    public void setFillPattern(int bg) { cellStyle.setFillPattern(FillPatternType.forInt(bg)); }
+    public void setFillPattern(int bg) {
+        cellStyle.setFillPattern(FillPatternType.forInt(bg));
+    }
 
     public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);

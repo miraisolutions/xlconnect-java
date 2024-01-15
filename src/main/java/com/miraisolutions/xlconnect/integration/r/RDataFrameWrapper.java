@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ package com.miraisolutions.xlconnect.integration.r;
 import com.miraisolutions.xlconnect.data.Column;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
+
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Date;
@@ -62,7 +63,7 @@ public final class RDataFrameWrapper {
     public String[] getColumnTypes() {
         ArrayList<DataType> columnTypes = dataFrame.getColumnTypes();
         String[] dataTypes = new String[columnTypes.size()];
-        for(int i = 0; i < columnTypes.size(); i++) {
+        for (int i = 0; i < columnTypes.size(); i++) {
             dataTypes[i] = columnTypes.get(i).toString();
         }
         return dataTypes;
@@ -89,7 +90,7 @@ public final class RDataFrameWrapper {
         Date[] v = dataFrame.getColumn(col).getDateTimeData();
         long[] values = new long[v.length];
 
-        for(int i = 0; i < v.length; i++) {
+        for (int i = 0; i < v.length; i++) {
             values[i] = (v[i] == null) ? 0 : v[i].getTime();
         }
 

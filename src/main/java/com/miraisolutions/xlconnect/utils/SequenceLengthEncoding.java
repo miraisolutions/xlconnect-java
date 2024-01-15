@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2017-2018 Mirai Solutions GmbH
+    Copyright (C) 2017-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ public final class SequenceLengthEncoding implements RepeatableIterable<Integer>
     private final int increment;
 
     public SequenceLengthEncoding(int[] values, int[] lengths, int increment) {
-        if(values.length != lengths.length) throw new IllegalArgumentException("Arrays must be of same length");
+        if (values.length != lengths.length) throw new IllegalArgumentException("Arrays must be of same length");
         for (int length : lengths) {
             if (length < 1) throw new IllegalArgumentException("Lengths must be greater than zero!");
         }
@@ -48,30 +48,37 @@ public final class SequenceLengthEncoding implements RepeatableIterable<Integer>
 
     /**
      * Creates an iterator which iterates over this sequence.
+     *
      * @param repeating if `true`, the iterator continues to iterate over this sequence (i.e. it 'resets' and loops
-     * over this sequence; `hasNext` always returns `true`); if `false`, the iterator stops when reaching the end
-     * of this sequence
+     *                  over this sequence; `hasNext` always returns `true`); if `false`, the iterator stops when reaching the end
+     *                  of this sequence
      * @return Sequence iterator
      */
     public Iterator<Integer> iterator(boolean repeating) {
         return new SequenceIterator(repeating);
     }
 
-    /** Creates a non-repeating sequence iterator */
+    /**
+     * Creates a non-repeating sequence iterator
+     */
     public Iterator<Integer> iterator() {
         return iterator(false);
     }
 
-    /** Sequence length */
+    /**
+     * Sequence length
+     */
     public int length() {
         return cumLengths[cumLengths.length - 1];
     }
 
-    /** Calculates the cumulative length of the sub-sequences */
+    /**
+     * Calculates the cumulative length of the sub-sequences
+     */
     private static int[] cumulativeLengths(int[] lengths) {
         int[] cum = new int[lengths.length];
         int total = 0;
-        for(int i = 0; i < lengths.length; i++) {
+        for (int i = 0; i < lengths.length; i++) {
             total += lengths[i];
             cum[i] = total;
         }
@@ -103,7 +110,7 @@ public final class SequenceLengthEncoding implements RepeatableIterable<Integer>
             if (repeating && i >= SequenceLengthEncoding.this.length()) {
                 i = 0;
                 chunk = 0;
-            } else if(i >= cumLengths[chunk]) {
+            } else if (i >= cumLengths[chunk]) {
                 chunk++;
             }
             return result;

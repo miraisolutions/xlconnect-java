@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ public class HCellStyle extends Common implements CellStyle {
         this.workbook = workbook;
         this.cellStyle = cellStyle;
     }
-    
+
     public void setBorderBottom(BorderStyle border) {
         cellStyle.setBorderBottom(border);
     }
@@ -92,15 +92,15 @@ public class HCellStyle extends Common implements CellStyle {
 
     public static HCellStyle create(HSSFWorkbook workbook, String name) {
         HSSFCellStyle cellStyle = workbook.createCellStyle();
-        if(name != null) cellStyle.setUserStyleName(name);
+        if (name != null) cellStyle.setUserStyleName(name);
         return new HCellStyle(workbook, cellStyle);
     }
 
     public static HCellStyle get(HSSFWorkbook workbook, String name) {
-        for(short i = 0; i < workbook.getNumCellStyles(); i++) {
+        for (short i = 0; i < workbook.getNumCellStyles(); i++) {
             HSSFCellStyle cs = workbook.getCellStyleAt(i);
             String userStyleName = cs.getUserStyleName();
-            if(userStyleName != null && cs.getUserStyleName().equals(name))
+            if (userStyleName != null && cs.getUserStyleName().equals(name))
                 return new HCellStyle(workbook, cs);
         }
 

@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,17 +34,17 @@ import java.util.stream.Collectors;
 
 
 public final class DefaultColumnBuilder extends ColumnBuilder {
-    
+
     // The following split is done for performance reasons
     private final String[] missingValueStrings;
     private final double[] missingValueNumbers;
-    
+
     public DefaultColumnBuilder(int nrows, boolean forceConversion,
-            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
-            Object[] missingValue, String dateTimeFormat) {
-        
+                                boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+                                Object[] missingValue, String dateTimeFormat) {
+
         super(nrows, forceConversion, takeCached, evaluator, onErrorCell, dateTimeFormat);
-        
+
         // Split missing values into missing values for strings and doubles
         // (for better performance later on)
         Map<Boolean, List<Object>> partitioned = Arrays.stream(missingValue)
@@ -53,11 +53,11 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
         missingValueStrings = partitioned.get(true).toArray(String[]::new);
         missingValueNumbers = partitioned.get(false).stream().mapToDouble(o -> (Double) o).toArray();
     }
-    
+
     @Override
     protected void handleCell(Cell c, CellValue cv) {
         // Determine (evaluated) cell data type
-        switch(cv.getCellType()) {
+        switch (cv.getCellType()) {
             case BLANK:
                 addMissing();
                 break;
@@ -65,7 +65,7 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
                 addValue(c, cv, DataType.Boolean);
                 break;
             case NUMERIC:
-                if(DateUtil.isCellDateFormatted(c))
+                if (DateUtil.isCellDateFormatted(c))
                     addValue(c, cv, DataType.DateTime);
                 else {
                     boolean missing = false;
@@ -75,7 +75,7 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
                             break;
                         }
                     }
-                    if(missing)
+                    if (missing)
                         addMissing();
                     else
                         addValue(c, cv, DataType.Numeric);
@@ -90,7 +90,7 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
                         break;
                     }
                 }
-                if(missing)
+                if (missing)
                     addMissing();
                 else
                     addValue(c, cv, DataType.String);

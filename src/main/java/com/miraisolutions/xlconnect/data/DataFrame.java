@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ package com.miraisolutions.xlconnect.data;
 import java.util.ArrayList;
 
 public final class DataFrame {
-    
+
     private final ArrayList<String> columnNames;
     private final ArrayList<Column> columns;
 
@@ -37,7 +37,7 @@ public final class DataFrame {
     }
 
     public int rows() {
-        if(isEmpty())
+        if (isEmpty())
             return 0;
         else
             return columns.get(0).size();
@@ -59,9 +59,9 @@ public final class DataFrame {
         return hasHeader;
     }
 
-    
+
     public void addColumn(String name, Column column) {
-        if(isEmpty() || (column.size() == rows())) {
+        if (isEmpty() || (column.size() == rows())) {
             columnNames.add(name);
             columns.add(column);
         } else
@@ -87,7 +87,7 @@ public final class DataFrame {
 
     public ArrayList<DataType> getColumnTypes() {
         ArrayList<DataType> dataTypes = new ArrayList<DataType>(columns.size());
-        for(Column c : columns) {
+        for (Column c : columns) {
             dataTypes.add(c.getDataType());
         }
         return dataTypes;

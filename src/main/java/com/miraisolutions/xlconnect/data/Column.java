@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2013-2018 Mirai Solutions GmbH
+    Copyright (C) 2013-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,41 +26,41 @@ public final class Column {
     private final Object data;
     private final BitSet missing;
     private final DataType type;
-    
+
     public Column(Object data, BitSet missing, DataType type) {
         this.data = data;
         this.missing = missing;
         this.type = type;
     }
-    
+
     public DataType getDataType() {
         return type;
     }
-    
+
     public boolean[] getBooleanData() {
         return (boolean[]) data;
     }
-    
+
     public Date[] getDateTimeData() {
         return (Date[]) data;
     }
-    
+
     public double[] getNumericData() {
         return (double[]) data;
     }
-    
+
     public String[] getStringData() {
         return (String[]) data;
     }
-    
+
     public BitSet getMissing() {
         return missing;
     }
-    
+
     public boolean isMissing(int i) {
         return missing.get(i);
     }
-    
+
     public int size() {
         return missing.length();
     }

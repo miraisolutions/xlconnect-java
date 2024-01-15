@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2013-2018 Mirai Solutions GmbH
+    Copyright (C) 2013-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,21 +25,17 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 
-/**
- *
- * @author mstuder
- */
 public final class FastColumnBuilder extends ColumnBuilder {
-    
+
     public FastColumnBuilder(int nrows, boolean forceConversion,
-            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
-            String dateTimeFormat) {
-        
+                             boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+                             String dateTimeFormat) {
+
         super(nrows, forceConversion, takeCached, evaluator, onErrorCell, dateTimeFormat);
     }
-    
+
     protected void handleCell(Cell c, CellValue cv) {
-        switch(cv.getCellType()) {
+        switch (cv.getCellType()) {
             case BLANK:
                 addMissing();
                 break;
