@@ -31,7 +31,7 @@ import java.util.EnumMap;
  * should be determined dynamically with the data format
  * being re-specified according to the data type
  */
-public class DataFormatOnlyCellStyle extends Common implements CellStyle {
+public final class DataFormatOnlyCellStyle implements CellStyle {
 
     private static final EnumMap<DataType, DataFormatOnlyCellStyle> instances = new EnumMap<>(DataType.class);
     private final DataType dataType;
@@ -93,10 +93,6 @@ public class DataFormatOnlyCellStyle extends Common implements CellStyle {
     }
 
     public void setWrapText(boolean wrap) {
-        throw new UnsupportedOperationException();
-    }
-
-    public String getDataFormat() {
         throw new UnsupportedOperationException();
     }
 

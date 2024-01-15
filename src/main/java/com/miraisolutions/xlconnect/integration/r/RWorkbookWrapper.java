@@ -27,15 +27,13 @@ import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import com.miraisolutions.xlconnect.utils.RepeatableIterableUtils;
 import com.miraisolutions.xlconnect.utils.SequenceLengthEncoding;
 import com.miraisolutions.xlconnect.utils.SimpleSequence;
 import org.apache.poi.common.usermodel.HyperlinkType;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 public final class RWorkbookWrapper {
 
@@ -112,9 +110,9 @@ public final class RWorkbookWrapper {
     private static DataType[] dataTypeFromString(String[] colTypes) {
         DataType[] ctypes = null;
         if (colTypes != null) {
-            ctypes = new DataType[colTypes.length];
-            for (int i = 0; i < colTypes.length; i++)
-                ctypes[i] = fromString(colTypes[i]);
+            ctypes = Arrays.stream(colTypes)
+                    .map(RWorkbookWrapper::getDataTypeFromString)
+                    .toArray(DataType[]::new);
         }
         return ctypes;
     }
@@ -232,7 +230,7 @@ public final class RWorkbookWrapper {
     }
 
     public void addImage(String filename, String name, boolean originalSize)
-            throws FileNotFoundException, IOException {
+            throws IOException {
         workbook.addImage(filename, name, originalSize);
     }
 
@@ -262,7 +260,7 @@ public final class RWorkbookWrapper {
         workbook.setMissingValue(value);
     }
 
-    private static DataType fromString(String dataType) {
+    private static DataType getDataTypeFromString(String dataType) {
         if ("BOOLEAN".equals(dataType))
             return DataType.Boolean;
         else if ("NUMERIC".equals(dataType))
@@ -276,15 +274,15 @@ public final class RWorkbookWrapper {
     }
 
     public void setDataFormat(String dataType, String format) {
-        workbook.setDataFormat(fromString(dataType), format);
+        workbook.setDataFormat(getDataTypeFromString(dataType), format);
     }
 
     public void setCellStyleForDataType(String dataType, RCellStyleWrapper cellStyle) {
-        workbook.setCellStyleForDataType(fromString(dataType), cellStyle.cellStyle);
+        workbook.setCellStyleForDataType(getDataTypeFromString(dataType), cellStyle.cellStyle);
     }
 
     public RCellStyleWrapper getCellStyleForDataType(String dataType) {
-        return new RCellStyleWrapper(workbook.getCellStyleForDataType(fromString(dataType)));
+        return new RCellStyleWrapper(workbook.getCellStyleForDataType(getDataTypeFromString(dataType)));
     }
 
     public void setStyleAction(String action) {
@@ -311,14 +309,14 @@ public final class RWorkbookWrapper {
     public void setCellStyleSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
                                       SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
         RepeatableIterableUtils.foreach(sheetName, row, col, cellStyle,
-                (RepeatableIterableUtils.Function4<String, Integer, Integer, RCellStyleWrapper>) (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
+                (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
         );
     }
 
     public void setCellStyleSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
                                        SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
         RepeatableIterableUtils.foreach(sheetIndex, row, col, cellStyle,
-                (RepeatableIterableUtils.Function4<Integer, Integer, Integer, RCellStyleWrapper>) (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
+                (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
         );
     }
 
@@ -329,14 +327,14 @@ public final class RWorkbookWrapper {
     public void setHyperlinkSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
                                        SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
         RepeatableIterableUtils.foreach(sheetIndex, row, col, type, address,
-                (RepeatableIterableUtils.Function5<Integer, Integer, Integer, String, String>) (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
+                (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
         );
     }
 
     public void setHyperlinkSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
                                       SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
         RepeatableIterableUtils.foreach(sheetName, row, col, type, address,
-                (RepeatableIterableUtils.Function5<String, Integer, Integer, String, String>) (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
+                (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
         );
     }
 

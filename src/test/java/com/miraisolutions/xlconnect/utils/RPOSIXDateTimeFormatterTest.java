@@ -32,7 +32,7 @@ import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
 
-public class RPOSIXDateTimeFormatterTest {
+public final class RPOSIXDateTimeFormatterTest {
 
     private RPOSIXDateTimeFormatter underTest;
 

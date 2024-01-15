@@ -26,7 +26,7 @@ import java.util.Iterator;
 /**
  * Repeatable iterable utilities
  */
-public class RepeatableIterableUtils {
+public final class RepeatableIterableUtils {
     /**
      * Function with four type parameters
      */

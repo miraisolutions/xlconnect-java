@@ -24,9 +24,10 @@ import com.miraisolutions.xlconnect.data.Column;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Date;
+import java.util.stream.IntStream;
 
 public final class RDataFrameWrapper {
 
@@ -53,25 +54,20 @@ public final class RDataFrameWrapper {
     }
 
     public void addDateTimeColumn(String name, long[] column, boolean[] na) {
-        Date[] elements = new Date[column.length];
-        for (int i = 0; i < column.length; i++) {
-            elements[i] = na[i] ? null : new Date(column[i]);
-        }
+        Date[] elements = IntStream.range(0, column.length)
+                .mapToObj(i -> na[i] ? null : new Date(column[i]))
+                .toArray(Date[]::new);
         dataFrame.addColumn(name, new Column(elements, toBitSet(na), DataType.DateTime));
     }
 
     public String[] getColumnTypes() {
-        ArrayList<DataType> columnTypes = dataFrame.getColumnTypes();
-        String[] dataTypes = new String[columnTypes.size()];
-        for (int i = 0; i < columnTypes.size(); i++) {
-            dataTypes[i] = columnTypes.get(i).toString();
-        }
-        return dataTypes;
+        return dataFrame.getColumnTypes().stream()
+                .map(DataType::toString)
+                .toArray(String[]::new);
     }
 
     public String[] getColumnNames() {
-        ArrayList<String> columnNames = dataFrame.getColumnNames();
-        return columnNames.toArray(new String[0]);
+        return dataFrame.getColumnNames().toArray(new String[0]);
     }
 
     public double[] getNumericColumn(int col) {
@@ -87,14 +83,9 @@ public final class RDataFrameWrapper {
     }
 
     public long[] getDateTimeColumn(int col) {
-        Date[] v = dataFrame.getColumn(col).getDateTimeData();
-        long[] values = new long[v.length];
-
-        for (int i = 0; i < v.length; i++) {
-            values[i] = (v[i] == null) ? 0 : v[i].getTime();
-        }
-
-        return values;
+        return Arrays.stream(dataFrame.getColumn(col).getDateTimeData())
+                .mapToLong(date -> date == null ? 0 : date.getTime())
+                .toArray();
     }
 
     public boolean[] isMissing(int col) {

@@ -20,13 +20,13 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import static org.junit.Assert.assertArrayEquals;
-
 import org.junit.Test;
 
 import java.util.Iterator;
 
-public class SequenceLengthEncodingTests {
+import static org.junit.Assert.assertArrayEquals;
+
+public final class SequenceLengthEncodingTests {
 
     @Test
     public void testEncodingIncrement1() {

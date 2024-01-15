@@ -27,7 +27,7 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-public class HCellStyle extends Common implements CellStyle {
+public final class HCellStyle implements CellStyle {
 
     private final HSSFWorkbook workbook;
     private final HSSFCellStyle cellStyle;

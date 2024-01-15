@@ -21,6 +21,9 @@
 package com.miraisolutions.xlconnect.data;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public final class DataFrame {
 
@@ -37,10 +40,7 @@ public final class DataFrame {
     }
 
     public int rows() {
-        if (isEmpty())
-            return 0;
-        else
-            return columns.get(0).size();
+        return isEmpty() ? 0 : columns.get(0).size();
     }
 
     public boolean isEmpty() {
@@ -48,15 +48,7 @@ public final class DataFrame {
     }
 
     public boolean hasColumnHeader() {
-        boolean hasHeader = false;
-        for (String columnName : columnNames) {
-            if (columnName != null) {
-                hasHeader = true;
-                break;
-            }
-        }
-
-        return hasHeader;
+        return columnNames.stream().anyMatch(Objects::nonNull);
     }
 
 
@@ -81,15 +73,13 @@ public final class DataFrame {
         return columns.get(index);
     }
 
-    public ArrayList<String> getColumnNames() {
+    public List<String> getColumnNames() {
         return columnNames;
     }
 
-    public ArrayList<DataType> getColumnTypes() {
-        ArrayList<DataType> dataTypes = new ArrayList<DataType>(columns.size());
-        for (Column c : columns) {
-            dataTypes.add(c.getDataType());
-        }
-        return dataTypes;
+    public List<DataType> getColumnTypes() {
+        return columns.stream()
+                .map(Column::getDataType)
+                .collect(Collectors.toList());
     }
 }

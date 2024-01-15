@@ -25,7 +25,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-public class SSCellStyle extends Common implements CellStyle {
+public final class SSCellStyle implements CellStyle {
 
     org.apache.poi.ss.usermodel.Workbook workbook;
     org.apache.poi.ss.usermodel.CellStyle cellStyle;

@@ -24,7 +24,7 @@ import com.miraisolutions.xlconnect.CellStyle;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-public class RCellStyleWrapper {
+public final class RCellStyleWrapper {
 
     final CellStyle cellStyle;
 
@@ -75,9 +75,5 @@ public class RCellStyleWrapper {
 
     public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);
-    }
-
-    public String[] retrieveWarnings() {
-        return cellStyle.retrieveWarnings();
     }
 }

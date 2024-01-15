@@ -20,7 +20,10 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
@@ -33,7 +36,7 @@ import java.util.Map;
 /**
  * Inspired by <a href="http://code.google.com/p/renjin/source/browse/trunk/core/src/main/java/r/base/Time.java?spec=svn379&r=379">Time.java</a>
  */
-public class RPOSIXDateTimeFormatter implements DateTimeFormatter {
+public final class RPOSIXDateTimeFormatter implements DateTimeFormatter {
 
     private final Map<String, java.time.format.DateTimeFormatter> cache = new HashMap<>();
 

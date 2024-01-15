@@ -20,25 +20,11 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import com.miraisolutions.xlconnect.data.DataType;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.util.CellReference;
 
 public abstract class CellUtils {
-
-    public static boolean isCellValueOfType(CellValue cv, DataType type) {
-        switch (cv.getCellType()) {
-            case BOOLEAN:
-                return DataType.Boolean.equals(type);
-            case NUMERIC:
-                return DataType.Numeric.equals(type) ||
-                        (DataType.DateTime.equals(type) && DateUtil.isValidExcelDate(cv.getNumberValue()));
-            case STRING:
-                return DataType.String.equals(type);
-            default:
-                return false;
-        }
-    }
 
     public static String formatAsString(Cell cell) {
         return (new CellReference(cell).formatAsString());

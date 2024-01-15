@@ -23,12 +23,6 @@ package com.miraisolutions.xlconnect;
 import com.miraisolutions.xlconnect.data.*;
 import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
-
-import java.io.*;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.IntStream;
-
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -41,6 +35,14 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
+
+import java.io.*;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 
 /**
@@ -82,7 +84,7 @@ public final class Workbook extends Common {
     private Object[] missingValue = new Object[]{null};
     // Default cell styles
     private final Map<String, CellStyle> defaultStyles =
-            new HashMap<String, CellStyle>(5);
+            new HashMap<>(5);
     // Styles per data type
     private final Map<DataType, CellStyle> dataTypeStyles = new EnumMap<>(DataType.class);
 
@@ -112,7 +114,7 @@ public final class Workbook extends Common {
 
     private Workbook(File excelFile) throws IOException {
         /*
-         * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
+         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
         this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
@@ -514,7 +516,7 @@ public final class Workbook extends Common {
             colset = subset;
         }
 
-        ColumnBuilder cb;
+        ColumnBuilder cb;  // TODO: introduce ColumnBuilderFactory
         switch (readStrategy) {
             case DEFAULT:
                 cb = new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
@@ -1143,11 +1145,7 @@ public final class Workbook extends Common {
     }
 
     public void setCellStyle(String formula, final CellStyle cs) {
-        foreachReferencedCell(formula, new CellFunction() {
-            public void apply(Cell cell) {
-                setCellStyle(cell, cs);
-            }
-        });
+        foreachReferencedCell(formula, cell -> setCellStyle(cell, cs));
     }
 
     public void setCellStyle(int sheetIndex, int row, int col, CellStyle cs) {
@@ -1167,11 +1165,7 @@ public final class Workbook extends Common {
     }
 
     public void setHyperlink(String formula, final HyperlinkType type, final String address) {
-        foreachReferencedCell(formula, new CellFunction() {
-            public void apply(Cell cell) {
-                setHyperlink(cell, type, address);
-            }
-        });
+        foreachReferencedCell(formula, cell -> setHyperlink(cell, type, address));
     }
 
     public void setHyperlink(int sheetIndex, int row, int col, HyperlinkType type, String address) {
@@ -1194,7 +1188,7 @@ public final class Workbook extends Common {
      * @return A mapping of header/column indices to cell styles
      */
     private Map<String, CellStyle> getStyles(DataFrame data, Sheet sheet, int startRow, int startCol) {
-        Map<String, CellStyle> cstyles = new HashMap<String, CellStyle>(data.columns());
+        Map<String, CellStyle> cstyles = new HashMap<>(data.columns());
 
         switch (styleAction) {
             case XLCONNECT:
@@ -1579,8 +1573,8 @@ public final class Workbook extends Common {
     public void setSheetColor(int sheetIndex, int color) {
         if (isXSSF()) {
             XSSFWorkbook wb = (XSSFWorkbook) workbook;
-            Sheet sheet = wb.getSheetAt(sheetIndex);
-            ((XSSFSheet) sheet).setTabColor(
+            XSSFSheet sheet = wb.getSheetAt(sheetIndex);
+            sheet.setTabColor(
                     new XSSFColor(IndexedColors.fromInt(color), wb.getStylesSource().getIndexedColors()));
         } else if (isHSSF()) {
             addWarning("Setting the sheet color for XLS files is not supported yet.");
