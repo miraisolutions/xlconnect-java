@@ -71,17 +71,18 @@ public abstract class ColumnBuilder {
 
     public void addCell(Cell c) {
         try {
-            Optional.ofNullable(c)
-                    .map(this::getCellValue)
-                    .ifPresentOrElse(cv -> {
-                        if (cv.getCellType() == CellType.ERROR) {
-                            assert c != null;
-                            cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " +
-                                    CellUtils.getErrorMessage(c.getErrorCellValue()));
-                        } else {
-                            handleCell(c, cv);
-                        }
-                    }, this::addMissing);
+            Optional<CellValue> cellValue = Optional.ofNullable(c).map(this::getCellValue);
+            if (cellValue.isPresent()) {
+                CellValue cv = cellValue.get();
+                if (cv.getCellType() == CellType.ERROR) {
+                    cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " +
+                            CellUtils.getErrorMessage(c.getErrorCellValue()));
+                } else {
+                    handleCell(c, cv);
+                }
+            } else {
+                addMissing();
+            }
         } catch (Exception e) {
             cellError("Error when trying to evaluate cell " + CellUtils.formatAsString(c) + " - " + e.getMessage());
         }

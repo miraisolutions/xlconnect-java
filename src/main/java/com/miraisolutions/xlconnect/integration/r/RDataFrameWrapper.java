@@ -67,7 +67,7 @@ public final class RDataFrameWrapper {
     }
 
     public String[] getColumnNames() {
-        return dataFrame.getColumnNames().toArray(String[]::new);
+        return dataFrame.getColumnNames().toArray(new String[0]);
     }
 
     public double[] getNumericColumn(int col) {

@@ -375,7 +375,7 @@ public final class RWorkbookWrapper {
     }
 
     public String[] retrieveWarnings() {
-        return workbook.getAndClearWarnings().toArray(String[]::new);
+        return workbook.getAndClearWarnings().toArray(new String[0]);
     }
 
     public void onErrorCell(String behavior) {
