@@ -37,6 +37,7 @@ import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -96,18 +97,12 @@ public final class Workbook {
     // This is used to support the warnings mechanism on the R side
     private ArrayList<String> warnings = new ArrayList<>();
 
-    private Workbook(InputStream in, String password) throws IOException {
-        this.workbook = WorkbookFactory.create(in, password);
-        this.excelFile = null;
-        init();
-    }
-
     private Workbook(File excelFile, String password) throws IOException {
         /*
-         * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
+         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
+        this.workbook = WorkbookFactory.create(Files.newInputStream(excelFile.toPath()), password);
         this.excelFile = excelFile;
         init();
     }
@@ -117,7 +112,7 @@ public final class Workbook {
          * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
+        this.workbook = WorkbookFactory.create(Files.newInputStream(excelFile.toPath()));
         this.excelFile = excelFile;
         init();
     }
@@ -205,20 +200,8 @@ public final class Workbook {
         dataFormatMap.put(type, format);
     }
 
-    public String getDataFormat(DataType type) {
-        return dataFormatMap.get(type);
-    }
-
-    public StyleAction getStyleAction() {
-        return styleAction;
-    }
-
     public void setStyleAction(StyleAction styleAction) {
         this.styleAction = styleAction;
-    }
-
-    public String getStyleNamePrefix() {
-        return styleNamePrefix;
     }
 
     public void setStyleNamePrefix(String styleNamePrefix) {
@@ -508,10 +491,7 @@ public final class Workbook {
         if (!takeCached) evaluator.clearAllCachedResultValues();
 
         if (subset == null) {
-            colset = new int[ncols];
-            for (int i = 0; i < ncols; i++) {
-                colset[i] = i;
-            }
+            colset = IntStream.range(0, ncols).toArray();
         } else {
             colset = subset;
         }
@@ -623,10 +603,6 @@ public final class Workbook {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
-    public DataFrame readNamedRegion(String name, boolean header) {
-        return readNamedRegion(name, header, ReadStrategy.DEFAULT, null, false, "", false, null);
-    }
-
     public DataFrame readNamedRegion(String name, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
                                      boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
         Name cname = getName(name);
@@ -732,27 +708,6 @@ public final class Workbook {
                 takeCached, subset);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, true, true);
-    }
-
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header, boolean
-            autofitRow, boolean autofitCol) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, autofitRow, autofitCol);
-    }
-
-    public DataFrame readWorksheet(int worksheetIndex, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
-                                   boolean forceConversion, String dateTimeFormat) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion,
-                dateTimeFormat, false, null, true, true);
-    }
-
-    public DataFrame readWorksheet(int worksheetIndex, boolean header) {
-        return readWorksheet(worksheetIndex, header, ReadStrategy.DEFAULT, null, false, "");
-    }
-
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
                                    ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached,
                                    int[] subset, boolean autofitRow, boolean autofitCol) {
@@ -760,28 +715,7 @@ public final class Workbook {
                 colTypes, forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
     }
 
-    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, true, true);
-    }
-
-    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-                                   boolean autofitRow, boolean autofitCol) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, autofitRow, autofitCol);
-    }
-
-    public DataFrame readWorksheet(String worksheetName, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
-                                   boolean forceConversion, String dateTimeFormat) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion,
-                dateTimeFormat, false, null, true, true);
-    }
-
-    public DataFrame readWorksheet(String worksheetName, boolean header) {
-        return readWorksheet(worksheetName, header, ReadStrategy.DEFAULT, null, false, "");
-    }
-
-    public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
+    public void addImage(File imageFile, String name, boolean originalSize) throws IOException {
         Name cname = getName(name);
 
         // Get sheet where name is defined in
@@ -792,30 +726,13 @@ public final class Workbook {
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
 
-        // Determine image type
-        int imageType;
-        String filename = imageFile.getName().toLowerCase();
-        if (filename.endsWith("jpg") || filename.endsWith("jpeg")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
-        } else if (filename.endsWith("png")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
-        } else if (filename.endsWith("wmf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
-        } else if (filename.endsWith("emf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
-        } else if (filename.endsWith("bmp") || filename.endsWith("dib")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
-        } else if (filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
-        } else
-            throw new IllegalArgumentException("Image type \"" + filename.substring(filename.lastIndexOf('.') + 1) + "\" not supported!");
-
-        InputStream is = new FileInputStream(imageFile);
+        int imageType = getImageType(imageFile);
+        InputStream is = Files.newInputStream(imageFile.toPath());
         byte[] bytes = IOUtils.toByteArray(is);
         int imageIndex = workbook.addPicture(bytes, imageType);
         is.close();
 
-        Drawing drawing;
+        Drawing<?> drawing;
         if (isHSSF()) {
             drawing = ((HSSFSheet) sheet).getDrawingPatriarch();
             if (drawing == null) {
@@ -838,6 +755,26 @@ public final class Workbook {
 
         Picture picture = drawing.createPicture(anchor, imageIndex);
         if (originalSize) picture.resize();
+    }
+
+    private static int getImageType(File imageFile) {
+        int imageType;
+        String filename = imageFile.getName().toLowerCase();
+        if (filename.endsWith("jpg") || filename.endsWith("jpeg")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
+        } else if (filename.endsWith("png")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
+        } else if (filename.endsWith("wmf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
+        } else if (filename.endsWith("emf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
+        } else if (filename.endsWith("bmp") || filename.endsWith("dib")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
+        } else if (filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
+        } else
+            throw new IllegalArgumentException("Image type \"" + filename.substring(filename.lastIndexOf('.') + 1) + "\" not supported!");
+        return imageType;
     }
 
     public void addImage(String filename, String name, boolean originalSize) throws IOException {
@@ -983,7 +920,7 @@ public final class Workbook {
         if (!isValidReference(name.getRefersToFormula()))
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' has invalid reference!");
         else if (!existsSheet(name.getSheetName())) {
-            // The reference as such is valid but it doesn't point to a (existing) sheet ...
+            // The reference as such is valid, but it doesn't point to a (existing) sheet ...
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' does not refer to a valid sheet!");
         }
     }
@@ -1355,20 +1292,8 @@ public final class Workbook {
         return Workbook.getWorkbook(new File(filename), create);
     }
 
-    public static Workbook getWorkbook(InputStream is, String password) throws IOException {
-        return new Workbook(is, password);
-    }
-
-    public static Workbook getWorkbook(InputStream is) throws IOException {
-        return new Workbook(is, null);
-    }
-
     public void setCellFormula(Cell c, String formula) {
         c.setCellFormula(formula);
-    }
-
-    public void setCellFormula(String formula, final String formulaString) {
-        foreachReferencedCell(formula, cell -> setCellFormula(cell, formulaString));
     }
 
     public void setCellFormula(int sheetIndex, int row, int col, String formula) {
@@ -1582,10 +1507,6 @@ public final class Workbook {
         setSheetColor(workbook.getSheetIndex(sheetName), color);
     }
 
-    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol, true, true);
-    }
-
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol,
                                 boolean autofitRow, boolean autofitCol) {
         Sheet sheet = workbook.getSheetAt(sheetIndex);
@@ -1677,10 +1598,6 @@ public final class Workbook {
                                 boolean autofitRow, boolean autofitColumn) {
         return getBoundingBox(workbook.getSheetIndex(sheetName), startRow, startCol, endRow, endCol,
                 autofitRow, autofitColumn);
-    }
-
-    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(sheetName, startRow, startCol, endRow, endCol, true, true);
     }
 
     public List<String> getAndClearWarnings() {
