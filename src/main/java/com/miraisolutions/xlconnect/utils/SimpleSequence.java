@@ -22,6 +22,7 @@ package com.miraisolutions.xlconnect.utils;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * A repeatable iterable sequence wrapper around an array of elements
@@ -74,6 +75,10 @@ public final class SimpleSequence<T> implements RepeatableIterable<T> {
         }
 
         public T next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+
             T result = values[i % values.length];
             i++;
             return result;

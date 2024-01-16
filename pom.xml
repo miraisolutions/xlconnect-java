@@ -74,12 +74,6 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.5</version>
-            <!--            <exclusions>
-                            <exclusion>
-                                <groupId>org.apache.poi</groupId>
-                                <artifactId>poi-ooxml-schemas</artifactId>
-                            </exclusion>
-                        </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
