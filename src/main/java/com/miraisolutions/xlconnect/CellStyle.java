@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,18 +23,30 @@ package com.miraisolutions.xlconnect;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-public interface CellStyle extends SupportsWarnings {
+public interface CellStyle {
     void setBorderBottom(BorderStyle border);
+
     void setBorderLeft(BorderStyle border);
+
     void setBorderRight(BorderStyle border);
+
     void setBorderTop(BorderStyle border);
+
     void setBottomBorderColor(short color);
+
     void setLeftBorderColor(short color);
+
     void setRightBorderColor(short color);
+
     void setTopBorderColor(short color);
+
     void setDataFormat(String format);
+
     void setFillBackgroundColor(short bg);
+
     void setFillForegroundColor(short fp);
+
     void setFillPattern(FillPatternType bg);
+
     void setWrapText(boolean wrap);
 }

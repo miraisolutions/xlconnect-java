@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,12 +31,11 @@ import java.util.EnumMap;
  * should be determined dynamically with the data format
  * being re-specified according to the data type
  */
-public class DataFormatOnlyCellStyle extends Common implements CellStyle {
+public final class DataFormatOnlyCellStyle implements CellStyle {
 
-    // private static DataFormatOnlyCellStyle instance = null;
-    private static EnumMap<DataType, DataFormatOnlyCellStyle> instances = new EnumMap<DataType, DataFormatOnlyCellStyle>(DataType.class);
-    private DataType dataType;
-    
+    private static final EnumMap<DataType, DataFormatOnlyCellStyle> instances = new EnumMap<>(DataType.class);
+    private final DataType dataType;
+
     private DataFormatOnlyCellStyle(DataType type) {
         this.dataType = type;
     }
@@ -96,14 +95,10 @@ public class DataFormatOnlyCellStyle extends Common implements CellStyle {
     public void setWrapText(boolean wrap) {
         throw new UnsupportedOperationException();
     }
-    
-    public String getDataFormat() {
-        throw new UnsupportedOperationException();
-    }
 
     public static DataFormatOnlyCellStyle get(DataType type) {
         DataFormatOnlyCellStyle cs;
-        if(instances.containsKey(type))
+        if (instances.containsKey(type))
             cs = instances.get(type);
         else {
             cs = new DataFormatOnlyCellStyle(type);

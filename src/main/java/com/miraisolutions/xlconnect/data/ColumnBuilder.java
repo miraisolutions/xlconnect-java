@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2013-2018 Mirai Solutions GmbH
+    Copyright (C) 2013-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,86 +19,73 @@
  */
 package com.miraisolutions.xlconnect.data;
 
-import com.miraisolutions.xlconnect.Common;
 import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
 import org.apache.poi.ss.usermodel.*;
 
-public abstract class ColumnBuilder extends Common {
+import java.util.*;
+
+public abstract class ColumnBuilder {
 
     // Collection to hold detected data types for each value in a column
     // --> will be used to determine actual final data type for column
-    protected ArrayList<DataType> detectedTypes;
+    protected final ArrayList<DataType> detectedTypes;
     // Collection to hold cell references
-    protected ArrayList<Cell> cells;
+    protected final ArrayList<Cell> cells;
     // Collection to hold actual values
-    protected ArrayList<CellValue> values;
+    protected final ArrayList<CellValue> values;
     // Date/time format used for conversion to and from strings
-    protected String dateTimeFormat;
+    protected final String dateTimeFormat;
 
     // Should conversion to a less generic data type be forced?
-    protected boolean forceConversion;
+    protected final boolean forceConversion;
 
-    protected boolean takeCached = false;
-    protected FormulaEvaluator evaluator = null;
-    protected ErrorBehavior onErrorCell;
-    
+    protected final boolean takeCached;
+    protected final FormulaEvaluator evaluator;
+    protected final ErrorBehavior onErrorCell;
+
+    // This is used to support the warnings mechanism on the R side
+    protected final ArrayList<String> warnings = new ArrayList<>();
+
     public ColumnBuilder(int nrows, boolean forceConversion,
-            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
-            String dateTimeFormat) {
-        
-        this.detectedTypes = new ArrayList<DataType>(nrows);
-        this.cells = new ArrayList<Cell>(nrows);
-        this.values = new ArrayList<CellValue>(nrows);
+                         boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+                         String dateTimeFormat) {
+
+        this.detectedTypes = new ArrayList<>(nrows);
+        this.cells = new ArrayList<>(nrows);
+        this.values = new ArrayList<>(nrows);
         this.forceConversion = forceConversion;
         this.evaluator = evaluator;
         this.takeCached = takeCached;
         this.onErrorCell = onErrorCell;
         this.dateTimeFormat = dateTimeFormat;
     }
-    
+
     public void clear() {
         detectedTypes.clear();
         cells.clear();
         values.clear();
+        warnings.clear();
     }
 
     public void addCell(Cell c) {
-        // In case the cell does not exist ...
-        if (c == null) {
-            this.addMissing();
-            return;
-        }
-        String msg;
-        CellValue cv;
-        
-        // Try to evaluate cell;
-        // report an error if this fails
         try {
-            CellType cellType = this.takeCached ? c.getCellType() : evaluator.evaluateFormulaCell(c);
-            if (cellType == CellType.ERROR) {
-                msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(c.getErrorCellValue());
-                cellError(msg);
-                return;
+            Optional<CellValue> cellValue = Optional.ofNullable(c).map(this::getCellValue);
+            if (cellValue.isPresent()) {
+                CellValue cv = cellValue.get();
+                if (cv.getCellType() == CellType.ERROR) {
+                    cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " +
+                            CellUtils.getErrorMessage(c.getErrorCellValue()));
+                } else {
+                    handleCell(c, cv);
+                }
+            } else {
+                addMissing();
             }
-        
-            cv = getCellValue(c);
         } catch (Exception e) {
-            msg = "Error when trying to evaluate cell " + CellUtils.formatAsString(c) + " - " + e.getMessage();
-            cellError(msg);
-            return;
+            cellError("Error when trying to evaluate cell " + CellUtils.formatAsString(c) + " - " + e.getMessage());
         }
-        // Not sure if this case should ever happen;
-        // let's be sure anyway
-        if (cv == null) {
-            addMissing();
-            return;
-        }
-        handleCell(c, cv);
     }
 
     protected void addMissing() {
@@ -116,36 +103,30 @@ public abstract class ColumnBuilder extends Common {
     }
 
     public Column buildBooleanColumn() {
-        boolean[] colValues = new boolean[values.size()];
-        boolean[] missing = new boolean[values.size()];
-        Iterator<CellValue> it = values.iterator();
+        int size = values.size();
+        boolean[] colValues = new boolean[size];
+        BitSet missing = new BitSet(size);
+
         int counter = 0;
-        while (it.hasNext()) {
-            CellValue cv = it.next();
+        for (CellValue cv : values) {
             if (cv == null) {
-                missing[counter] = true;
+                missing.set(counter);
             } else {
                 switch (detectedTypes.get(counter)) {
                     case Boolean:
                         colValues[counter] = cv.getBooleanValue();
                         break;
                     case Numeric:
-                        if (forceConversion) {
-                            colValues[counter] = cv.getNumberValue() > 0;
-                        } else {
-                            missing[counter] = true;
-                        }
+                        colValues[counter] = forceConversion && cv.getNumberValue() > 0;
+                        missing.set(counter, !forceConversion);
                         break;
                     case String:
-                        if (forceConversion) {
-                            colValues[counter] = Boolean.parseBoolean(cv.getStringValue().toLowerCase());
-                        } else {
-                            missing[counter] = true;
-                        }
+                        colValues[counter] = forceConversion && Boolean.parseBoolean(cv.getStringValue().toLowerCase());
+                        missing.set(counter, !forceConversion);
                         break;
                     case DateTime:
-                        missing[counter] = true;
-                        addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from DateTime to Boolean - returning NA");
+                        missing.set(counter);
+                        this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from DateTime to Boolean - returning NA");
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown data type detected!");
@@ -153,12 +134,14 @@ public abstract class ColumnBuilder extends Common {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.Boolean);
+        return new Column(colValues, size, missing, DataType.Boolean);
     }
 
     public Column buildDateTimeColumn() {
-        Date[] colValues = new Date[values.size()];
-        boolean[] missing = new boolean[values.size()];
+        int size = values.size();
+        Date[] colValues = new Date[size];
+        BitSet missing = new BitSet(size);
+
         Iterator<CellValue> it = values.iterator();
         Iterator<Cell> jt = cells.iterator();
         int counter = 0;
@@ -166,23 +149,23 @@ public abstract class ColumnBuilder extends Common {
             CellValue cv = it.next();
             Cell cell = jt.next();
             if (cv == null) {
-                missing[counter] = true;
+                missing.set(counter);
             } else {
                 switch (detectedTypes.get(counter)) {
                     case Boolean:
-                        missing[counter] = true;
-                        addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Boolean to DateTime - returning NA");
+                        missing.set(counter);
+                        this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Boolean to DateTime - returning NA");
                         break;
                     case Numeric:
                         if (forceConversion) {
                             if (DateUtil.isValidExcelDate(cv.getNumberValue())) {
                                 colValues[counter] = cell.getDateCellValue();
                             } else {
-                                missing[counter] = true;
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Numeric to DateTime - returning NA");
+                                missing.set(counter);
+                                this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from Numeric to DateTime - returning NA");
                             }
                         } else {
-                            missing[counter] = true;
+                            missing.set(counter);
                         }
                         break;
                     case String:
@@ -190,12 +173,12 @@ public abstract class ColumnBuilder extends Common {
                             try {
                                 colValues[counter] = Workbook.dateTimeFormatter.parse(cv.getStringValue(), dateTimeFormat);
                             } catch (Exception e) {
-                                missing[counter] = true;
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from " +
+                                missing.set(counter);
+                                this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from " +
                                         "String to DateTime - returning NA - cause: " + e.getClass() + ":" + e.getMessage());
                             }
                         } else {
-                            missing[counter] = true;
+                            missing.set(counter);
                         }
                         break;
                     case DateTime:
@@ -207,18 +190,18 @@ public abstract class ColumnBuilder extends Common {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.DateTime);
+        return new Column(colValues, size, missing, DataType.DateTime);
     }
 
     public Column buildNumericColumn() {
-        double[] colValues = new double[values.size()];
-        boolean[] missing = new boolean[values.size()];
-        Iterator<CellValue> it = values.iterator();
+        int size = values.size();
+        double[] colValues = new double[size];
+        BitSet missing = new BitSet(size);
+
         int counter = 0;
-        while (it.hasNext()) {
-            CellValue cv = it.next();
+        for (CellValue cv : values) {
             if (cv == null) {
-                missing[counter] = true;
+                missing.set(counter);
             } else {
                 switch (detectedTypes.get(counter)) {
                     case Boolean:
@@ -232,18 +215,19 @@ public abstract class ColumnBuilder extends Common {
                             try {
                                 colValues[counter] = Double.parseDouble(cv.getStringValue());
                             } catch (NumberFormatException e) {
-                                missing[counter] = true;
-                                addWarning("Cell " + CellUtils.formatAsString(cells.get(counter)) + " cannot be converted from String to Numeric - returning NA");
+                                missing.set(counter);
+                                this.warnings.add("Cell " + CellUtils.formatAsString(cells.get(counter)) +
+                                        " cannot be converted from String to Numeric - returning NA");
                             }
                         } else {
-                            missing[counter] = true;
+                            missing.set(counter);
                         }
                         break;
                     case DateTime:
                         if (forceConversion) {
                             colValues[counter] = cv.getNumberValue();
                         } else {
-                            missing[counter] = true;
+                            missing.set(counter);
                         }
                         break;
                     default:
@@ -252,12 +236,14 @@ public abstract class ColumnBuilder extends Common {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.Numeric);
+        return new Column(colValues, size, missing, DataType.Numeric);
     }
 
     public Column buildStringColumn() {
-        String[] colValues = new String[values.size()];
-        boolean[] missing = new boolean[values.size()];
+        int size = values.size();
+        String[] colValues = new String[size];
+        BitSet missing = new BitSet(size);
+
         Iterator<CellValue> it = values.iterator();
         Iterator<Cell> jt = cells.iterator();
         DataFormatter fmt = new DataFormatter();
@@ -266,7 +252,7 @@ public abstract class ColumnBuilder extends Common {
             CellValue cv = it.next();
             Cell cell = jt.next();
             if (cv == null) {
-                missing[counter] = true;
+                missing.set(counter);
             } else {
                 switch (detectedTypes.get(counter)) {
                     case Boolean:
@@ -278,7 +264,6 @@ public abstract class ColumnBuilder extends Common {
                         int formatIndex = cell.getCellStyle().getDataFormat();
                         String formatStr = cell.getCellStyle().getDataFormatString();
                         colValues[counter] = fmt.formatRawCellContents(cv.getNumberValue(), formatIndex, formatStr);
-                        // colValues[counter] = fmt.formatCellValue(cell, this.evaluator);
                         break;
                     case DateTime:
                         // format according to dateTimeFormatter
@@ -293,13 +278,13 @@ public abstract class ColumnBuilder extends Common {
             }
             ++counter;
         }
-        return new Column(colValues, missing, DataType.String);
+        return new Column(colValues, size, missing, DataType.String);
     }
 
     protected void cellError(String msg) {
         if (this.onErrorCell.equals(ErrorBehavior.WARN)) {
             this.addMissing();
-            this.addWarning(msg);
+            this.warnings.add(msg);
         } else {
             throw new IllegalArgumentException(msg);
         }
@@ -344,7 +329,7 @@ public abstract class ColumnBuilder extends Common {
             case ERROR:
                 return CellValue.getError(cell.getErrorCellValue());
             default:
-                String msg = String.format("Could not extract value from cell with cached value type %d", valueType);
+                String msg = String.format("Could not extract value from cell with cached value type %s", valueType);
                 throw new RuntimeException(msg);
         }
     }
@@ -360,5 +345,8 @@ public abstract class ColumnBuilder extends Common {
     }
 
     protected abstract void handleCell(Cell c, CellValue cv);
-    
+
+    public List<String> getWarnings() {
+        return this.warnings;
+    }
 }

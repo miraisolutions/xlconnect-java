@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,15 +23,10 @@ package com.miraisolutions.xlconnect;
 import com.miraisolutions.xlconnect.data.*;
 import com.miraisolutions.xlconnect.utils.DateTimeFormatter;
 import com.miraisolutions.xlconnect.utils.RPOSIXDateTimeFormatter;
-import java.io.*;
-import java.util.*;
-import java.util.function.Consumer;
-
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
@@ -41,11 +36,17 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
+
 
 /**
  * Class representing a Microsoft Excel Workbook for XLConnect
  */
-public final class Workbook extends Common {
+public final class Workbook {
 
     // Prefix
     private final static String HEADER = "Header";
@@ -78,55 +79,46 @@ public final class Workbook extends Common {
        first element is used as missing value string when writing data
        (null means blank/empty cell)
      */
-    private Object[] missingValue = new Object[] { null };
+    private Object[] missingValue = new Object[]{null};
     // Default cell styles
     private final Map<String, CellStyle> defaultStyles =
-            new HashMap<String, CellStyle>(5);
+            new HashMap<>(5);
     // Styles per data type
-    private final Map<DataType, CellStyle> dataTypeStyles = new EnumMap(DataType.class);
-    
+    private final Map<DataType, CellStyle> dataTypeStyles = new EnumMap<>(DataType.class);
+
     // Data format map
-    private final Map<DataType, String> dataFormatMap = new EnumMap(DataType.class);
+    private final Map<DataType, String> dataFormatMap = new EnumMap<>(DataType.class);
 
 
     // Behavior when detecting an error cell
     // WARN means returning a missing value and registering a warning
     private ErrorBehavior onErrorCell = ErrorBehavior.WARN;
-    
-    private Workbook(InputStream in, String password) throws IOException, InvalidFormatException {
-        this.workbook = WorkbookFactory.create(in, password);
-        this.excelFile = null;
-        init();
-    }
-    
-    private Workbook(File excelFile, String password) throws IOException, InvalidFormatException {
-        /* 
-         * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
+
+    // This is used to support the warnings mechanism on the R side
+    private ArrayList<String> warnings = new ArrayList<>();
+
+    private Workbook(File excelFile, String password) throws IOException {
+        /*
+         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
+        this.workbook = WorkbookFactory.create(Files.newInputStream(excelFile.toPath()), password);
         this.excelFile = excelFile;
         init();
     }
-    
-    private Workbook(InputStream in) throws IOException, InvalidFormatException {
-        this.workbook = WorkbookFactory.create(in);
-        this.excelFile = null;
-        init();
-    }
-    
-    private Workbook(File excelFile) throws IOException, InvalidFormatException {
-        /* 
-         * NOTE: We are using a FileInputStream since otherwise using 'save' mutiple times would cause
+
+    private Workbook(File excelFile) throws IOException {
+        /*
+         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
+        this.workbook = WorkbookFactory.create(Files.newInputStream(excelFile.toPath()));
         this.excelFile = excelFile;
         init();
     }
-    
+
     private Workbook(File excelFile, SpreadsheetVersion version) {
-        switch(version) {
+        switch (version) {
             case EXCEL97:
                 this.workbook = new HSSFWorkbook();
                 break;
@@ -140,41 +132,33 @@ public final class Workbook extends Common {
         this.excelFile = excelFile;
         init();
     }
-    
+
     private void init() {
         initDefaultDataFormats();
         initDefaultStyles();
     }
-    
+
     private void initDefaultDataFormats() {
         dataFormatMap.put(DataType.Boolean, "General");
         dataFormatMap.put(DataType.DateTime, "mm/dd/yyyy hh:mm:ss");
         dataFormatMap.put(DataType.Numeric, "General");
         dataFormatMap.put(DataType.String, "General");
     }
-    
-    private CellStyle initGeneralStyle(String name, DataType type) {
+
+    private CellStyle initGeneralStyle(String name) {
         CellStyle style = getCellStyle(name);
-         if(style == null) {
+        if (style == null) {
             style = createCellStyle(name);
-            if(type == null)
-                style.setDataFormat("General");
-            else
-                style.setDataFormat(dataFormatMap.get(type));
+            style.setDataFormat("General");
             style.setWrapText(true);
         }
         return style;
     }
-    
-    private CellStyle initGeneralStyle(String name) {
-        return initGeneralStyle(name, null);
-    }
 
     private void initDefaultStyles() {
-
         // Header style
         CellStyle headerStyle = getCellStyle(HEADER_STYLE);
-        if(headerStyle == null) {
+        if (headerStyle == null) {
             headerStyle = initGeneralStyle(HEADER_STYLE);
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
@@ -190,7 +174,7 @@ public final class Workbook extends Common {
 
         // Date style
         CellStyle dateStyle = getCellStyle(DATETIME_STYLE);
-        if(dateStyle == null) {
+        if (dateStyle == null) {
             dateStyle = createCellStyle(DATETIME_STYLE);
             dateStyle.setDataFormat(dataFormatMap.get(DataType.DateTime));
             dateStyle.setWrapText(true);
@@ -203,48 +187,31 @@ public final class Workbook extends Common {
         defaultStyles.put(BOOLEAN_STYLE, booleanStyle);
         defaultStyles.put(DATETIME_STYLE, dateStyle);
     }
-    
+
     public void setCellStyleForDataType(DataType type, CellStyle cs) {
         dataTypeStyles.put(type, cs);
     }
-    
+
     public CellStyle getCellStyleForDataType(DataType type) {
         return dataTypeStyles.get(type);
     }
 
     public void setDataFormat(DataType type, String format) {
         dataFormatMap.put(type, format);
-        
-    }
-
-    public String getDataFormat(DataType type) {
-        return dataFormatMap.get(type);
-    }
-
-    public StyleAction getStyleAction() {
-        return styleAction;
     }
 
     public void setStyleAction(StyleAction styleAction) {
         this.styleAction = styleAction;
     }
 
-    public String getStyleNamePrefix() {
-        return styleNamePrefix;
-    }
-
     public void setStyleNamePrefix(String styleNamePrefix) {
         this.styleNamePrefix = styleNamePrefix;
     }
-    
+
     public String[] getSheets() {
-        int count = workbook.getNumberOfSheets();
-        String[] sheetNames = new String[count];
-
-        for(int i = 0; i < count; i++)
-            sheetNames[i] = workbook.getSheetName(i);
-
-        return sheetNames;
+        return IntStream.range(0, workbook.getNumberOfSheets())
+                .mapToObj(workbook::getSheetName)
+                .toArray(String[]::new);
     }
 
     public int getSheetPos(String sheetName) {
@@ -256,28 +223,26 @@ public final class Workbook extends Common {
     }
 
     public String[] getDefinedNames(boolean validOnly) {
-        ArrayList<String> nameNames = new ArrayList<String>();
-        for(Name namedRegion : workbook.getAllNames()) {
-            // if valid only, check corresponding reference formula validity
-            if(validOnly && !isValidNamedRegion(namedRegion)) continue;
-            nameNames.add(namedRegion.getNameName());
-        }
-        return nameNames.toArray(new String[0]);
+        return workbook.getAllNames().stream()
+                .filter(namedRegion -> !validOnly || isValidNamedRegion(namedRegion))
+                .map(Name::getNameName)
+                .toArray(String[]::new);
     }
-    
-    
-    private boolean isValidNamedRegion(Name region) {  
+
+
+    private boolean isValidNamedRegion(Name region) {
         return !region.isDeleted() && hasValidWorkSheet(region);
     }
-    
+
     private boolean hasValidWorkSheet(Name region) {
         String sheetName = null;
         try {
             sheetName = region.getSheetName();
-        } catch(Exception e) {}
-        return (sheetName != null && !"".equals(sheetName));
+        } catch (Exception ignored) {
+        }
+        return (sheetName != null && !sheetName.isEmpty());
     }
-    
+
     public boolean existsSheet(String name) {
         return workbook.getSheet(name) != null;
     }
@@ -287,15 +252,15 @@ public final class Workbook extends Common {
     }
 
     public void createSheet(String name) {
-        if(name.length() > 31)
+        if (name.length() > 31)
             throw new IllegalArgumentException("Sheet names are not allowed to contain more than 31 characters!");
 
-        if(workbook.getSheetIndex(name) < 0)
+        if (workbook.getSheetIndex(name) < 0)
             workbook.createSheet(name);
     }
 
     public void removeSheet(int sheetIndex) {
-        if(sheetIndex > -1 && sheetIndex < workbook.getNumberOfSheets()) {
+        if (sheetIndex > -1 && sheetIndex < workbook.getNumberOfSheets()) {
             setAlternativeActiveSheet(sheetIndex);
             workbook.removeSheetAt(sheetIndex);
         }
@@ -321,14 +286,14 @@ public final class Workbook extends Common {
         Sheet sheet = workbook.cloneSheet(workbook.getSheetIndex(name));
         workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
     }
-    
+
     public void createName(String name, String formula, boolean overwrite) {
-        if(existsName(name)) {
-            if(overwrite) {
+        if (existsName(name)) {
+            if (overwrite) {
                 // Name already exists but we overwrite --> remove
                 removeName(name);
             } else {
-                // Name already exists but we don't want to overwrite --> error
+                // Name already exists, but we don't want to overwrite --> error
                 throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
             }
         }
@@ -337,7 +302,7 @@ public final class Workbook extends Common {
         try {
             cname.setNameName(name);
             cname.setRefersToFormula(formula);
-        } catch(Exception e) {
+        } catch (Exception e) {
             // --> Clean up (= remove) name
             // Need to set dummy name in order to be able to remove it ...
             String dummyNameName = "XLConnectDummyName";
@@ -349,7 +314,7 @@ public final class Workbook extends Common {
 
     public void removeName(String name) {
         Name cname = workbook.getName(name);
-        if(cname != null)
+        if (cname != null)
             workbook.removeName(cname);
     }
 
@@ -375,45 +340,41 @@ public final class Workbook extends Common {
         int right = last.getCol();
         return new int[]{top, left, bottom, right};
     }
-    
+
     public String[] getTables(int sheetIndex) {
-        if(isXSSF()) {
+        if (isXSSF()) {
             XSSFSheet s = (XSSFSheet) getSheet(sheetIndex);
-            String[] tables = new String[s.getTables().size()];
-            int i = 0;
-            Iterator<XSSFTable> it = s.getTables().iterator();
-            while(it.hasNext()) {
-                tables[i++] = it.next().getName();
-            }
-            return tables;
+            return s.getTables().stream()
+                    .map(XSSFTable::getName)
+                    .toArray(String[]::new);
         } else {
             return new String[0];
         }
     }
-    
+
     public String[] getTables(String sheetName) {
         return getTables(workbook.getSheetIndex(sheetName));
     }
-    
+
     public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
-        if(!isXSSF()) {
+        if (!isXSSF()) {
             throw new IllegalArgumentException("Tables are not supported with this file format");
         }
         XSSFSheet s = (XSSFSheet) getSheet(sheetIndex);
-        for(XSSFTable t : s.getTables()) {
-            if(tableName.equals(t.getName())) {
+        for (XSSFTable t : s.getTables()) {
+            if (tableName.equals(t.getName())) {
                 CellReference start = t.getStartCellReference();
                 CellReference end = t.getEndCellReference();
                 int top = start.getRow();
                 int bottom = end.getRow();
                 int left = start.getCol();
                 int right = end.getCol();
-                return new int[] {top, left, bottom, right};
+                return new int[]{top, left, bottom, right};
             }
         }
         throw new IllegalArgumentException("Could not find table '" + tableName + "'!");
     }
-    
+
     public int[] getReferenceCoordinatesForTable(String sheetName, String tableName) {
         return getReferenceCoordinatesForTable(workbook.getSheetIndex(sheetName), tableName);
     }
@@ -422,21 +383,22 @@ public final class Workbook extends Common {
         // Get styles
         Map<String, CellStyle> styles = getStyles(data, sheet, startRow, startCol);
 
-        Consumer<Cell> maybeClearFormula = overwriteFormulaCells ? (cell -> 
-            {
-                if(cell.getCellType() == CellType.FORMULA){
-                    cell.removeFormula();
-                }
+        Consumer<Cell> maybeClearFormula = overwriteFormulaCells ? (cell ->
+        {
+            if (cell.getCellType() == CellType.FORMULA) {
+                cell.removeFormula();
             }
-            ) : (cell -> {});
+        }
+        ) : (cell -> {
+        });
         // Define row & column index variables
         int rowIndex = startRow;
         int colIndex = startCol;
 
         // In case of column headers ...
-        if(header && data.hasColumnHeader()) {
+        if (header && data.hasColumnHeader()) {
             // For each column write corresponding column name
-            for(int i = 0; i < data.columns(); i++) {
+            for (int i = 0; i < data.columns(); i++) {
                 Cell cell = getCell(sheet, rowIndex, colIndex + i);
                 cell.setCellValue(data.getColumnName(i));
                 setCellStyle(cell, styles.get(HEADER + i));
@@ -446,26 +408,24 @@ public final class Workbook extends Common {
         }
 
         // For each column of data
-        for(int i = 0; i < data.columns(); i++) {
+        for (int i = 0; i < data.columns(); i++) {
             // Get column style
             CellStyle cs = styles.get(COLUMN + i);
             Column col = data.getColumn(i);
             // Depending on column type ...
-            switch(data.getColumnType(i)) {
+            switch (data.getColumnType(i)) {
                 case Numeric:
                     double[] doubleValues = col.getNumericData();
-                    for(int j = 0; j < data.rows(); j++) {
+                    for (int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         maybeClearFormula.accept(cell);
-                        if(col.isMissing(j))
+                        if (col.isMissing(j))
                             setMissing(cell);
                         else {
-                            if(Double.isInfinite(doubleValues[j])) {
-
-                              cell.setCellErrorValue(FormulaError.NA.getCode());
+                            if (Double.isInfinite(doubleValues[j])) {
+                                cell.setCellErrorValue(FormulaError.NA.getCode());
                             } else {
-                              cell.setCellValue(doubleValues[j]);
-
+                                cell.setCellValue(doubleValues[j]);
                             }
                             setCellStyle(cell, cs);
                         }
@@ -473,42 +433,39 @@ public final class Workbook extends Common {
                     break;
                 case String:
                     String[] stringValues = col.getStringData();
-                    for(int j = 0; j < data.rows(); j++) {
+                    for (int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         maybeClearFormula.accept(cell);
-                        if(col.isMissing(j))
+                        if (col.isMissing(j))
                             setMissing(cell);
                         else {
                             cell.setCellValue(stringValues[j]);
-
                             setCellStyle(cell, cs);
                         }
                     }
                     break;
                 case Boolean:
                     boolean[] booleanValues = col.getBooleanData();
-                    for(int j = 0; j < data.rows(); j++) {
+                    for (int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         maybeClearFormula.accept(cell);
-                        if(col.isMissing(j))
+                        if (col.isMissing(j))
                             setMissing(cell);
                         else {
                             cell.setCellValue(booleanValues[j]);
-
                             setCellStyle(cell, cs);
                         }
                     }
                     break;
                 case DateTime:
                     Date[] dateValues = col.getDateTimeData();
-                    for(int j = 0; j < data.rows(); j++) {
+                    for (int j = 0; j < data.rows(); j++) {
                         Cell cell = getCell(sheet, rowIndex + j, colIndex);
                         maybeClearFormula.accept(cell);
-                        if(col.isMissing(j))
+                        if (col.isMissing(j))
                             setMissing(cell);
                         else {
                             cell.setCellValue(dateValues[j]);
-
                             setCellStyle(cell, cs);
                         }
                     }
@@ -523,67 +480,64 @@ public final class Workbook extends Common {
 
 
     private DataFrame readData(Sheet sheet, int startRow, int startCol, int nrows, int ncols, boolean header,
-            ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, 
-            boolean takeCached, int [] subset) {
+                               ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat,
+                               boolean takeCached, int[] subset) {
 
         DataFrame data = new DataFrame();
-        int [] colset;
-        
+        int[] colset;
+
         // Formula evaluator - only if we don't want to take cached values
         FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-        if(!takeCached) evaluator.clearAllCachedResultValues();
-        
+        if (!takeCached) evaluator.clearAllCachedResultValues();
+
         if (subset == null) {
-            colset = new int[ncols];
-            for(int i = 0; i < ncols; i++) {
-                colset[i] = i;
-            }
+            colset = IntStream.range(0, ncols).toArray();
         } else {
             colset = subset;
         }
-        
+
         ColumnBuilder cb;
-        switch(readStrategy) {
+        switch (readStrategy) {
             case DEFAULT:
                 cb = new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
-                    missingValue, dateTimeFormat);
+                        missingValue, dateTimeFormat);
                 break;
             case FAST:
                 cb = new FastColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
-                    dateTimeFormat);
+                        dateTimeFormat);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown read strategy!");
         }
-        
+
         // Determine header column
         String[] columnHeaders = new String[colset.length];
-        if(header) {
+        if (header) {
             ColumnBuilder cbHeader = new DefaultColumnBuilder(1, true, takeCached, evaluator, onErrorCell, missingValue, dateTimeFormat);
-            for(int col : colset) {
-                cbHeader.addCell(getCell(sheet, startRow, startCol + col, false)); 
+            for (int col : colset) {
+                cbHeader.addCell(getCell(sheet, startRow, startCol + col, false));
             }
             columnHeaders = cbHeader.buildStringColumn().getStringData();
         }
         // Replace missing column headers
-        for(int i = 0; i < columnHeaders.length; i++) {
-            if(columnHeaders[i] == null) {
+        for (int i = 0; i < columnHeaders.length; i++) {
+            if (columnHeaders[i] == null) {
                 columnHeaders[i] = "Col" + (colset[i] + 1);
             }
         }
-        
+
         // Loop over columns
-        for(int i = 0; i < colset.length; i++) {
+        for (int i = 0; i < colset.length; i++) {
             int col = colset[i];
             int colIndex = startCol + col;
             String columnHeader = columnHeaders[i];
 
             // Prepare column builder for new set of rows
             cb.clear();
-            
+
             // Loop over rows
             Row r;
-            for(int row = header ? 1 : 0; row < nrows; row++) {
+            for (int row = header ? 1 : 0; row < nrows; row++) {
                 int rowIndex = startRow + row;
 
                 // Cell cell = getCell(sheet, rowIndex, colIndex, false);
@@ -592,8 +546,8 @@ public final class Workbook extends Common {
             }
 
             DataType columnType = ((colTypes != null) && (colTypes.length > 0)) ? colTypes[col % colTypes.length] :
-                cb.determineColumnType();
-            switch(columnType) {
+                    cb.determineColumnType();
+            switch (columnType) {
                 case Boolean:
                     data.addColumn(columnHeader, cb.buildBooleanColumn());
                     break;
@@ -608,18 +562,15 @@ public final class Workbook extends Common {
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown data type detected!");
-                    
+
             }
-            // ArrayList columnValues = cb.build(columnType);
-            // data.addColumn(columnHeader, columnType, columnValues);
-            // Copy warnings
-            for(String w : cb.retrieveWarnings())
-                this.addWarning(w);
+            // Collect column builder warnings
+            this.warnings.addAll(cb.getWarnings());
         }
 
         return data;
     }
-    
+
 
     public void onErrorCell(ErrorBehavior eb) {
         this.onErrorCell = eb;
@@ -638,7 +589,7 @@ public final class Workbook extends Common {
 
         // Compute bottom right cell coordinates
         int bottomRightRow = Math.max(topLeft.getRow() + data.rows() - 1, topLeft.getRow());
-        if(header && data.rows() > 0) ++bottomRightRow;
+        if (header && data.rows() > 0) ++bottomRightRow;
         int bottomRightCol = Math.max(topLeft.getCol() + data.columns() - 1, topLeft.getCol());
         // Create bottom right cell reference
         CellReference bottomRight = new CellReference(sheet.getSheetName(), bottomRightRow,
@@ -652,12 +603,8 @@ public final class Workbook extends Common {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
-    public DataFrame readNamedRegion(String name, boolean header) {
-        return readNamedRegion(name, header, ReadStrategy.DEFAULT, null, false, "", false, null);
-    }
-
-    public DataFrame readNamedRegion(String name, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+    public DataFrame readNamedRegion(String name, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
+                                     boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
         Name cname = getName(name);
         checkName(cname);
 
@@ -673,13 +620,13 @@ public final class Workbook extends Common {
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
-        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes, 
+        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
                 forceConversion, dateTimeFormat, takeCached, subset);
     }
-    
-    public DataFrame readTable(int worksheetIndex, String tableName, boolean header, ReadStrategy readStrategy, 
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
-        if(!isXSSF()) throw new IllegalArgumentException("Tables are not supported with this file format!");
+
+    public DataFrame readTable(int worksheetIndex, String tableName, boolean header, ReadStrategy readStrategy,
+                               DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+        if (!isXSSF()) throw new IllegalArgumentException("Tables are not supported with this file format!");
         XSSFSheet s = (XSSFSheet) getSheet(worksheetIndex);
         int[] coords = getReferenceCoordinatesForTable(worksheetIndex, tableName);
         int nrows = coords[2] - coords[0] + 1;
@@ -687,21 +634,21 @@ public final class Workbook extends Common {
         return readData(s, coords[0], coords[1], nrows, ncols, header, readStrategy, colTypes, forceConversion, dateTimeFormat,
                 takeCached, subset);
     }
-    
-    public DataFrame readTable(String worksheetName, String tableName, boolean header, ReadStrategy readStrategy, 
-            DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
-        return readTable(workbook.getSheetIndex(worksheetName), tableName, header, readStrategy, colTypes, 
+
+    public DataFrame readTable(String worksheetName, String tableName, boolean header, ReadStrategy readStrategy,
+                               DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+        return readTable(workbook.getSheetIndex(worksheetName), tableName, header, readStrategy, colTypes,
                 forceConversion, dateTimeFormat, takeCached, subset);
     }
 
     /**
      * Writes a data frame into the specified worksheet index at the specified location
      *
-     * @param data              Data frame to be written to the worksheet
-     * @param worksheetIndex    Worksheet index (0-based)
-     * @param startRow          Start row (row index of top left cell)
-     * @param startCol          Start column (column index of top left cell)
-     * @param header            If true, column headers are written, otherwise not
+     * @param data           Data frame to be written to the worksheet
+     * @param worksheetIndex Worksheet index (0-based)
+     * @param startRow       Start row (row index of top left cell)
+     * @param startCol       Start column (column index of top left cell)
+     * @param header         If true, column headers are written, otherwise not
      */
     public void writeWorksheet(DataFrame data, int worksheetIndex, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
@@ -724,134 +671,75 @@ public final class Workbook extends Common {
      * Reads data from a worksheet. Data regions can be narrowed down by specifying corresponding row and column ranges.
      * Limits specified as negative integers will be automatically determined. The rules for automatically determining
      * the ranges are as follows:
-     *
+     * <p>
      * - If start row < 0: get first row on sheet
      * - If end row < 0: get last row on sheet
      * - If start column < 0: get column of first (non-null) cell in start row
      * - If end column < 0: get max column between start row and end row
      *
-     * @param worksheetIndex    Worksheet index
-     * @param startRow          Start row
-     * @param startCol          Start column
-     * @param endRow            End row
-     * @param endCol            End column
-     * @param header            If true, assume header, otherwise not
-     * @param colTypes          Column data types
-     * @param forceConversion   Should conversion to a less generic data type be forced?
-     * @param dateTimeFormat    Date/time format used when converting between Date and String
-     * @return                  Data Frame
+     * @param worksheetIndex  Worksheet index
+     * @param startRow        Start row
+     * @param startCol        Start column
+     * @param endRow          End row
+     * @param endCol          End column
+     * @param header          If true, assume header, otherwise not
+     * @param colTypes        Column data types
+     * @param forceConversion Should conversion to a less generic data type be forced?
+     * @param dateTimeFormat  Date/time format used when converting between Date and String
+     * @return Data Frame
      */
     public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header,
-            ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, 
-            boolean takeCached, int[] subset, boolean autofitRow, boolean autofitCol) {
+                                   ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat,
+                                   boolean takeCached, int[] subset, boolean autofitRow, boolean autofitCol) {
         Sheet sheet = workbook.getSheetAt(worksheetIndex);
         int[] boundingBox = getBoundingBox(worksheetIndex, startRow, startCol, endRow, endCol, autofitRow, autofitCol);
         startRow = boundingBox[0];
         startCol = boundingBox[1];
         endRow = boundingBox[2];
         endCol = boundingBox[3];
-        
+
         int nrows = startRow < 0 ? 0 : (endRow - startRow) + 1;
         int ncols = startCol < 0 ? 0 : (endCol - startCol) + 1;
-        if(nrows == 0 || ncols == 0) {
-            this.addWarning("Data frame contains " + nrows + " rows and " + ncols + " columns!");
+        if (nrows == 0 || ncols == 0) {
+            this.warnings.add("Data frame contains " + nrows + " rows and " + ncols + " columns!");
         }
-        
-        return readData(sheet, startRow, startCol, nrows, ncols, header, readStrategy, colTypes, forceConversion, dateTimeFormat, 
+
+        return readData(sheet, startRow, startCol, nrows, ncols, header, readStrategy, colTypes, forceConversion, dateTimeFormat,
                 takeCached, subset);
     }
 
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, true, true);
-    }
-    
-    public DataFrame readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, boolean header, boolean
-            autofitRow, boolean autofitCol) {
-        return readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, autofitRow, autofitCol);
-    }
-
-    public DataFrame readWorksheet(int worksheetIndex, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
-            boolean forceConversion, String dateTimeFormat) {
-        return readWorksheet(worksheetIndex, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion, 
-                dateTimeFormat, false, null, true, true);
-    }
-
-    public DataFrame readWorksheet(int worksheetIndex, boolean header) {
-        return readWorksheet(worksheetIndex, header, ReadStrategy.DEFAULT, null, false, "");
-    }
-
     public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, 
-            int [] subset, boolean autofitRow, boolean autofitCol) {
+                                   ReadStrategy readStrategy, DataType[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached,
+                                   int[] subset, boolean autofitRow, boolean autofitCol) {
         return readWorksheet(workbook.getSheetIndex(worksheetName), startRow, startCol, endRow, endCol, header, readStrategy,
                 colTypes, forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
     }
 
-    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT, 
-                null, false, "", false, null, true, true);
-    }
-    
-    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
-            boolean autofitRow, boolean autofitCol) {
-        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
-                null, false, "", false, null, autofitRow, autofitCol);
-    }
-
-    public DataFrame readWorksheet(String worksheetName, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
-            boolean forceConversion, String dateTimeFormat) {
-        return readWorksheet(worksheetName, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion, 
-                dateTimeFormat, false, null, true, true);
-    }
-
-    public DataFrame readWorksheet(String worksheetName, boolean header) {
-        return readWorksheet(worksheetName, header, ReadStrategy.DEFAULT, null, false, "");
-    }
-
-    public void addImage(File imageFile, String name, boolean originalSize) throws FileNotFoundException, IOException {
+    public void addImage(File imageFile, String name, boolean originalSize) throws IOException {
         Name cname = getName(name);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
-        
+
         AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get name corners (top left, bottom right)
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
 
-        // Determine image type
-        int imageType;
-        String filename = imageFile.getName().toLowerCase();
-        if(filename.endsWith("jpg") || filename.endsWith("jpeg")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
-        } else if(filename.endsWith("png")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
-        } else if(filename.endsWith("wmf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
-        } else if(filename.endsWith("emf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
-        } else if(filename.endsWith("bmp") || filename.endsWith("dib")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
-        } else if(filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
-        } else
-            throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
-
-        InputStream is = new FileInputStream(imageFile);
+        int imageType = getImageType(imageFile);
+        InputStream is = Files.newInputStream(imageFile.toPath());
         byte[] bytes = IOUtils.toByteArray(is);
         int imageIndex = workbook.addPicture(bytes, imageType);
         is.close();
 
-        Drawing drawing;
-        if(isHSSF()) {
-            drawing = ((HSSFSheet)sheet).getDrawingPatriarch();
-            if(drawing == null) {
+        Drawing<?> drawing;
+        if (isHSSF()) {
+            drawing = ((HSSFSheet) sheet).getDrawingPatriarch();
+            if (drawing == null) {
                 drawing = sheet.createDrawingPatriarch();
             }
-        } else if(isXSSF()) {
-            drawing = ((XSSFSheet)sheet).createDrawingPatriarch();
+        } else if (isXSSF()) {
+            drawing = ((XSSFSheet) sheet).createDrawingPatriarch();
         } else {
             drawing = sheet.createDrawingPatriarch();
         }
@@ -866,7 +754,27 @@ public final class Workbook extends Common {
         anchor.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
 
         Picture picture = drawing.createPicture(anchor, imageIndex);
-        if(originalSize) picture.resize();
+        if (originalSize) picture.resize();
+    }
+
+    private static int getImageType(File imageFile) {
+        int imageType;
+        String filename = imageFile.getName().toLowerCase();
+        if (filename.endsWith("jpg") || filename.endsWith("jpeg")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
+        } else if (filename.endsWith("png")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
+        } else if (filename.endsWith("wmf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
+        } else if (filename.endsWith("emf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
+        } else if (filename.endsWith("bmp") || filename.endsWith("dib")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
+        } else if (filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
+        } else
+            throw new IllegalArgumentException("Image type \"" + filename.substring(filename.lastIndexOf('.') + 1) + "\" not supported!");
+        return imageType;
     }
 
     public void addImage(String filename, String name, boolean originalSize) throws IOException {
@@ -874,13 +782,14 @@ public final class Workbook extends Common {
     }
 
     public CellStyle createCellStyle(String name) {
-        if(getCellStyle(name) == null) {
-            if(isHSSF()) {
+        if (getCellStyle(name) == null) {
+            if (isHSSF()) {
                 return HCellStyle.create((HSSFWorkbook) workbook, name);
-            } else if(isXSSF()) {
+            } else if (isXSSF()) {
                 return XCellStyle.create((XSSFWorkbook) workbook, name);
+            } else {
+                throw new RuntimeException("Unsupported workbook format.");
             }
-            return null;
         } else
             throw new IllegalArgumentException("Cell style with name '" + name + "' already exists!");
     }
@@ -890,14 +799,14 @@ public final class Workbook extends Common {
     }
 
     public int getActiveSheetIndex() {
-        if(workbook.getNumberOfSheets() < 1)
+        if (workbook.getNumberOfSheets() < 1)
             return -1;
         else
             return workbook.getActiveSheetIndex();
     }
 
     public String getActiveSheetName() {
-        if(workbook.getNumberOfSheets() < 1)
+        if (workbook.getNumberOfSheets() < 1)
             return null;
         else
             return workbook.getSheetName(workbook.getActiveSheetIndex());
@@ -908,7 +817,7 @@ public final class Workbook extends Common {
     }
 
     public void setActiveSheet(String sheetName) {
-        int sheetIndex  = workbook.getSheetIndex(sheetName);
+        int sheetIndex = workbook.getSheetIndex(sheetName);
         setActiveSheet(sheetIndex);
     }
 
@@ -944,12 +853,12 @@ public final class Workbook extends Common {
     public boolean isSheetVeryHidden(String sheetName) {
         return isSheetVeryHidden(workbook.getSheetIndex(sheetName));
     }
-    
+
     public void setColumnWidth(int sheetIndex, int columnIndex, int width) {
         Sheet sheet = getSheet(sheetIndex);
-        if(width >= 0)
+        if (width >= 0)
             sheet.setColumnWidth(columnIndex, width);
-        else if(width == -1)
+        else if (width == -1)
             sheet.autoSizeColumn(columnIndex);
         else
             sheet.setColumnWidth(columnIndex, sheet.getDefaultColumnWidth() * 256);
@@ -962,10 +871,10 @@ public final class Workbook extends Common {
     public void setRowHeight(int sheetIndex, int rowIndex, float height) {
         Sheet sheet = getSheet(sheetIndex);
         Row r = sheet.getRow(rowIndex);
-        if(r == null)
+        if (r == null)
             r = getSheet(sheetIndex).createRow(rowIndex);
 
-        if(height >= 0)
+        if (height >= 0)
             r.setHeightInPoints(height);
         else
             r.setHeightInPoints(sheet.getDefaultRowHeightInPoints());
@@ -978,7 +887,7 @@ public final class Workbook extends Common {
     public void save(OutputStream os) throws IOException {
         workbook.write(os);
     }
-    
+
     public void save(File f) throws IOException {
         this.excelFile = f;
         FileOutputStream fos = new FileOutputStream(f, false);
@@ -996,7 +905,7 @@ public final class Workbook extends Common {
 
     Name getName(String name) {
         Name cname = workbook.getName(name);
-        if(cname != null)
+        if (cname != null)
             return cname;
         else
             throw new IllegalArgumentException("Name '" + name + "' does not exist!");
@@ -1008,10 +917,10 @@ public final class Workbook extends Common {
     }
 
     private void checkName(Name name) {
-        if(!isValidReference(name.getRefersToFormula()))
+        if (!isValidReference(name.getRefersToFormula()))
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' has invalid reference!");
-        else if(!existsSheet(name.getSheetName())) {
-            // The reference as such is valid but it doesn't point to a (existing) sheet ...
+        else if (!existsSheet(name.getSheetName())) {
+            // The reference as such is valid, but it doesn't point to a (existing) sheet ...
             throw new IllegalArgumentException("Name '" + name.getNameName() + "' does not refer to a valid sheet!");
         }
     }
@@ -1027,19 +936,17 @@ public final class Workbook extends Common {
     private Cell getCell(Sheet sheet, int rowIndex, int colIndex, boolean create) {
         // Get or create row
         Row row = sheet.getRow(rowIndex);
-        if(row == null) {
-            if(create) {
+        if (row == null) {
+            if (create) {
                 row = sheet.createRow(rowIndex);
-            }
-            else return null;
+            } else return null;
         }
         // Get or create cell
         Cell cell = row.getCell(colIndex);
-        if(cell == null) {
-            if(create) {
+        if (cell == null) {
+            if (create) {
                 cell = row.createCell(colIndex);
-            }
-            else return null;
+            } else return null;
         }
 
         return cell;
@@ -1050,14 +957,14 @@ public final class Workbook extends Common {
     }
 
     private Sheet getSheet(int sheetIndex) {
-        if(sheetIndex < 0 || sheetIndex >= workbook.getNumberOfSheets())
+        if (sheetIndex < 0 || sheetIndex >= workbook.getNumberOfSheets())
             throw new IllegalArgumentException("Sheet with index " + sheetIndex + " does not exist!");
         return workbook.getSheetAt(sheetIndex);
     }
 
     private Sheet getSheet(String sheetName) {
         Sheet sheet = workbook.getSheet(sheetName);
-        if(sheet == null)
+        if (sheet == null)
             throw new IllegalArgumentException("Sheet with name '" + sheetName + "' does not exist!");
         return sheet;
     }
@@ -1067,13 +974,13 @@ public final class Workbook extends Common {
     }
 
     private void setMissing(Cell cell) {
-        if(missingValue.length < 1 || missingValue[0] == null)
+        if (missingValue.length < 1 || missingValue[0] == null)
             cell.setBlank();
         else {
-            if(missingValue[0] instanceof String) {
+            if (missingValue[0] instanceof String) {
                 cell.setCellValue((String) missingValue[0]);
-            } else if(missingValue[0] instanceof Double) {
-                cell.setCellValue(((Double) missingValue[0]).doubleValue());
+            } else if (missingValue[0] instanceof Double) {
+                cell.setCellValue((Double) missingValue[0]);
             } else {
                 cell.setBlank();
                 return;
@@ -1094,20 +1001,20 @@ public final class Workbook extends Common {
      * @throws IllegalArgumentException In case no alternative active sheet can be found
      */
     private void setAlternativeActiveSheet(int sheetIndex) {
-        if(sheetIndex == getActiveSheetIndex()) {
+        if (sheetIndex == getActiveSheetIndex()) {
             // Set active sheet to be first non-hidden/non-very-hidden sheet
             // in the workbook; if there are no such sheets left,
             // then throw an exception
             boolean ok = false;
-            for(int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                if(i != sheetIndex && !workbook.isSheetHidden(i) && !workbook.isSheetVeryHidden(i)) {
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                if (i != sheetIndex && !workbook.isSheetHidden(i) && !workbook.isSheetVeryHidden(i)) {
                     setActiveSheet(i);
                     ok = true;
                     break;
                 }
             }
 
-            if(!ok) throw new IllegalArgumentException("Cannot hide or remove sheet as there would be no " +
+            if (!ok) throw new IllegalArgumentException("Cannot hide or remove sheet as there would be no " +
                     "alternative active sheet left!");
         }
     }
@@ -1115,16 +1022,16 @@ public final class Workbook extends Common {
     /**
      * Gets a cell style by name.
      *
-     * @param name  Cell style name
-     * @return      The corresponding cell style if there exists one with the specified name;
-     *              null otherwise
+     * @param name Cell style name
+     * @return The corresponding cell style if there exists one with the specified name;
+     * null otherwise
      */
     public CellStyle getCellStyle(String name) {
-        if(isHSSF()) {
+        if (isHSSF()) {
             return HCellStyle.get((HSSFWorkbook) workbook, name);
-        } else if(isXSSF()) {
+        } else if (isXSSF()) {
             return XCellStyle.get((XSSFWorkbook) workbook, name);
-        }      
+        }
         return null;
     }
 
@@ -1137,12 +1044,12 @@ public final class Workbook extends Common {
     }
 
     private void setCellStyle(Cell c, CellStyle cs) {
-        if(cs != null) {
-            if(cs instanceof HCellStyle) {
+        if (cs != null) {
+            if (cs instanceof HCellStyle) {
                 HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
-            } else if(cs instanceof XCellStyle) {
+            } else if (cs instanceof XCellStyle) {
                 XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
-            } else if(cs instanceof DataFormatOnlyCellStyle) {
+            } else if (cs instanceof DataFormatOnlyCellStyle) {
                 CellStyle csx = getCellStyle(c);
                 csx.setDataFormat(dataFormatMap.get(((DataFormatOnlyCellStyle) cs).getDataType()));
                 SSCellStyle.set(c, (SSCellStyle) csx);
@@ -1159,24 +1066,20 @@ public final class Workbook extends Common {
     private void foreachReferencedCell(String formula, CellFunction function) {
         AreaReference aref = new AreaReference(formula, workbook.getSpreadsheetVersion());
         String sheetName = aref.getFirstCell().getSheetName();
-        if(sheetName == null) {
+        if (sheetName == null) {
             throw new IllegalArgumentException("Invalid formula reference - should be of the form Sheet!A1:B10");
         }
         Sheet sheet = getSheet(sheetName);
 
         CellReference[] crefs = aref.getAllReferencedCells();
-        for(CellReference cref : crefs) {
+        for (CellReference cref : crefs) {
             Cell cell = getCell(sheet, cref.getRow(), cref.getCol());
             function.apply(cell);
         }
     }
-    
+
     public void setCellStyle(String formula, final CellStyle cs) {
-        foreachReferencedCell(formula, new CellFunction() {
-            public void apply(Cell cell) {
-                setCellStyle(cell, cs);
-            }
-        });
+        foreachReferencedCell(formula, cell -> setCellStyle(cell, cs));
     }
 
     public void setCellStyle(int sheetIndex, int row, int col, CellStyle cs) {
@@ -1196,11 +1099,7 @@ public final class Workbook extends Common {
     }
 
     public void setHyperlink(String formula, final HyperlinkType type, final String address) {
-        foreachReferencedCell(formula, new CellFunction() {
-            public void apply(Cell cell) {
-                setHyperlink(cell, type, address);
-            }
-        });
+        foreachReferencedCell(formula, cell -> setHyperlink(cell, type, address));
     }
 
     public void setHyperlink(int sheetIndex, int row, int col, HyperlinkType type, String address) {
@@ -1216,23 +1115,23 @@ public final class Workbook extends Common {
     /**
      * Determines the cell styles for headers and columns by column based on the defined style action.
      *
-     * @param data      Data frame to be written
-     * @param sheet     Worksheet
-     * @param startRow  Start row in specified sheet for beginning to write the specified data frame
-     * @param startCol  Start column in specified sheet for beginning to write the specified data frame
-     * @return          A mapping of header/column indices to cell styles
+     * @param data     Data frame to be written
+     * @param sheet    Worksheet
+     * @param startRow Start row in specified sheet for beginning to write the specified data frame
+     * @param startCol Start column in specified sheet for beginning to write the specified data frame
+     * @return A mapping of header/column indices to cell styles
      */
     private Map<String, CellStyle> getStyles(DataFrame data, Sheet sheet, int startRow, int startCol) {
-        Map<String, CellStyle> cstyles = new HashMap<String, CellStyle>(data.columns());
+        Map<String, CellStyle> cstyles = new HashMap<>(data.columns());
 
-        switch(styleAction) {
+        switch (styleAction) {
             case XLCONNECT:
-                if(data.hasColumnHeader()) {
-                    for(int i = 0; i < data.columns(); i++)
+                if (data.hasColumnHeader()) {
+                    for (int i = 0; i < data.columns(); i++)
                         cstyles.put(HEADER + i, defaultStyles.get(HEADER_STYLE));
                 }
-                for(int i = 0; i < data.columns(); i++) {
-                    switch(data.getColumnType(i)) {
+                for (int i = 0; i < data.columns(); i++) {
+                    switch (data.getColumnType(i)) {
                         case Boolean:
                             cstyles.put(COLUMN + i, defaultStyles.get(BOOLEAN_STYLE));
                             break;
@@ -1251,11 +1150,11 @@ public final class Workbook extends Common {
                 }
                 break;
             case DATATYPE:
-                if(data.hasColumnHeader()) {
-                    for(int i = 0; i < data.columns(); i++)
+                if (data.hasColumnHeader()) {
+                    for (int i = 0; i < data.columns(); i++)
                         cstyles.put(HEADER + i, defaultStyles.get(HEADER_STYLE));
                 }
-                for(int i = 0; i < data.columns(); i++) {
+                for (int i = 0; i < data.columns(); i++) {
                     cstyles.put(COLUMN + i, dataTypeStyles.get(data.getColumnType(i)));
                 }
                 break;
@@ -1263,58 +1162,58 @@ public final class Workbook extends Common {
                 break;
             case PREDEFINED:
                 // In case of a header, determine header styles
-                if(data.hasColumnHeader()) {
-                    for(int i = 0; i < data.columns(); i++) {
+                if (data.hasColumnHeader()) {
+                    for (int i = 0; i < data.columns(); i++) {
                         cstyles.put(HEADER + i, getCellStyle(getCell(sheet, startRow, startCol + i)));
                     }
                 }
                 int styleRow = startRow + (data.hasColumnHeader() ? 1 : 0);
-                for(int i = 0; i < data.columns(); i++) {
+                for (int i = 0; i < data.columns(); i++) {
                     Cell cell = getCell(sheet, styleRow, startCol + i);
                     cstyles.put(COLUMN + i, getCellStyle(cell));
                 }
                 break;
             case STYLE_NAME_PREFIX:
-                if(data.hasColumnHeader()) {
-                    for(int i = 0; i < data.columns(); i++) {
+                if (data.hasColumnHeader()) {
+                    for (int i = 0; i < data.columns(); i++) {
                         String prefix = styleNamePrefix + SEP + HEADER;
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER><SEP><COLUMN_NAME>
                         CellStyle cs = getCellStyle(prefix + SEP + data.getColumnName(i));
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER><SEP><COLUMN_INDEX>
-                        if(cs == null)
+                        if (cs == null)
                             cs = getCellStyle(prefix + SEP + (i + 1));
                         // Check for style <STYLE_NAME_PREFIX><SEP><HEADER>
-                        if(cs == null)
+                        if (cs == null)
                             cs = getCellStyle(prefix);
-                        if(cs == null)
-                            cs = new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
-                        
+                        if (cs == null)
+                            cs = new SSCellStyle(workbook, workbook.getCellStyleAt((short) 0));
+
                         cstyles.put(HEADER + i, cs);
                     }
                 }
-                for(int i = 0; i < data.columns(); i++) {
+                for (int i = 0; i < data.columns(); i++) {
                     String prefix = styleNamePrefix + SEP + COLUMN;
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><COLUMN_NAME>
                     CellStyle cs = getCellStyle(prefix + SEP + data.getColumnName(i));
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><COLUMN_INDEX>
-                    if(cs == null)
+                    if (cs == null)
                         cs = getCellStyle(prefix + SEP + (i + 1));
                     // Check for style <STYLE_NAME_PREFIX><SEP><COLUMN><SEP><DATA_TYPE>
-                    if(cs == null)
+                    if (cs == null)
                         cs = getCellStyle(prefix + SEP + data.getColumnType(i).toString());
-                    if(cs == null)
-                        cs =  new SSCellStyle(workbook, workbook.getCellStyleAt((short)0));
+                    if (cs == null)
+                        cs = new SSCellStyle(workbook, workbook.getCellStyleAt((short) 0));
 
                     cstyles.put(COLUMN + i, cs);
                 }
                 break;
             case DATA_FORMAT_ONLY:
-                if(data.hasColumnHeader()) {
-                    for(int i = 0; i < data.columns(); i++) {
+                if (data.hasColumnHeader()) {
+                    for (int i = 0; i < data.columns(); i++) {
                         cstyles.put(HEADER + i, DataFormatOnlyCellStyle.get(DataType.String));
                     }
                 }
-                for(int i = 0; i < data.columns(); i++) {
+                for (int i = 0; i < data.columns(); i++) {
                     cstyles.put(COLUMN + i, DataFormatOnlyCellStyle.get(data.getColumnType(i)));
                 }
                 break;
@@ -1335,9 +1234,9 @@ public final class Workbook extends Common {
 
     public void unmergeCells(int sheetIndex, String reference) {
         Sheet sheet = getSheet(sheetIndex);
-        for(int i = 0; i < sheet.getNumMergedRegions(); i++) {
+        for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
             CellRangeAddress cra = sheet.getMergedRegion(i);
-            if(cra.formatAsString().equals(reference)) {
+            if (cra.formatAsString().equals(reference)) {
                 sheet.removeMergedRegion(i);
                 break;
             }
@@ -1347,73 +1246,54 @@ public final class Workbook extends Common {
     public void unmergeCells(String sheetName, String reference) {
         unmergeCells(workbook.getSheetIndex(sheetName), reference);
     }
-    
+
 
     /**
      * Get the workbook from a Microsoft Excel file.
-     *
+     * <p>
      * Reads the workbook if the file exists, otherwise creates a new workbook of the corresponding format.
      *
      * @param excelFile Microsoft Excel file to read or create if not existing
      * @return Instance of the workbook
-     * @throws FileNotFoundException
-     * @throws IOException
-     * @throws InvalidFormatException
      */
-    public static Workbook getWorkbook(File excelFile, String password, boolean create) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(File excelFile, String password, boolean create) throws IOException {
         Workbook wb;
 
-        if(excelFile.exists()) {
-            if(password == null)
-              wb = new Workbook(excelFile);
+        if (excelFile.exists()) {
+            if (password == null)
+                wb = new Workbook(excelFile);
             else
-              wb = new Workbook(excelFile, password);
+                wb = new Workbook(excelFile, password);
         } else {
-            if(create) {
+            if (create) {
                 String filename = excelFile.getName().toLowerCase();
-                if(filename.endsWith(".xls")) {
+                if (filename.endsWith(".xls")) {
                     wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL97);
-                } else if(filename.endsWith(".xlsx")) {
+                } else if (filename.endsWith(".xlsx")) {
                     wb = new Workbook(excelFile, SpreadsheetVersion.EXCEL2007);
                 } else
-                    throw new IllegalArgumentException("File extension \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported! Only *.xls and *.xlsx are allowed!");
+                    throw new IllegalArgumentException("File extension \"" + filename.substring(filename.lastIndexOf('.') + 1) + "\" not supported! Only *.xls and *.xlsx are allowed!");
             } else
                 throw new FileNotFoundException("File '" + excelFile.getName() + "' could not be found - " +
                         "you may specify to automatically create the file if not existing.");
         }
         return wb;
     }
-    
-    public static Workbook getWorkbook(File excelFile, boolean create) throws IOException, InvalidFormatException {
+
+    public static Workbook getWorkbook(File excelFile, boolean create) throws IOException {
         return getWorkbook(excelFile, null, create);
     }
 
-    public static Workbook getWorkbook(String filename, String password, boolean create) throws IOException, InvalidFormatException {
+    public static Workbook getWorkbook(String filename, String password, boolean create) throws IOException {
         return Workbook.getWorkbook(new File(filename), password, create);
     }
-    
-    public static Workbook getWorkbook(String filename, boolean create) throws IOException, InvalidFormatException {
+
+    public static Workbook getWorkbook(String filename, boolean create) throws IOException {
         return Workbook.getWorkbook(new File(filename), create);
     }
-    
-    public static Workbook getWorkbook(InputStream is, String password) throws IOException, InvalidFormatException {
-        return new Workbook(is, password);
-    }
-    
-    public static Workbook getWorkbook(InputStream is) throws IOException, InvalidFormatException {
-        return new Workbook(is, null);
-    }
-    
+
     public void setCellFormula(Cell c, String formula) {
         c.setCellFormula(formula);
-    }
-    
-    public void setCellFormula(String formula, final String formulaString) {
-        foreachReferencedCell(formula, new CellFunction() {
-            public void apply(Cell cell) {
-                setCellFormula(cell, formulaString);
-            }
-        });
     }
 
     public void setCellFormula(int sheetIndex, int row, int col, String formula) {
@@ -1429,7 +1309,7 @@ public final class Workbook extends Common {
     public String getCellFormula(Cell c) {
         return c.getCellFormula();
     }
-    
+
     public String getCellFormula(int sheetIndex, int row, int col) {
         Cell c = getCell(getSheet(sheetIndex), row, col);
         return getCellFormula(c);
@@ -1440,19 +1320,19 @@ public final class Workbook extends Common {
         return getCellFormula(c);
     }
 
-    public boolean getForceFormulaRecalculation(int sheetIndex) { 
+    public boolean getForceFormulaRecalculation(int sheetIndex) {
         return getSheet(sheetIndex).getForceFormulaRecalculation();
     }
 
-    public boolean getForceFormulaRecalculation(String sheetName) { 
+    public boolean getForceFormulaRecalculation(String sheetName) {
         return getSheet(sheetName).getForceFormulaRecalculation();
     }
 
-    public void setForceFormulaRecalculation(int sheetIndex, boolean value) { 
+    public void setForceFormulaRecalculation(int sheetIndex, boolean value) {
         getSheet(sheetIndex).setForceFormulaRecalculation(value);
     }
 
-    public void setForceFormulaRecalculation(String sheetName, boolean value) { 
+    public void setForceFormulaRecalculation(String sheetName, boolean value) {
         getSheet(sheetName).setForceFormulaRecalculation(value);
     }
 
@@ -1475,11 +1355,11 @@ public final class Workbook extends Common {
     public int getLastColumn(Sheet sheet) {
         int lastRow = sheet.getLastRowNum();
         int lastColumn = 1;
-        for(int i = 0 ; i < lastRow; ++i) {
+        for (int i = 0; i < lastRow; ++i) {
             Row row = sheet.getRow(i);
-            if(row != null) {
+            if (row != null) {
                 int col = row.getLastCellNum();
-                if(col > lastColumn) {
+                if (col > lastColumn) {
                     lastColumn = col;
                 }
             }
@@ -1511,12 +1391,12 @@ public final class Workbook extends Common {
         Sheet sheet = getSheet(worksheetIndex);
         int lastRow = getLastRow(worksheetIndex);
         int firstCol = Integer.MAX_VALUE;
-        for(int i = 0; i < lastRow && firstCol > 0; i++) {
+        for (int i = 0; i < lastRow && firstCol > 0; i++) {
             Row row = sheet.getRow(i);
-            if(row != null && row.getFirstCellNum() < firstCol)
+            if (row != null && row.getFirstCellNum() < firstCol)
                 firstCol = row.getFirstCellNum();
         }
-        if(firstCol == Integer.MAX_VALUE)
+        if (firstCol == Integer.MAX_VALUE)
             firstCol = 0;
 
         writeWorksheet(data, worksheetIndex, getLastRow(worksheetIndex) + 1, firstCol, header, false);
@@ -1530,9 +1410,9 @@ public final class Workbook extends Common {
         Sheet sheet = getSheet(sheetIndex);
         int firstRow = sheet.getFirstRowNum();
         int lastRow = sheet.getLastRowNum();
-        for (int i=lastRow; i>=firstRow; i--) {
+        for (int i = lastRow; i >= firstRow; i--) {
             Row r = sheet.getRow(i);
-            if(r != null)
+            if (r != null)
                 sheet.removeRow(r);
         }
     }
@@ -1540,37 +1420,37 @@ public final class Workbook extends Common {
     public void clearSheet(String sheetName) {
         clearSheet(workbook.getSheetIndex(sheetName));
     }
-    
+
     // coords[] = { top, left, bottom, right }
     public void clearRange(int sheetIndex, int[] coords) {
         Sheet sheet = getSheet(sheetIndex);
-        for(int i = coords[0]; i <= coords[2]; i++) {
+        for (int i = coords[0]; i <= coords[2]; i++) {
             Row row = sheet.getRow(i);
-            if(row == null) continue;
-            for(int j = coords[1]; j <= coords[3]; j++) {
+            if (row == null) continue;
+            for (int j = coords[1]; j <= coords[3]; j++) {
                 Cell cell = row.getCell(j);
-                if(cell != null)
+                if (cell != null)
                     row.removeCell(cell);
             }
-            if (row.getLastCellNum()<0)
+            if (row.getLastCellNum() < 0)
                 sheet.removeRow(row);
         }
     }
-    
+
     public void clearRange(String sheetName, int[] coords) {
         clearRange(workbook.getSheetIndex(sheetName), coords);
     }
-    
+
     public void clearRangeFromReference(String reference) {
         AreaReference ref = new AreaReference(reference, workbook.getSpreadsheetVersion());
         CellReference firstCell = ref.getFirstCell();
         CellReference lastCell = ref.getLastCell();
         String sheetName = firstCell.getSheetName();
-        int[] coords = { firstCell.getRow(), firstCell.getCol(), lastCell.getRow(),
-            lastCell.getCol() };
+        int[] coords = {firstCell.getRow(), firstCell.getCol(), lastCell.getRow(),
+                lastCell.getCol()};
         clearRange(sheetName, coords);
     }
-    
+
     public void clearNamedRegion(String name) {
         String sheetName = getName(name).getSheetName();
         int[] coords = getReferenceCoordinates(name);
@@ -1578,7 +1458,7 @@ public final class Workbook extends Common {
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
-        if(leftColumn < 0 | topRow < 0)
+        if (leftColumn < 0 | topRow < 0)
             getSheet(sheetIndex).createFreezePane(colSplit, rowSplit);
         else
             getSheet(sheetIndex).createFreezePane(colSplit, rowSplit, leftColumn, topRow);
@@ -1597,7 +1477,7 @@ public final class Workbook extends Common {
     }
 
     public void createSplitPane(int sheetIndex, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
-        getSheet(sheetIndex).createSplitPane(xSplitPos, ySplitPos, leftColumn, topRow, Sheet.PANE_LOWER_RIGHT);
+        getSheet(sheetIndex).createSplitPane(xSplitPos, ySplitPos, leftColumn, topRow, PaneType.LOWER_RIGHT);
     }
 
     public void createSplitPane(String sheetName, int xSplitPos, int ySplitPos, int leftColumn, int topRow) {
@@ -1611,102 +1491,98 @@ public final class Workbook extends Common {
     public void removePane(String sheetName) {
         createFreezePane(sheetName, 0, 0);
     }
-    
+
     public void setSheetColor(int sheetIndex, int color) {
-        if(isXSSF()) {
+        if (isXSSF()) {
             XSSFWorkbook wb = (XSSFWorkbook) workbook;
-            Sheet sheet = wb.getSheetAt(sheetIndex);
-            ((XSSFSheet)sheet).setTabColor(
+            XSSFSheet sheet = wb.getSheetAt(sheetIndex);
+            sheet.setTabColor(
                     new XSSFColor(IndexedColors.fromInt(color), wb.getStylesSource().getIndexedColors()));
-        } else if(isHSSF()) {
-            addWarning("Setting the sheet color for XLS files is not supported yet.");
-        }      
+        } else if (isHSSF()) {
+            this.warnings.add("Setting the sheet color for XLS files is not supported yet.");
+        }
     }
 
     public void setSheetColor(String sheetName, int color) {
         setSheetColor(workbook.getSheetIndex(sheetName), color);
     }
-    
-    public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol, true, true);
-    }
-    
+
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol,
-            boolean autofitRow, boolean autofitCol) {
+                                boolean autofitRow, boolean autofitCol) {
         Sheet sheet = workbook.getSheetAt(sheetIndex);
         final int mark = Integer.MAX_VALUE - 1;
 
-        if(startRow < 0) {
+        if (startRow < 0) {
             startRow = sheet.getFirstRowNum();
-            if(sheet.getRow(startRow) == null) {
+            if (sheet.getRow(startRow) == null) {
                 // There is no row in this sheet
                 startRow = -1;
             }
         }
-        
-        if(endRow < 0) {
+
+        if (endRow < 0) {
             // We interpret this as "all except for the last N rows"
             // -1 => auto-detect the last row
             // -2 => all except for the last row
             // -3 => all except for the last 2 rows
             // ...
             endRow = sheet.getLastRowNum() + endRow + 1;
-            if(sheet.getRow(endRow) == null) {
+            if (sheet.getRow(endRow) == null) {
                 // There is no row in this sheet
                 endRow = -1;
             }
         }
-        
+
         int minRow = startRow;
         int maxRow = endRow;
         int minCol = startCol;
         int maxCol = endCol < 0 ? mark : endCol;
-        
+
         int origEndCol = endCol;
-        
+
         startCol = startCol < 0 ? mark : startCol;
         endCol = endCol < 0 ? -1 : endCol;
         Cell topLeft = null, bottomRight = null;
         boolean anyCell = false;
-        for(int i = minRow; i > -1 && i <= maxRow; i++) {
+        for (int i = minRow; i > -1 && i <= maxRow; i++) {
             Row r = sheet.getRow(i);
-            if(r != null) {
+            if (r != null) {
                 // Determine column boundaries
                 int start = Math.max(minCol, r.getFirstCellNum());
                 int end = Math.min(maxCol + 1, r.getLastCellNum()); // NOTE: getLastCellNum is 1-based!
                 boolean anyNonBlank = false;
-                for(int j = start; j > -1 && j < end; j++) {
+                for (int j = start; j > -1 && j < end; j++) {
                     Cell c = r.getCell(j);
-                    if(c != null && c.getCellType() != CellType.BLANK) {
+                    if (c != null && c.getCellType() != CellType.BLANK) {
                         anyCell = true;
                         anyNonBlank = true;
-                        if((autofitCol || minCol < 0) && (topLeft == null || j < startCol)) {
+                        if ((autofitCol || minCol < 0) && (topLeft == null || j < startCol)) {
                             startCol = j;
                             topLeft = c;
                         }
-                        if((autofitCol || maxCol == mark) && (bottomRight == null || j > endCol)) {
+                        if ((autofitCol || maxCol == mark) && (bottomRight == null || j > endCol)) {
                             endCol = j;
                             bottomRight = c;
                         }
                     }
                 }
-                if(autofitRow && anyNonBlank) {
+                if (autofitRow && anyNonBlank) {
                     endRow = i;
-                    if(sheet.getRow(startRow) == null) {
+                    if (sheet.getRow(startRow) == null) {
                         startRow = i;
                     }
                 }
             }
         }
-        
-        if((autofitRow || startRow < 0) && !anyCell) {
+
+        if ((autofitRow || startRow < 0) && !anyCell) {
             startRow = endRow = -1;
         }
-        if((autofitCol || startCol == mark) && !anyCell) {
+        if ((autofitCol || startCol == mark) && !anyCell) {
             startCol = endCol = -1;
         }
-        
-        if(origEndCol < 0) {
+
+        if (origEndCol < 0) {
             // We interpret this as "all except for the last N columns"
             // -1 => auto-detect the last column
             // -2 => all except for the last column
@@ -1714,17 +1590,19 @@ public final class Workbook extends Common {
             // ...
             endCol = endCol + origEndCol + 1;
         }
-        
-        return new int[] {startRow, startCol, endRow, endCol};
+
+        return new int[]{startRow, startCol, endRow, endCol};
     }
-    
+
     public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol,
-            boolean autofitRow, boolean autofitColumn) {
+                                boolean autofitRow, boolean autofitColumn) {
         return getBoundingBox(workbook.getSheetIndex(sheetName), startRow, startCol, endRow, endCol,
                 autofitRow, autofitColumn);
     }
-    
-    public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol) {
-        return getBoundingBox(sheetName, startRow, startCol, endRow, endCol, true, true);
+
+    public List<String> getAndClearWarnings() {
+        List<String> warnings = this.warnings;
+        this.warnings = new ArrayList<>();
+        return warnings;
     }
 }

@@ -1,6 +1,6 @@
 <!--
     XLConnect
-    Copyright (C) 2010 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,24 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.miraisolutions</groupId>
     <artifactId>XLConnect</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.8-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <name>XLConnect</name>
-    <url>http://www.mirai-solutions.com</url>
+    <url>https://mirai-solutions.ch/</url>
     <repositories>
         <repository>
             <id>MavenCentral</id>
             <name>Maven Central Repository</name>
-            <url>http://repo1.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>FuseSource</id>
-            <name>FuseSource Repository</name>
-            <url>http://repo.fusesource.com/nexus/content/groups/public/</url>
+            <url>https://repo1.maven.org/maven2/</url>
         </repository>
     </repositories>
     <build>
@@ -56,6 +51,11 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -74,12 +74,6 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.5</version>
-<!--            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.poi</groupId>
-                    <artifactId>poi-ooxml-schemas</artifactId>
-                </exclusion>
-            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -88,8 +82,8 @@
         </dependency>
     </dependencies>
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 </project>

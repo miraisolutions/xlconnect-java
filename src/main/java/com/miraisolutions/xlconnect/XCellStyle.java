@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,28 +28,19 @@ import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellAlignment;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellFill;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorder;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorderPr;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellAlignment;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyles;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTFill;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTPatternFill;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTXf;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.STBorderStyle;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.*;
 
 /**
- * This class uses parts from XSSFCellStyle.java at
- * http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java
+ * This class uses parts from
+ * <a href="http://svn.apache.org/repos/asf/poi/trunk/src/ooxml/java/org/apache/poi/xssf/usermodel/XSSFCellStyle.java">XSSFCellStyle.java</a>
  * by The Apache Software Foundation
  */
-public class XCellStyle extends Common implements CellStyle {
+public final class XCellStyle implements CellStyle {
 
     private final XSSFWorkbook workbook;
     private final int xfId, styleXfId;
     private XSSFCellAlignment cellAlignment;
-    private IndexedColorMap defaultIndexedColorMap = new DefaultIndexedColorMap();
+    private final IndexedColorMap defaultIndexedColorMap = new DefaultIndexedColorMap();
 
     public XCellStyle(XSSFWorkbook workbook, int xfId, int styleXfId) {
         this.workbook = workbook;
@@ -58,7 +49,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     private CTXf getCoreXf() {
-        if(xfId < 0)
+        if (xfId < 0)
             return workbook.getStylesSource().getCellXfAt(0);
         else
             return workbook.getStylesSource().getCellXfAt(xfId);
@@ -69,31 +60,31 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     private CTXf getXf() {
-        if(styleXfId > -1) return workbook.getStylesSource().getCellStyleXfAt(styleXfId);
+        if (styleXfId > -1) return workbook.getStylesSource().getCellStyleXfAt(styleXfId);
         else return getCoreXf();
     }
 
-    private CTBorder getCTBorder(){
+    private CTBorder getCTBorder() {
         CTBorder ct;
         CTXf xf = getXf();
-        if(xf.getApplyBorder()) {
+        if (xf.getApplyBorder()) {
             int idx = (int) xf.getBorderId();
             XSSFCellBorder cf = workbook.getStylesSource().getBorderAt(idx);
-            ct = (CTBorder)cf.getCTBorder().copy();
+            ct = (CTBorder) cf.getCTBorder().copy();
         } else {
             ct = CTBorder.Factory.newInstance();
         }
         return ct;
     }
 
-    private CTFill getCTFill(){
+    private CTFill getCTFill() {
         CTFill ct;
         CTXf xf = getXf();
-        if(xf.getApplyFill()) {
-            int fillIndex = (int)xf.getFillId();
+        if (xf.getApplyFill()) {
+            int fillIndex = (int) xf.getFillId();
             XSSFCellFill cf = workbook.getStylesSource().getFillAt(fillIndex);
 
-            ct = (CTFill)cf.getCTFill().copy();
+            ct = (CTFill) cf.getCTFill().copy();
         } else {
             ct = CTFill.Factory.newInstance();
         }
@@ -118,7 +109,7 @@ public class XCellStyle extends Common implements CellStyle {
     public void setBorderBottom(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetBottom() ? ct.getBottom() : ct.addNewBottom();
-        if(border == BorderStyle.NONE) ct.unsetBottom();
+        if (border == BorderStyle.NONE) ct.unsetBottom();
         else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -132,7 +123,7 @@ public class XCellStyle extends Common implements CellStyle {
     public void setBorderLeft(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetLeft() ? ct.getLeft() : ct.addNewLeft();
-        if(border == BorderStyle.NONE) ct.unsetLeft();
+        if (border == BorderStyle.NONE) ct.unsetLeft();
         else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -146,7 +137,7 @@ public class XCellStyle extends Common implements CellStyle {
     public void setBorderRight(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetRight() ? ct.getRight() : ct.addNewRight();
-        if(border == BorderStyle.NONE) ct.unsetRight();
+        if (border == BorderStyle.NONE) ct.unsetRight();
         else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -160,7 +151,7 @@ public class XCellStyle extends Common implements CellStyle {
     public void setBorderTop(BorderStyle border) {
         CTBorder ct = getCTBorder();
         CTBorderPr pr = ct.isSetTop() ? ct.getTop() : ct.addNewTop();
-        if(border == BorderStyle.NONE) ct.unsetTop();
+        if (border == BorderStyle.NONE) ct.unsetTop();
         else pr.setStyle(STBorderStyle.Enum.forInt(border.getCode() + 1));
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -173,10 +164,10 @@ public class XCellStyle extends Common implements CellStyle {
 
     private void setBottomBorderColor(XSSFColor color) {
         CTBorder ct = getCTBorder();
-        if(color == null && !ct.isSetBottom()) return;
+        if (color == null && !ct.isSetBottom()) return;
 
         CTBorderPr pr = ct.isSetBottom() ? ct.getBottom() : ct.addNewBottom();
-        if(color != null)  pr.setColor(color.getCTColor());
+        if (color != null) pr.setColor(color.getCTColor());
         else pr.unsetColor();
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -195,10 +186,10 @@ public class XCellStyle extends Common implements CellStyle {
 
     private void setLeftBorderColor(XSSFColor color) {
         CTBorder ct = getCTBorder();
-        if(color == null && !ct.isSetLeft()) return;
+        if (color == null && !ct.isSetLeft()) return;
 
         CTBorderPr pr = ct.isSetLeft() ? ct.getLeft() : ct.addNewLeft();
-        if(color != null)  pr.setColor(color.getCTColor());
+        if (color != null) pr.setColor(color.getCTColor());
         else pr.unsetColor();
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -217,10 +208,10 @@ public class XCellStyle extends Common implements CellStyle {
 
     private void setRightBorderColor(XSSFColor color) {
         CTBorder ct = getCTBorder();
-        if(color == null && !ct.isSetRight()) return;
+        if (color == null && !ct.isSetRight()) return;
 
         CTBorderPr pr = ct.isSetRight() ? ct.getRight() : ct.addNewRight();
-        if(color != null)  pr.setColor(color.getCTColor());
+        if (color != null) pr.setColor(color.getCTColor());
         else pr.unsetColor();
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -239,10 +230,10 @@ public class XCellStyle extends Common implements CellStyle {
 
     private void setTopBorderColor(XSSFColor color) {
         CTBorder ct = getCTBorder();
-        if(color == null && !ct.isSetTop()) return;
+        if (color == null && !ct.isSetTop()) return;
 
         CTBorderPr pr = ct.isSetTop() ? ct.getTop() : ct.addNewTop();
-        if(color != null)  pr.setColor(color.getCTColor());
+        if (color != null) pr.setColor(color.getCTColor());
         else pr.unsetColor();
 
         int idx = workbook.getStylesSource().putBorder(new XSSFCellBorder(ct));
@@ -272,10 +263,10 @@ public class XCellStyle extends Common implements CellStyle {
     private void setFillBackgroundColor(XSSFColor color) {
         CTFill ct = getCTFill();
         CTPatternFill ptrn = ct.getPatternFill();
-        if(color == null) {
-            if(ptrn != null) ptrn.unsetBgColor();
+        if (color == null) {
+            if (ptrn != null) ptrn.unsetBgColor();
         } else {
-            if(ptrn == null) ptrn = ct.addNewPatternFill();
+            if (ptrn == null) ptrn = ct.addNewPatternFill();
             ptrn.setBgColor(color.getCTColor());
         }
 
@@ -298,10 +289,10 @@ public class XCellStyle extends Common implements CellStyle {
         CTFill ct = getCTFill();
 
         CTPatternFill ptrn = ct.getPatternFill();
-        if(color == null) {
-            if(ptrn != null) ptrn.unsetFgColor();
+        if (color == null) {
+            if (ptrn != null) ptrn.unsetFgColor();
         } else {
-            if(ptrn == null) ptrn = ct.addNewPatternFill();
+            if (ptrn == null) ptrn = ct.addNewPatternFill();
             ptrn.setFgColor(color.getCTColor());
         }
 
@@ -323,7 +314,7 @@ public class XCellStyle extends Common implements CellStyle {
     public void setFillPattern(FillPatternType fp) {
         CTFill ct = getCTFill();
         CTPatternFill ptrn = ct.isSetPatternFill() ? ct.getPatternFill() : ct.addNewPatternFill();
-        if(fp == FillPatternType.NO_FILL && ptrn.isSetPatternType()) ptrn.unsetPatternType();
+        if (fp == FillPatternType.NO_FILL && ptrn.isSetPatternType()) ptrn.unsetPatternType();
         else ptrn.setPatternType(STPatternType.Enum.forInt(fp.getCode() + 1));
 
         StylesTable stylesTable = workbook.getStylesSource();
@@ -349,13 +340,13 @@ public class XCellStyle extends Common implements CellStyle {
         xf.setFillId(0);
         xf.setBorderId(0);
 
-        if(name != null) {
+        if (name != null) {
             CTCellStyles ctCellStyles = workbook.getStylesSource().getCTStylesheet().getCellStyles();
-            if(ctCellStyles == null) {
+            if (ctCellStyles == null) {
                 ctCellStyles = workbook.getStylesSource().getCTStylesheet().addNewCellStyles();
                 ctCellStyles.setCount(0);
             }
-            if(ctCellStyles.getCount() == 0) {
+            if (ctCellStyles.getCount() == 0) {
                 CTCellStyle standardCellStyle = ctCellStyles.addNewCellStyle();
                 standardCellStyle.setName("Standard");
                 standardCellStyle.setXfId(0);
@@ -371,7 +362,7 @@ public class XCellStyle extends Common implements CellStyle {
 
             styleXfSize = workbook.getStylesSource().putCellStyleXf(styleXf);
             xf.setXfId(styleXfSize - 1);
-            
+
             CTCellStyle ctCellStyle = ctCellStyles.addNewCellStyle();
             ctCellStyle.setName(name);
             ctCellStyle.setXfId(styleXfSize - 1);
@@ -386,18 +377,16 @@ public class XCellStyle extends Common implements CellStyle {
     /**
      * Used for querying user-named cell styles (style xf only).
      *
-     * @param workbook
-     * @param name
-     * @return          XCellStyle with corresponding (named) style xf
+     * @return XCellStyle with corresponding (named) style xf
      */
     public static XCellStyle get(XSSFWorkbook workbook, String name) {
         StylesTable stylesSource = workbook.getStylesSource();
         CTCellStyles ctCellStyles = stylesSource.getCTStylesheet().getCellStyles();
 
-        if(ctCellStyles != null) {
-            for(int i = 0; i < ctCellStyles.getCount(); i++) {
+        if (ctCellStyles != null) {
+            for (int i = 0; i < ctCellStyles.getCount(); i++) {
                 CTCellStyle ctCellStyle = ctCellStyles.getCellStyleArray(i);
-                if(ctCellStyle.getName().equals(name)) {
+                if (ctCellStyle.getName().equals(name)) {
                     int styleXfId = (int) ctCellStyle.getXfId();
 
                     return new XCellStyle(workbook, -1, styleXfId);
@@ -409,7 +398,7 @@ public class XCellStyle extends Common implements CellStyle {
     }
 
     public static void set(XSSFCell c, XCellStyle cs) {
-        if(cs.xfId < 0) {
+        if (cs.xfId < 0) {
             // Only the style xf is of interest
 
             CTXf styleXf = cs.getStyleXf();
@@ -425,13 +414,13 @@ public class XCellStyle extends Common implements CellStyle {
             int xfSize = cs.workbook.getStylesSource().putCellXf(xf);
             c.setCellStyle(new XSSFCellStyle(xfSize - 1, cs.styleXfId,
                     cs.workbook.getStylesSource(), cs.workbook.getTheme()));
-        } else if(cs.styleXfId < 0) {
+        } else if (cs.styleXfId < 0) {
             // It's an unnamed cell style - only the core xf is of interest
-            
+
             int styleXfId = 0;
             int id = (int) cs.workbook.getStylesSource().getCellXfAt(cs.xfId).getXfId();
-            if(id > 0) styleXfId = id;
-            
+            if (id > 0) styleXfId = id;
+
             c.setCellStyle(new XSSFCellStyle(cs.xfId, styleXfId, cs.workbook.getStylesSource(),
                     cs.workbook.getTheme()));
         } else

@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,44 +20,34 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import com.miraisolutions.xlconnect.data.DataType;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.util.CellReference;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
 public abstract class CellUtils {
 
-    public static boolean isCellValueOfType(CellValue cv, DataType type) {
-        switch(cv.getCellType()) {
-            case BOOLEAN:
-                return DataType.Boolean.equals(type);
-            case NUMERIC:
-                return DataType.Numeric.equals(type) ||
-                        (DataType.DateTime.equals(type) && DateUtil.isValidExcelDate(cv.getNumberValue()));
-            case STRING:
-                return DataType.String.equals(type);
-            default:
-                return false;
-        }
-    }
-    
     public static String formatAsString(Cell cell) {
-        return(new CellReference(cell).formatAsString());
+        return (new CellReference(cell).formatAsString());
     }
 
     public static String getErrorMessage(FormulaError error) {
-        switch(error) {
-            case DIV0: return "Division by 0";
-            case NA: return "Value is not available";
-            case NAME: return "No such name defined";
-            case NULL: return "Two areas are required to intersect but do not";
-            case NUM: return "Value outside of domain";
-            case REF: return "Invalid cell reference";
-            case VALUE: return "Incompatible type";
-            default: return "Unknown error";
+        switch (error) {
+            case DIV0:
+                return "Division by 0";
+            case NA:
+                return "Value is not available";
+            case NAME:
+                return "No such name defined";
+            case NULL:
+                return "Two areas are required to intersect but do not";
+            case NUM:
+                return "Value outside of domain";
+            case REF:
+                return "Invalid cell reference";
+            case VALUE:
+                return "Incompatible type";
+            default:
+                return "Unknown error";
         }
     }
 

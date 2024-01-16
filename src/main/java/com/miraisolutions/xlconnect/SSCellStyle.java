@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-public class SSCellStyle extends Common implements CellStyle {
+public final class SSCellStyle implements CellStyle {
 
     org.apache.poi.ss.usermodel.Workbook workbook;
     org.apache.poi.ss.usermodel.CellStyle cellStyle;

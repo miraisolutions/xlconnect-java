@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,15 +21,18 @@
 package com.miraisolutions.xlconnect.data;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class DataFrame {
-    
-    protected ArrayList<String> columnNames;
-    protected ArrayList<Column> columns;
+public final class DataFrame {
+
+    private final ArrayList<String> columnNames;
+    private final ArrayList<Column> columns;
 
     public DataFrame() {
-        this.columnNames = new ArrayList<String>();
-        this.columns = new ArrayList<Column>();
+        this.columnNames = new ArrayList<>();
+        this.columns = new ArrayList<>();
     }
 
     public int columns() {
@@ -37,10 +40,7 @@ public class DataFrame {
     }
 
     public int rows() {
-        if(isEmpty())
-            return 0;
-        else
-            return columns.get(0).size();
+        return isEmpty() ? 0 : columns.get(0).size();
     }
 
     public boolean isEmpty() {
@@ -48,20 +48,12 @@ public class DataFrame {
     }
 
     public boolean hasColumnHeader() {
-        boolean hasHeader = false;
-        for(int i = 0; i < columnNames.size(); i++) {
-            if(columnNames.get(i) != null) {
-                hasHeader = true;
-                break;
-            }
-        }
-
-        return hasHeader;
+        return columnNames.stream().anyMatch(Objects::nonNull);
     }
 
-    
+
     public void addColumn(String name, Column column) {
-        if(isEmpty() || (column.size() == rows())) {
+        if (isEmpty() || (column.size() == rows())) {
             columnNames.add(name);
             columns.add(column);
         } else
@@ -81,15 +73,13 @@ public class DataFrame {
         return columns.get(index);
     }
 
-    public ArrayList<String> getColumnNames() {
+    public List<String> getColumnNames() {
         return columnNames;
     }
 
-    public ArrayList<DataType> getColumnTypes() {
-        ArrayList<DataType> dataTypes = new ArrayList<DataType>(columns.size());
-        for(Column c : columns) {
-            dataTypes.add(c.getDataType());
-        }
-        return dataTypes;
+    public List<DataType> getColumnTypes() {
+        return columns.stream()
+                .map(Column::getDataType)
+                .collect(Collectors.toList());
     }
 }

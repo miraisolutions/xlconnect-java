@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2017-2018 Mirai Solutions GmbH
+    Copyright (C) 2017-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,35 +20,30 @@
 
 package com.miraisolutions.xlconnect.utils;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * A repeatable iterable sequence wrapper around an array of elements
+ *
  * @param <T> Element type
  */
-public class SimpleSequence<T> implements RepeatableIterable<T> {
-    private T[] values;
+public final class SimpleSequence<T> implements RepeatableIterable<T> {
+    private final T[] values;
 
     public static SimpleSequence<String> create(String[] values) {
-        return new SimpleSequence<String>(values);
+        return new SimpleSequence<>(values);
     }
 
     public static SimpleSequence<Integer> create(int[] values) {
-        Integer[] newValues = new Integer[values.length];
-        int i = 0;
-        for (int value : values) {
-            newValues[i++] = Integer.valueOf(value);
-        }
-        return new SimpleSequence<Integer>(newValues);
+        Integer[] newValues = Arrays.stream(values).boxed().toArray(Integer[]::new);
+        return new SimpleSequence<>(newValues);
     }
 
     public static SimpleSequence<Double> create(double[] values) {
-        Double[] newValues = new Double[values.length];
-        int i = 0;
-        for (double value : values) {
-            newValues[i++] = Double.valueOf(value);
-        }
-        return new SimpleSequence<Double>(newValues);
+        Double[] newValues = Arrays.stream(values).boxed().toArray(Double[]::new);
+        return new SimpleSequence<>(newValues);
     }
 
     public SimpleSequence(T[] values) {
@@ -67,8 +62,8 @@ public class SimpleSequence<T> implements RepeatableIterable<T> {
         return iterator(false);
     }
 
-    private class SequenceIterator implements Iterator<T> {
-        private boolean repeating = false;
+    private final class SequenceIterator implements Iterator<T> {
+        private final boolean repeating;
         private int i = 0;
 
         public SequenceIterator(boolean repeating) {
@@ -80,12 +75,13 @@ public class SimpleSequence<T> implements RepeatableIterable<T> {
         }
 
         public T next() {
-            T result = values[i];
-            i += 1;
-            if(repeating && i >= length()) i = 0;
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            T result = values[i % values.length];
+            i++;
             return result;
         }
-
-        public void remove() {}
     }
 }

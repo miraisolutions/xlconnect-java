@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,96 +22,74 @@ package com.miraisolutions.xlconnect.data;
 
 import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.utils.CellUtils;
-import java.util.ArrayList;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-public class DefaultColumnBuilder extends ColumnBuilder {
-    
+
+public final class DefaultColumnBuilder extends ColumnBuilder {
+
     // The following split is done for performance reasons
-    protected String[] missingValueStrings;
-    protected double[] missingValueNumbers;
-    
+    private final List<Object> missingValueStrings;
+    private final List<Object> missingValueNumbers;
+
     public DefaultColumnBuilder(int nrows, boolean forceConversion,
-            boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
-            Object[] missingValue, String dateTimeFormat) {
-        
+                                boolean takeCached, FormulaEvaluator evaluator, ErrorBehavior onErrorCell,
+                                Object[] missingValue, String dateTimeFormat) {
+
         super(nrows, forceConversion, takeCached, evaluator, onErrorCell, dateTimeFormat);
-        
+
         // Split missing values into missing values for strings and doubles
         // (for better performance later on)
-        ArrayList<Double> missingNum = new ArrayList<Double>();
-        ArrayList<String> missingStr = new ArrayList<String>();
-        for(int i = 0; i < missingValue.length; i++) {
-            if(missingValue[i] instanceof String) {
-                missingStr.add((String) missingValue[i]);
-            } else if(missingValue[i] instanceof Double) {
-                missingNum.add((Double) missingValue[i]);
-            }
-        }
-        
-        missingValueStrings = missingStr.toArray(new String[missingStr.size()]);
-        missingValueNumbers = new double[missingNum.size()];
-        for(int i = 0; i < missingNum.size(); i++) {
-            missingValueNumbers[i] = missingNum.get(i).doubleValue();
-        }
+        Map<Boolean, List<Object>> partitioned = Arrays.stream(missingValue)
+                .collect(Collectors.partitioningBy(o -> o instanceof String));
+
+        missingValueStrings = partitioned.get(true);
+        missingValueNumbers = partitioned.get(false);
     }
-    
+
     @Override
     protected void handleCell(Cell c, CellValue cv) {
-        String msg;
         // Determine (evaluated) cell data type
-        switch(cv.getCellType()) {
+        switch (cv.getCellType()) {
             case BLANK:
                 addMissing();
-                return;
+                break;
             case BOOLEAN:
                 addValue(c, cv, DataType.Boolean);
                 break;
             case NUMERIC:
-                if(DateUtil.isCellDateFormatted(c))
+                if (DateUtil.isCellDateFormatted(c))
                     addValue(c, cv, DataType.DateTime);
                 else {
-                    boolean missing = false;
-                    for(int i = 0; i < missingValueNumbers.length; i++) {
-                        if(cv.getNumberValue() == missingValueNumbers[i]) {
-                            missing = true;
-                            break;
-                        }
-                    }
-                    if(missing)
+                    double value = cv.getNumberValue();
+                    if (missingValueNumbers.contains(value))
                         addMissing();
                     else
                         addValue(c, cv, DataType.Numeric);
                 }
                 break;
             case STRING:
-                boolean missing = false;
-                for(int i = 0; i < missingValueStrings.length; i++) {
-                    if(cv.getStringValue() == null || cv.getStringValue().equals(missingValueStrings[i])) {
-                        missing = true;
-                        break;
-                    }
-                }
-                if(missing)
+                String value = cv.getStringValue();
+                if ((value == null) || missingValueStrings.contains(value))
                     addMissing();
                 else
                     addValue(c, cv, DataType.String);
                 break;
             case FORMULA:
-                msg = "Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!";
-                cellError(msg);
+                cellError("Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!");
                 break;
             case ERROR:
-                msg = "Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue());
-                cellError(msg);
+                cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue()));
                 break;
             default:
-                msg = "Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!";
-                cellError(msg);
+                cellError("Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!");
         }
     }
 }

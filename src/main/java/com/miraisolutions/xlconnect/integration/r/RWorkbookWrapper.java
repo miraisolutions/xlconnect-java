@@ -1,7 +1,7 @@
 /*
  *
     XLConnect
-    Copyright (C) 2010-2018 Mirai Solutions GmbH
+    Copyright (C) 2010-2024 Mirai Solutions GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,28 +27,23 @@ import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import com.miraisolutions.xlconnect.utils.RepeatableIterableUtils;
 import com.miraisolutions.xlconnect.utils.SequenceLengthEncoding;
 import com.miraisolutions.xlconnect.utils.SimpleSequence;
 import org.apache.poi.common.usermodel.HyperlinkType;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
-/**
- *
- * @author Martin Studer, Mirai Solutions GmbH
- */
+import java.io.IOException;
+import java.util.Arrays;
+
 public final class RWorkbookWrapper {
 
     private final Workbook workbook;
 
-    public RWorkbookWrapper(String filename, String password, boolean create) throws IOException, InvalidFormatException {
+    public RWorkbookWrapper(String filename, String password, boolean create) throws IOException {
         this.workbook = Workbook.getWorkbook(filename, password, create);
     }
-    
-    public RWorkbookWrapper(String filename, boolean create) throws IOException, InvalidFormatException {
+
+    public RWorkbookWrapper(String filename, boolean create) throws IOException {
         this.workbook = Workbook.getWorkbook(filename, create);
     }
 
@@ -114,31 +109,31 @@ public final class RWorkbookWrapper {
 
     private static DataType[] dataTypeFromString(String[] colTypes) {
         DataType[] ctypes = null;
-        if(colTypes != null) {
-            ctypes = new DataType[colTypes.length];
-            for(int i = 0; i < colTypes.length; i++)
-                ctypes[i] = fromString(colTypes[i]);
+        if (colTypes != null) {
+            ctypes = Arrays.stream(colTypes)
+                    .map(RWorkbookWrapper::getDataTypeFromString)
+                    .toArray(DataType[]::new);
         }
         return ctypes;
     }
 
     public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int [] subset,
-            String readStrategy) {
+                                             boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
+                                             String readStrategy) {
         DataFrame dataFrame = workbook.readNamedRegion(name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
-    
+
     public RDataFrameWrapper readTable(int worksheetIndex, String tableName, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset, String readStrategy) {
+                                       boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset, String readStrategy) {
         DataFrame dataFrame = workbook.readTable(worksheetIndex, tableName, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
     }
-    
+
     public RDataFrameWrapper readTable(String worksheetName, String tableName, boolean header, String[] colTypes,
-            boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset, String readStrategy) {
+                                       boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset, String readStrategy) {
         DataFrame dataFrame = workbook.readTable(worksheetName, tableName, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
                 dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
         return new RDataFrameWrapper(dataFrame);
@@ -152,18 +147,18 @@ public final class RWorkbookWrapper {
         return workbook.existsSheet(name);
     }
 
-    public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached, 
-            int [] subset, String readStrategy) {
+    public RDataFrameWrapper readWorksheet(int worksheetIndex, int startRow, int startCol, int endRow, int endCol,
+                                           boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached,
+                                           int[] subset, String readStrategy) {
         DataFrame dataFrame = workbook.readWorksheet(worksheetIndex, startRow, startCol, endRow, endCol, header,
-                ReadStrategy.valueOf(readStrategy.toUpperCase()), dataTypeFromString(colTypes), forceConversion, dateTimeFormat, 
+                ReadStrategy.valueOf(readStrategy.toUpperCase()), dataTypeFromString(colTypes), forceConversion, dateTimeFormat,
                 takeCached, subset, false, false);
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol, 
-            boolean header, String colTypes[], boolean forceConversion, String dateTimeFormat, boolean takeCached, 
-            int [] subset, String readStrategy) {
+    public RDataFrameWrapper readWorksheet(String worksheet, int startRow, int startCol, int endRow, int endCol,
+                                           boolean header, String[] colTypes, boolean forceConversion, String dateTimeFormat, boolean takeCached,
+                                           int[] subset, String readStrategy) {
         DataFrame dataFrame = workbook.readWorksheet(worksheet, startRow, startCol, endRow, endCol, header,
                 ReadStrategy.valueOf(readStrategy.toUpperCase()), dataTypeFromString(colTypes), forceConversion, dateTimeFormat,
                 takeCached, subset, false, false);
@@ -235,7 +230,7 @@ public final class RWorkbookWrapper {
     }
 
     public void addImage(String filename, String name, boolean originalSize)
-            throws FileNotFoundException, IOException {
+            throws IOException {
         workbook.addImage(filename, name, originalSize);
     }
 
@@ -251,7 +246,7 @@ public final class RWorkbookWrapper {
 
     public RCellStyleWrapper getCellStyle(String name) {
         CellStyle cs = workbook.getCellStyle(name);
-        if(cs != null) {
+        if (cs != null) {
             return new RCellStyleWrapper(cs);
         }
         throw new IllegalArgumentException("Cell style " + name + " does not exist");
@@ -265,43 +260,43 @@ public final class RWorkbookWrapper {
         workbook.setMissingValue(value);
     }
 
-    private static DataType fromString(String dataType) {
-        if("BOOLEAN".equals(dataType))
+    private static DataType getDataTypeFromString(String dataType) {
+        if ("BOOLEAN".equals(dataType))
             return DataType.Boolean;
-        else if("NUMERIC".equals(dataType))
+        else if ("NUMERIC".equals(dataType))
             return DataType.Numeric;
-        else if("STRING".equals(dataType))
+        else if ("STRING".equals(dataType))
             return DataType.String;
-        else if("DATETIME".equals(dataType))
+        else if ("DATETIME".equals(dataType))
             return DataType.DateTime;
         else
             throw new IllegalArgumentException("Provided data type is not a valid data type!");
     }
 
     public void setDataFormat(String dataType, String format) {
-        workbook.setDataFormat(fromString(dataType), format);
+        workbook.setDataFormat(getDataTypeFromString(dataType), format);
     }
-    
+
     public void setCellStyleForDataType(String dataType, RCellStyleWrapper cellStyle) {
-        workbook.setCellStyleForDataType(fromString(dataType), cellStyle.cellStyle);
+        workbook.setCellStyleForDataType(getDataTypeFromString(dataType), cellStyle.cellStyle);
     }
-    
+
     public RCellStyleWrapper getCellStyleForDataType(String dataType) {
-        return new RCellStyleWrapper(workbook.getCellStyleForDataType(fromString(dataType)));
+        return new RCellStyleWrapper(workbook.getCellStyleForDataType(getDataTypeFromString(dataType)));
     }
-    
+
     public void setStyleAction(String action) {
-        if("XLCONNECT".equals(action))
+        if ("XLCONNECT".equals(action))
             workbook.setStyleAction(StyleAction.XLCONNECT);
-        else if("DATATYPE".equals(action))
+        else if ("DATATYPE".equals(action))
             workbook.setStyleAction(StyleAction.DATATYPE);
-        else if("NONE".equals(action))
+        else if ("NONE".equals(action))
             workbook.setStyleAction(StyleAction.NONE);
-        else if("PREDEFINED".equals(action))
+        else if ("PREDEFINED".equals(action))
             workbook.setStyleAction(StyleAction.PREDEFINED);
-        else if("STYLE_NAME_PREFIX".equals(action))
+        else if ("STYLE_NAME_PREFIX".equals(action))
             workbook.setStyleAction(StyleAction.STYLE_NAME_PREFIX);
-        else if("DATA_FORMAT_ONLY".equals(action))
+        else if ("DATA_FORMAT_ONLY".equals(action))
             workbook.setStyleAction(StyleAction.DATA_FORMAT_ONLY);
         else
             throw new IllegalArgumentException("Provided action is not a valid style action!");
@@ -312,50 +307,34 @@ public final class RWorkbookWrapper {
     }
 
     public void setCellStyleSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
-        SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
+                                      SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
         RepeatableIterableUtils.foreach(sheetName, row, col, cellStyle,
-            new RepeatableIterableUtils.Function4<String, Integer, Integer, RCellStyleWrapper>() {
-                public void apply(String sheet, Integer row, Integer col, RCellStyleWrapper cellStyle) {
-                    workbook.setCellStyle(sheet, row, col, cellStyle.cellStyle);
-                }
-            }
+                (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
         );
     }
 
     public void setCellStyleSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
-        SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
+                                       SequenceLengthEncoding col, SimpleSequence<RCellStyleWrapper> cellStyle) {
         RepeatableIterableUtils.foreach(sheetIndex, row, col, cellStyle,
-                new RepeatableIterableUtils.Function4<Integer, Integer, Integer, RCellStyleWrapper>() {
-                    public void apply(Integer sheet, Integer row, Integer col, RCellStyleWrapper cellStyle) {
-                        workbook.setCellStyle(sheet, row, col, cellStyle.cellStyle);
-                    }
-                }
+                (sheet, row1, col1, cellStyle1) -> workbook.setCellStyle(sheet, row1, col1, cellStyle1.cellStyle)
         );
     }
-    
+
     public void setCellStyleFormula(String formula, RCellStyleWrapper cellStyle) {
         workbook.setCellStyle(formula, cellStyle.cellStyle);
     }
 
     public void setHyperlinkSheetIndex(SimpleSequence<Integer> sheetIndex, SequenceLengthEncoding row,
-        SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
+                                       SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
         RepeatableIterableUtils.foreach(sheetIndex, row, col, type, address,
-                new RepeatableIterableUtils.Function5<Integer, Integer, Integer, String, String>() {
-                    public void apply(Integer sheet, Integer row, Integer col, String type, String address) {
-                        workbook.setHyperlink(sheet, row, col, HyperlinkType.valueOf(type), address);
-                    }
-                }
+                (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
         );
     }
 
     public void setHyperlinkSheetName(SimpleSequence<String> sheetName, SequenceLengthEncoding row,
-        SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
+                                      SequenceLengthEncoding col, SimpleSequence<String> type, SimpleSequence<String> address) {
         RepeatableIterableUtils.foreach(sheetName, row, col, type, address,
-                new RepeatableIterableUtils.Function5<String, Integer, Integer, String, String>() {
-                    public void apply(String sheet, Integer row, Integer col, String type, String address) {
-                        workbook.setHyperlink(sheet, row, col, HyperlinkType.valueOf(type), address);
-                    }
-                }
+                (sheet, row1, col1, type1, address1) -> workbook.setHyperlink(sheet, row1, col1, HyperlinkType.valueOf(type1), address1)
         );
     }
 
@@ -396,11 +375,11 @@ public final class RWorkbookWrapper {
     }
 
     public String[] retrieveWarnings() {
-        return workbook.retrieveWarnings();
+        return workbook.getAndClearWarnings().toArray(new String[0]);
     }
-    
+
     public void onErrorCell(String behavior) {
-        if("STOP".equals(behavior))
+        if ("STOP".equals(behavior))
             workbook.onErrorCell(ErrorBehavior.THROW_EXCEPTION);
         else
             workbook.onErrorCell(ErrorBehavior.WARN);
@@ -423,25 +402,25 @@ public final class RWorkbookWrapper {
     }
 
     public String getCellFormula(int sheetIndex, int row, int col) {
-        return workbook.getCellFormula(sheetIndex,row,col);
+        return workbook.getCellFormula(sheetIndex, row, col);
     }
 
     public String getCellFormula(String sheetName, int row, int col) {
-        return workbook.getCellFormula(sheetName,row,col);
+        return workbook.getCellFormula(sheetName, row, col);
     }
 
     public int[] getReferenceCoordinates(String name) {
-	return workbook.getReferenceCoordinates(name);
+        return workbook.getReferenceCoordinates(name);
     }
-    
+
     public int[] getReferenceCoordinatesForName(String name) {
         return workbook.getReferenceCoordinatesForName(name);
     }
-    
+
     public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
         return workbook.getReferenceCoordinatesForTable(sheetIndex, tableName);
     }
-    
+
     public int[] getReferenceCoordinatesForTable(String sheetName, String tableName) {
         return workbook.getReferenceCoordinatesForTable(sheetName, tableName);
     }
@@ -498,7 +477,7 @@ public final class RWorkbookWrapper {
     public void appendWorksheet(RDataFrameWrapper data, String worksheetName, boolean header) {
         workbook.appendWorksheet(data.dataFrame, worksheetName, header);
     }
-    
+
     public void clearSheet(int sheetIndex) {
         workbook.clearSheet(sheetIndex);
     }
@@ -506,7 +485,7 @@ public final class RWorkbookWrapper {
     public void clearSheet(String sheetName) {
         workbook.clearSheet(sheetName);
     }
-    
+
     public void clearRange(int sheetIndex, int[] coords) {
         workbook.clearRange(sheetIndex, coords);
     }
@@ -514,11 +493,11 @@ public final class RWorkbookWrapper {
     public void clearRange(String sheetName, int[] coords) {
         workbook.clearRange(sheetName, coords);
     }
-    
+
     public void clearRangeFromReference(String reference) {
         workbook.clearRangeFromReference(reference);
     }
-    
+
     public void clearNamedRegion(String name) {
         workbook.clearNamedRegion(name);
     }
@@ -554,7 +533,7 @@ public final class RWorkbookWrapper {
     public void removePane(String sheetName) {
         workbook.removePane(sheetName);
     }
-    
+
     public void setSheetColor(int sheetIndex, int color) {
         workbook.setSheetColor(sheetIndex, color);
     }
@@ -562,23 +541,23 @@ public final class RWorkbookWrapper {
     public void setSheetColor(String sheetName, int color) {
         workbook.setSheetColor(sheetName, color);
     }
-    
+
     public int[] getBoundingBox(int sheetIndex, int startRow, int startCol, int endRow, int endCol,
-            boolean autofitRow, boolean autofitCol) {
-	return workbook.getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol,
+                                boolean autofitRow, boolean autofitCol) {
+        return workbook.getBoundingBox(sheetIndex, startRow, startCol, endRow, endCol,
                 autofitRow, autofitCol);
     }
-    
+
     public int[] getBoundingBox(String sheetName, int startRow, int startCol, int endRow, int endCol,
-            boolean autofitRow, boolean autofitCol) {
-	return workbook.getBoundingBox(sheetName, startRow, startCol, endRow, endCol,
+                                boolean autofitRow, boolean autofitCol) {
+        return workbook.getBoundingBox(sheetName, startRow, startCol, endRow, endCol,
                 autofitRow, autofitCol);
     }
-    
+
     public String[] getTables(int sheetIndex) {
         return workbook.getTables(sheetIndex);
     }
-    
+
     public String[] getTables(String sheetName) {
         return workbook.getTables(sheetName);
     }
