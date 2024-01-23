@@ -32,8 +32,6 @@ import org.apache.poi.common.usermodel.HyperlinkType;
 import java.io.IOException;
 import java.util.Arrays;
 
-import java.io.IOException;
-
 public final class RWorkbookWrapper {
 
     private final Workbook workbook;
