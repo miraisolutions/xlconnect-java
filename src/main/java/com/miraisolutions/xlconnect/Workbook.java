@@ -269,6 +269,7 @@ public final class Workbook {
             String foundInScope = effectiveScope(worksheetScope, found);
             return new BooleanWithAttributes(WORKSHEET_SCOPE, foundInScope, true);
         } catch (IllegalArgumentException ignored) {
+            warnings.add(ignored.getMessage());
             return worksheetScope != null ? new BooleanWithAttributes(WORKSHEET_SCOPE, worksheetScope, false) : new BooleanWithAttributes(false);
         }
     }
