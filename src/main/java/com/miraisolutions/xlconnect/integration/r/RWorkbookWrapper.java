@@ -64,7 +64,7 @@ public final class RWorkbookWrapper {
         workbook.createSheet(name);
     }
 
-    public void createName(String name, String worksheetScope, String formula, boolean overwrite) {
+    public void createName(String name, String formula, boolean overwrite, String worksheetScope) {
         workbook.createName(name, worksheetScope, formula, overwrite);
     }
 
@@ -463,7 +463,7 @@ public final class RWorkbookWrapper {
     }
 
 
-    public void appendNamedRegion(RDataFrameWrapper data, String name, String worksheetScope, boolean header, boolean overwriteFormulaCells) {
+    public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
         workbook.appendNamedRegion(data.dataFrame, name, worksheetScope, header, overwriteFormulaCells);
     }
 
