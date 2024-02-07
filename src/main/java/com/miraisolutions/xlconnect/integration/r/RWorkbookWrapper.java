@@ -117,8 +117,8 @@ public final class RWorkbookWrapper {
     public RDataFrameWithAttributes readNamedRegion(String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
                                              String readStrategy, String worksheetScope) {
-        DataFrameWithAttributes dataFrame = workbook.readNamedRegion(name, worksheetScope, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
-                dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
+        DataFrameWithAttributes dataFrame = workbook.readNamedRegion(name, header, dataTypeFromString(colTypes), forceConversion,
+                dateTimeFormat, takeCached, subset, ReadStrategy.valueOf(readStrategy.toUpperCase()), worksheetScope);
         return new RDataFrameWithAttributes(dataFrame.getAttributes(), new RDataFrameWrapper(dataFrame.getValue()));
     }
 
@@ -228,7 +228,7 @@ public final class RWorkbookWrapper {
 
     public void addImage(String filename, String name, boolean originalSize, String worksheetScope)
             throws IOException {
-        workbook.addImage(filename, name, worksheetScope, originalSize);
+        workbook.addImage(filename, name, originalSize, worksheetScope);
     }
 
     public RCellStyleWrapper createCellStyle(String name) {
@@ -464,7 +464,7 @@ public final class RWorkbookWrapper {
 
 
     public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
-        workbook.appendNamedRegion(data.dataFrame, name, worksheetScope, header, overwriteFormulaCells);
+        workbook.appendNamedRegion(data.dataFrame, name, header, overwriteFormulaCells, worksheetScope);
     }
 
     public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header) {

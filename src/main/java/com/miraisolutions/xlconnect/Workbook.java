@@ -640,8 +640,8 @@ public final class Workbook {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
-    public DataFrameWithAttributes readNamedRegion(String name, String worksheetScope, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
-                                                   boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
+    public DataFrameWithAttributes readNamedRegion(String name, boolean header, DataType[] colTypes, boolean forceConversion, String dateTimeFormat,
+                                                   boolean takeCached, int[] subset, ReadStrategy readStrategy, String worksheetScope) {
         Name cname = getName(name, worksheetScope);
         checkName(cname);
         String foundInScope = effectiveScope(worksheetScope, cname);
@@ -835,7 +835,7 @@ public final class Workbook {
         if(originalSize) picture.resize();
     }
 
-    public void addImage(String filename, String name, String worksheetScope, boolean originalSize) throws IOException {
+    public void addImage(String filename, String name, boolean originalSize, String worksheetScope) throws IOException {
         addImage(new File(filename), name, worksheetScope, originalSize);
     }
 
@@ -1457,7 +1457,7 @@ public final class Workbook {
         return getLastColumn(getSheet(sheetName));
     }
 
-    public void appendNamedRegion(DataFrame data, String name, String worksheetScope, boolean header, boolean overwriteFormulaCells) {
+    public void appendNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
         Sheet sheet = workbook.getSheet(getName(name, worksheetScope).getSheetName());
         // top, left, bottom, right
         int[] coord = getReferenceCoordinatesForName(name, worksheetScope);
