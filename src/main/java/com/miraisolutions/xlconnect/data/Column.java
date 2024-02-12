@@ -19,16 +19,16 @@
  */
 package com.miraisolutions.xlconnect.data;
 
-import java.util.BitSet;
+import com.zaxxer.sparsebits.SparseBitSet;
 import java.util.Date;
 
 public final class Column {
     private final Object data;
     private final int size;
-    private final BitSet missing;
+    private final SparseBitSet missing;
     private final DataType type;
 
-    public Column(Object data, int size, BitSet missing, DataType type) {
+    public Column(Object data, int size, SparseBitSet missing, DataType type) {
         this.data = data;
         this.size = size;
         this.missing = missing;
@@ -55,7 +55,7 @@ public final class Column {
         return (String[]) data;
     }
 
-    public BitSet getMissing() {
+    public SparseBitSet getMissing() {
         return missing;
     }
 

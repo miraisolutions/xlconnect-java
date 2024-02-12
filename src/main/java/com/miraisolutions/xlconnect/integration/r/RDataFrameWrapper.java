@@ -25,7 +25,7 @@ import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 
 import java.util.Arrays;
-import java.util.BitSet;
+import com.zaxxer.sparsebits.SparseBitSet;
 import java.util.Date;
 import java.util.stream.IntStream;
 
@@ -90,14 +90,16 @@ public final class RDataFrameWrapper {
 
     public boolean[] isMissing(int col) {
         Column column = dataFrame.getColumn(col);
-        BitSet missing = column.getMissing();
+        SparseBitSet missing = column.getMissing();
         boolean[] na = new boolean[column.size()];
-        missing.stream().forEach(i -> na[i] = true);
+        for (int i = missing.nextSetBit(0); i >= 0; i = missing.nextSetBit(i + 1)) {
+            na[i] = true;
+        }
         return na;
     }
 
-    private static BitSet toBitSet(boolean[] bits) {
-        BitSet bs = new BitSet(bits.length);
+    private static SparseBitSet toBitSet(boolean[] bits) {
+        SparseBitSet bs = new SparseBitSet(bits.length);
         for (int i = 0; i < bits.length; i++) {
             bs.set(i, bits[i]);
         }

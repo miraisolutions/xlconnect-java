@@ -22,6 +22,7 @@ package com.miraisolutions.xlconnect.data;
 import com.miraisolutions.xlconnect.ErrorBehavior;
 import com.miraisolutions.xlconnect.Workbook;
 import com.miraisolutions.xlconnect.utils.CellUtils;
+import com.zaxxer.sparsebits.SparseBitSet;
 import org.apache.poi.ss.usermodel.*;
 
 import java.util.*;
@@ -105,7 +106,7 @@ public abstract class ColumnBuilder {
     public Column buildBooleanColumn() {
         int size = values.size();
         boolean[] colValues = new boolean[size];
-        BitSet missing = new BitSet(size);
+        SparseBitSet missing = new SparseBitSet(size);
 
         int counter = 0;
         for (CellValue cv : values) {
@@ -140,7 +141,7 @@ public abstract class ColumnBuilder {
     public Column buildDateTimeColumn() {
         int size = values.size();
         Date[] colValues = new Date[size];
-        BitSet missing = new BitSet(size);
+        SparseBitSet missing = new SparseBitSet(size);
 
         Iterator<CellValue> it = values.iterator();
         Iterator<Cell> jt = cells.iterator();
@@ -196,7 +197,7 @@ public abstract class ColumnBuilder {
     public Column buildNumericColumn() {
         int size = values.size();
         double[] colValues = new double[size];
-        BitSet missing = new BitSet(size);
+        SparseBitSet missing = new SparseBitSet(size);
 
         int counter = 0;
         for (CellValue cv : values) {
@@ -242,7 +243,7 @@ public abstract class ColumnBuilder {
     public Column buildStringColumn() {
         int size = values.size();
         String[] colValues = new String[size];
-        BitSet missing = new BitSet(size);
+        SparseBitSet missing = new SparseBitSet(size);
 
         Iterator<CellValue> it = values.iterator();
         Iterator<Cell> jt = cells.iterator();
