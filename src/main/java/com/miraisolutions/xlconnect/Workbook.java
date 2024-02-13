@@ -314,14 +314,14 @@ public final class Workbook {
         List<Name> originalNamedRanges = workbook.getAllNames().stream().filter(name -> name.getSheetIndex() == index).collect(Collectors.toList());
         // we have to collect the original names *then* add the new names, otherwise we get concurrency issues creating names while iterating over them
         originalNamedRanges.forEach(namedRange ->
-                createName(namedRange.getNameName(), newName, namedRange.getRefersToFormula(), false));
+                createName(namedRange.getNameName(), namedRange.getRefersToFormula(), false, newName));
     }
 
     public void cloneSheet(String name, String newName) {
         cloneSheet(workbook.getSheetIndex(name), newName);
     }
 
-    public void createName(String name,  String worksheetScope, String formula, boolean overwrite) {
+    public void createName(String name,  String formula, boolean overwrite, String worksheetScope) {
         if (existsName(name, worksheetScope).getValue()) {
             if (overwrite) {
                 // Name already exists but we overwrite --> remove
@@ -1466,7 +1466,7 @@ public final class Workbook {
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
         CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
         String formula = cra.formatAsString(sheet.getSheetName(), true);
-        createName(name, worksheetScope, formula, true);
+        createName(name, formula, true, worksheetScope);
     }
 
 
