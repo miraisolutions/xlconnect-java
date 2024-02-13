@@ -65,7 +65,7 @@ public final class RWorkbookWrapper {
     }
 
     public void createName(String name, String formula, boolean overwrite, String worksheetScope) {
-        workbook.createName(name, worksheetScope, formula, overwrite);
+        workbook.createName(name, formula, overwrite, worksheetScope);
     }
 
     public void removeName(String name, String worksheetScope) {
