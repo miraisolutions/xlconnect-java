@@ -114,12 +114,12 @@ public final class RWorkbookWrapper {
         return ctypes;
     }
 
-    public RDataFrameWithAttributes readNamedRegion(String name, boolean header, String[] colTypes,
+    public ResultWithAttributes<RDataFrameWrapper> readNamedRegion(String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
                                              String readStrategy, String worksheetScope) {
-        DataFrameWithAttributes dataFrame = workbook.readNamedRegion(name, header, dataTypeFromString(colTypes), forceConversion,
+        ResultWithAttributes<DataFrame> dataFrame = workbook.readNamedRegion(name, header, dataTypeFromString(colTypes), forceConversion,
                 dateTimeFormat, takeCached, subset, ReadStrategy.valueOf(readStrategy.toUpperCase()), worksheetScope);
-        return new RDataFrameWithAttributes(dataFrame.getAttributes(), new RDataFrameWrapper(dataFrame.getValue()));
+        return new ResultWithAttributes<RDataFrameWrapper>(new RDataFrameWrapper(dataFrame.getValue()), dataFrame.getAttributes());
     }
 
     public RDataFrameWrapper readTable(int worksheetIndex, String tableName, boolean header, String[] colTypes,
@@ -136,7 +136,7 @@ public final class RWorkbookWrapper {
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public BooleanWithAttributes existsName(String name, String worksheetScope) {
+    public ResultWithAttributes<Boolean> existsName(String name, String worksheetScope) {
         return workbook.existsName(name, worksheetScope);
     }
 
