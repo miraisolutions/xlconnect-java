@@ -1,6 +1,6 @@
 package com.miraisolutions.xlconnect;
 
-public class BooleanWithAttributes extends ResultWithAttributes implements WithJNI{
+public class BooleanWithAttributes extends ResultWithAttributes{
 
     private final boolean value;
 
@@ -16,10 +16,5 @@ public class BooleanWithAttributes extends ResultWithAttributes implements WithJ
 
     public boolean getValue() {
         return value;
-    }
-
-    @Override
-    public String jni() {
-        return "Z";
     }
 }
