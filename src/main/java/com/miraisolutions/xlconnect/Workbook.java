@@ -37,7 +37,6 @@ import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -101,6 +100,7 @@ public final class Workbook {
         /*
          * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         * TODO once we no longer support java 8, try again to switch to Files.newInputStream(excelFile.toPath()) 
          */
         this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
         this.excelFile = excelFile;
@@ -111,6 +111,7 @@ public final class Workbook {
         /*
          * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         * TODO once we no longer support java 8, try again to switch to Files.newInputStream(excelFile.toPath()) 
          */
         this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
         this.excelFile = excelFile;
@@ -727,6 +728,7 @@ public final class Workbook {
         CellReference bottomRight = aref.getLastCell();
 
         int imageType = getImageType(imageFile);
+        // TODO once we no longer support java 8, try again to switch to Files.newInputStream(imageFile.toPath()) 
         InputStream is = new FileInputStream(imageFile);
         byte[] bytes = IOUtils.toByteArray(is);
         int imageIndex = workbook.addPicture(bytes, imageType);
