@@ -102,7 +102,7 @@ public final class Workbook {
          * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(Files.newInputStream(excelFile.toPath()), password);
+        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
         this.excelFile = excelFile;
         init();
     }
@@ -112,7 +112,7 @@ public final class Workbook {
          * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
          * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(Files.newInputStream(excelFile.toPath()));
+        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
         this.excelFile = excelFile;
         init();
     }
@@ -727,7 +727,7 @@ public final class Workbook {
         CellReference bottomRight = aref.getLastCell();
 
         int imageType = getImageType(imageFile);
-        InputStream is = Files.newInputStream(imageFile.toPath());
+        InputStream is = new FileInputStream(imageFile);
         byte[] bytes = IOUtils.toByteArray(is);
         int imageIndex = workbook.addPicture(bytes, imageType);
         is.close();
