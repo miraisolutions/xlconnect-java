@@ -3,9 +3,8 @@ package com.miraisolutions.xlconnect;
 import java.util.*;
 
 /**
- * Represent attributes to be set on an object in R as part of the result to be returned.
- * Should be extended for each required type. Not using a generic typed value, because it looks like R can't retrieve it
- * in a specific subtype (we get an Object instance).
+ * Wraps a value with attributes to be set on the value in R. @see XLConnect::xlcCall and 
+ * https://www.r-bloggers.com/2020/10/attributes-in-r/ for more information.
  */
 public class ResultWithAttributes<T> {
 
