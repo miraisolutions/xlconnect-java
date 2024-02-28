@@ -647,19 +647,18 @@ public final class Workbook {
         Name cname = getName(name, worksheetScope);
         checkName(cname);
         String foundInScope = effectiveScope(worksheetScope, cname);
-
-        // Get sheet where name is defined in
-        Sheet sheet = workbook.getSheet(cname.getSheetName());
-
         AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
+
         // Get name corners (top left, bottom right)
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
-
         // Determine number of rows and columns
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
+        // read from the sheet referenced in the formula, not the one where the name is
+        // defined (unless the reference does not have an explicit sheet name)
+        Sheet sheet = getSheet(Optional.ofNullable(aref.getFirstCell().getSheetName()).orElse(cname.getSheetName()));
         return new ResultWithAttributes<DataFrame>(
                 readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
                         forceConversion, dateTimeFormat, takeCached, subset),
