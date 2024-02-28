@@ -310,7 +310,6 @@ public final class Workbook {
 
     public void cloneSheet(int index, String newName) {
         Sheet sheet = workbook.cloneSheet(index);
-        String originalName = workbook.getSheetName(index);
         workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
         // Copy names (named ranges) that are scoped to the original sheet, adapting the scope.
         List<Name> originalNamedRanges = workbook.getAllNames().stream().filter(name -> name.getSheetIndex() == index).collect(Collectors.toList());
