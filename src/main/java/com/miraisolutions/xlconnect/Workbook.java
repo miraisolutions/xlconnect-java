@@ -43,12 +43,15 @@ import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
 import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
-
+import org.apache.log4j.Logger;
 
 /**
  * Class representing a Microsoft Excel Workbook for XLConnect
  */
 public final class Workbook {
+
+    private static final Logger logger = Logger.getLogger(Workbook.class);
+
 
     // Prefix
     private final static String HEADER = "Header";
@@ -657,6 +660,8 @@ public final class Workbook {
         String refSheetName = aref.getFirstCell().getSheetName();
         String fallBackSheetName = cname.getSheetName();
         String sheetName = (refSheetName != null) ? refSheetName : ((worksheetScope != null) ? worksheetScope : fallBackSheetName);
+        logger.error("refSheetName: " + refSheetName + ", fallbackSheetName: " + fallbackSheetName
+                + ", worksheetScope: " + worksheetScope);
         Sheet sheet = getSheet(sheetName);
         return new ResultWithAttributes<>(
             readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
