@@ -660,7 +660,7 @@ public final class Workbook {
         String refSheetName = aref.getFirstCell().getSheetName();
         String fallBackSheetName = cname.getSheetName();
         String sheetName = (refSheetName != null) ? refSheetName : ((worksheetScope != null) ? worksheetScope : fallBackSheetName);
-        logger.error("refSheetName: " + refSheetName + ", fallbackSheetName: " + fallbackSheetName
+        this.warnings.add("refSheetName: " + refSheetName + ", fallbackSheetName: " + fallbackSheetName
                 + ", worksheetScope: " + worksheetScope);
         Sheet sheet = getSheet(sheetName);
         return new ResultWithAttributes<>(
