@@ -43,15 +43,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
 import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
-import org.apache.log4j.Logger;
 
 /**
  * Class representing a Microsoft Excel Workbook for XLConnect
  */
 public final class Workbook {
-
-    private static final Logger logger = Logger.getLogger(Workbook.class);
-
 
     // Prefix
     private final static String HEADER = "Header";
@@ -658,11 +654,11 @@ public final class Workbook {
         // read from the sheet referenced in the formula, not the one where the name is
         // defined (unless the reference does not have an explicit sheet name)
         String refSheetName = aref.getFirstCell().getSheetName();
-        String fallBackSheetName = cname.getSheetName();
-        String sheetName = (refSheetName != null) ? refSheetName : ((worksheetScope != null) ? worksheetScope : fallBackSheetName);
-        this.warnings.add("refSheetName: " + refSheetName + ", fallbackSheetName: " + fallbackSheetName
-                + ", worksheetScope: " + worksheetScope);
+        String fallbackSheetName = cname.getSheetName();
+        String sheetName = (refSheetName != null) ? refSheetName : ((worksheetScope != null) ? worksheetScope : fallbackSheetName);
+        this.warnings.add("refSheetName: " + refSheetName + ", fallbackSheetName: " + fallbackSheetName + ", worksheetScope: " + worksheetScope);
         Sheet sheet = getSheet(sheetName);
+        this.warnings.add("reading data from "+sheetName);
         return new ResultWithAttributes<>(
             readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
                 forceConversion, dateTimeFormat, takeCached, subset), 
