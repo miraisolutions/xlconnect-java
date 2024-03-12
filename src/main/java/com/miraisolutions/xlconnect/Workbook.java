@@ -40,7 +40,6 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
-import java.util.stream.Collectors;
 
 import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
 
@@ -309,17 +308,12 @@ public final class Workbook {
     }
 
     public void cloneSheet(int index, String newName) {
-        Sheet sheet = workbook.cloneSheet(index);
-        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
-        // Copy names (named ranges) that are scoped to the original sheet, adapting the scope.
-        List<Name> originalNamedRanges = workbook.getAllNames().stream().filter(name -> name.getSheetIndex() == index).collect(Collectors.toList());
-        // we have to collect the original names *then* add the new names, otherwise we get concurrency issues creating names while iterating over them
-        originalNamedRanges.forEach(namedRange ->
-                createName(namedRange.getNameName(), namedRange.getRefersToFormula(), false, newName));
+        cloneSheet(workbook.getSheetName(index), newName);
     }
 
     public void cloneSheet(String name, String newName) {
-        cloneSheet(workbook.getSheetIndex(name), newName);
+        Sheet sheet = workbook.cloneSheet(workbook.getSheetIndex(name));
+        workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
     }
 
     public void createName(String name,  String formula, boolean overwrite, String worksheetScope) {
