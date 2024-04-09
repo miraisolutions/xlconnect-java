@@ -406,11 +406,11 @@ public final class RWorkbookWrapper {
         return workbook.getCellFormula(sheetName, row, col);
     }
 
-    public int[] getReferenceCoordinates(String name) {
+    public ResultWithAttributes<int[]> getReferenceCoordinates(String name) {
         return workbook.getReferenceCoordinates(name);
     }
 
-    public int[] getReferenceCoordinatesForName(String name, String worksheetScope) {
+    public ResultWithAttributes<int[]> getReferenceCoordinatesForName(String name, String worksheetScope) {
         return workbook.getReferenceCoordinatesForName(name, worksheetScope);
     }
 

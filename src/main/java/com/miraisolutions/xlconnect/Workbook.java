@@ -355,11 +355,11 @@ public final class Workbook {
     }
 
     // Keep for backwards compatibility
-    public int[] getReferenceCoordinates(String name) {
+    public ResultWithAttributes<int[]> getReferenceCoordinates(String name) {
         return getReferenceCoordinatesForName(name, null);
     }
 
-    public int[] getReferenceCoordinatesForName(String name, String worksheetScope) {
+    public ResultWithAttributes<int[]> getReferenceCoordinatesForName(String name, String worksheetScope) {
         Name cname = getName(name, worksheetScope);
         AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get upper left corner
@@ -370,7 +370,9 @@ public final class Workbook {
         int bottom = last.getRow();
         int left = first.getCol();
         int right = last.getCol();
-        return new int[]{top, left, bottom, right};
+        return new ResultWithAttributes<int[]>(new int[] { top, left, bottom, right },
+                WORKSHEET_SCOPE,
+                effectiveScope(worksheetScope, cname));
     }
 
     public String[] getTables(int sheetIndex) {
@@ -1459,7 +1461,7 @@ public final class Workbook {
     public void appendNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
         Sheet sheet = workbook.getSheet(getName(name, worksheetScope).getSheetName());
         // top, left, bottom, right
-        int[] coord = getReferenceCoordinatesForName(name, worksheetScope);
+        int[] coord = getReferenceCoordinatesForName(name, worksheetScope).getValue();
         writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
         int bottom = coord[2] + data.rows();
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
@@ -1535,7 +1537,7 @@ public final class Workbook {
 
     public void clearNamedRegion(String name, String worksheetScope) {
         String dataSourceSheetName = getName(name, worksheetScope).getSheetName();
-        int[] coords = getReferenceCoordinatesForName(name, worksheetScope);
+        int[] coords = getReferenceCoordinatesForName(name, worksheetScope).getValue();
         clearRange(dataSourceSheetName, coords);
     }
 
