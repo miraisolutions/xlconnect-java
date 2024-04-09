@@ -39,7 +39,9 @@ import org.apache.poi.xssf.usermodel.*;
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
 
@@ -225,12 +227,17 @@ public final class Workbook {
         workbook.setSheetOrder(sheetName, pos);
     }
 
-    public String[] getDefinedNames(boolean validOnly, String worksheetScope) {
-
-        return workbook.getAllNames().stream()
-                .filter(n -> (!validOnly || isValidNamedRegion(n)) &&
-                        (worksheetScope == null || n.getSheetIndex() == getSheetIndexForScope(worksheetScope)))
-                .map(Name::getNameName).toArray(String[]::new);
+    public ResultWithAttributes<String[]> getDefinedNames(boolean validOnly, String worksheetScope) {
+        Supplier<Stream<? extends Name>> definedNamesSup = () -> workbook.getAllNames().stream()
+                .filter(
+                    n -> (!validOnly || isValidNamedRegion(n)) && 
+                    (worksheetScope == null || n.getSheetIndex() == getSheetIndexForScope(worksheetScope))
+                );
+        String[] definedNames = definedNamesSup.get().map(Name::getNameName).toArray(String[]::new);
+        String[] definedNamesAttributeVals = definedNamesSup.get().map(n -> effectiveScope(worksheetScope, n))
+                .toArray(String[]::new);
+        return new ResultWithAttributes<>(definedNames,
+                Collections.singletonMap(WORKSHEET_SCOPE.toString(), definedNamesAttributeVals));
     }
 
 
