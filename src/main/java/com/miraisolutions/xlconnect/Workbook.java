@@ -357,8 +357,10 @@ public final class Workbook {
         }
     }
 
-    public String getReferenceFormula(String name, String worksheetScope) {
-        return getName(name, worksheetScope).getRefersToFormula();
+    public ResultWithAttributes<String> getReferenceFormula(String name, String worksheetScope) {
+        Name found = getName(name, worksheetScope);
+        return new ResultWithAttributes<>(
+                found.getRefersToFormula(), WORKSHEET_SCOPE, effectiveScope(worksheetScope, found));
     }
 
     // Keep for backwards compatibility
