@@ -20,10 +20,7 @@
 
 package com.miraisolutions.xlconnect.integration.r;
 
-import com.miraisolutions.xlconnect.CellStyle;
-import com.miraisolutions.xlconnect.ErrorBehavior;
-import com.miraisolutions.xlconnect.StyleAction;
-import com.miraisolutions.xlconnect.Workbook;
+import com.miraisolutions.xlconnect.*;
 import com.miraisolutions.xlconnect.data.DataFrame;
 import com.miraisolutions.xlconnect.data.DataType;
 import com.miraisolutions.xlconnect.data.ReadStrategy;
@@ -59,24 +56,24 @@ public final class RWorkbookWrapper {
         workbook.setSheetPos(sheetName, pos);
     }
 
-    public String[] getDefinedNames(boolean validOnly) {
-        return workbook.getDefinedNames(validOnly);
+    public ResultWithAttributes<String[]> getDefinedNames(boolean validOnly, String worksheetScope) {
+        return workbook.getDefinedNames(validOnly, worksheetScope);
     }
 
     public void createSheet(String name) {
         workbook.createSheet(name);
     }
 
-    public void createName(String name, String formula, boolean overwrite) {
-        workbook.createName(name, formula, overwrite);
+    public void createName(String name, String formula, boolean overwrite, String worksheetScope) {
+        workbook.createName(name, formula, overwrite, worksheetScope);
     }
 
-    public void removeName(String name) {
-        workbook.removeName(name);
+    public void removeName(String name, String worksheetScope) {
+        workbook.removeName(name, worksheetScope);
     }
 
-    public String getReferenceFormula(String name) {
-        return workbook.getReferenceFormula(name);
+    public ResultWithAttributes<String> getReferenceFormula(String name, String worksheetScope) {
+        return workbook.getReferenceFormula(name, worksheetScope);
     }
 
     public void removeSheet(String name) {
@@ -103,8 +100,8 @@ public final class RWorkbookWrapper {
         workbook.cloneSheet(name, newName);
     }
 
-    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header, boolean overwriteFormulaCells) {
-        workbook.writeNamedRegion(dataFrame.dataFrame, name, header, overwriteFormulaCells);
+    public void writeNamedRegion(RDataFrameWrapper dataFrame, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
+        workbook.writeNamedRegion(dataFrame.dataFrame, name, header, overwriteFormulaCells, worksheetScope);
     }
 
     private static DataType[] dataTypeFromString(String[] colTypes) {
@@ -117,12 +114,12 @@ public final class RWorkbookWrapper {
         return ctypes;
     }
 
-    public RDataFrameWrapper readNamedRegion(String name, boolean header, String[] colTypes,
+    public ResultWithAttributes<RDataFrameWrapper> readNamedRegion(String name, boolean header, String[] colTypes,
                                              boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset,
-                                             String readStrategy) {
-        DataFrame dataFrame = workbook.readNamedRegion(name, header, ReadStrategy.valueOf(readStrategy.toUpperCase()),
-                dataTypeFromString(colTypes), forceConversion, dateTimeFormat, takeCached, subset);
-        return new RDataFrameWrapper(dataFrame);
+                                             String readStrategy, String worksheetScope) {
+        ResultWithAttributes<DataFrame> dataFrame = workbook.readNamedRegion(name, header, dataTypeFromString(colTypes), forceConversion,
+                dateTimeFormat, takeCached, subset, ReadStrategy.valueOf(readStrategy.toUpperCase()), worksheetScope);
+        return new ResultWithAttributes<RDataFrameWrapper>(new RDataFrameWrapper(dataFrame.getValue()), dataFrame.getAttributes());
     }
 
     public RDataFrameWrapper readTable(int worksheetIndex, String tableName, boolean header, String[] colTypes,
@@ -139,8 +136,8 @@ public final class RWorkbookWrapper {
         return new RDataFrameWrapper(dataFrame);
     }
 
-    public boolean existsName(String name) {
-        return workbook.existsName(name);
+    public ResultWithAttributes<Boolean> existsName(String name, String worksheetScope) {
+        return workbook.existsName(name, worksheetScope);
     }
 
     public boolean existsSheet(String name) {
@@ -229,9 +226,9 @@ public final class RWorkbookWrapper {
         return workbook.isSheetVeryHidden(sheetName);
     }
 
-    public void addImage(String filename, String name, boolean originalSize)
+    public void addImage(String filename, String name, boolean originalSize, String worksheetScope)
             throws IOException {
-        workbook.addImage(filename, name, originalSize);
+        workbook.addImage(filename, name, originalSize, worksheetScope);
     }
 
     public RCellStyleWrapper createCellStyle(String name) {
@@ -409,12 +406,12 @@ public final class RWorkbookWrapper {
         return workbook.getCellFormula(sheetName, row, col);
     }
 
-    public int[] getReferenceCoordinates(String name) {
+    public ResultWithAttributes<int[]> getReferenceCoordinates(String name) {
         return workbook.getReferenceCoordinates(name);
     }
 
-    public int[] getReferenceCoordinatesForName(String name) {
-        return workbook.getReferenceCoordinatesForName(name);
+    public ResultWithAttributes<int[]> getReferenceCoordinatesForName(String name, String worksheetScope) {
+        return workbook.getReferenceCoordinatesForName(name, worksheetScope);
     }
 
     public int[] getReferenceCoordinatesForTable(int sheetIndex, String tableName) {
@@ -466,8 +463,8 @@ public final class RWorkbookWrapper {
     }
 
 
-    public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header, boolean overwriteFormulaCells) {
-        workbook.appendNamedRegion(data.dataFrame, name, header, overwriteFormulaCells);
+    public void appendNamedRegion(RDataFrameWrapper data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
+        workbook.appendNamedRegion(data.dataFrame, name, header, overwriteFormulaCells, worksheetScope);
     }
 
     public void appendWorksheet(RDataFrameWrapper data, int worksheetIndex, boolean header) {
@@ -498,8 +495,8 @@ public final class RWorkbookWrapper {
         workbook.clearRangeFromReference(reference);
     }
 
-    public void clearNamedRegion(String name) {
-        workbook.clearNamedRegion(name);
+    public void clearNamedRegion(String name, String worksheetScope) {
+        workbook.clearNamedRegion(name, worksheetScope);
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {

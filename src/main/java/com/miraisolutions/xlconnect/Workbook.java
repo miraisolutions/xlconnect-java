@@ -39,7 +39,11 @@ import org.apache.poi.xssf.usermodel.*;
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static com.miraisolutions.xlconnect.Attribute.WORKSHEET_SCOPE;
 
 
 /**
@@ -223,16 +227,34 @@ public final class Workbook {
         workbook.setSheetOrder(sheetName, pos);
     }
 
-    public String[] getDefinedNames(boolean validOnly) {
-        return workbook.getAllNames().stream()
-                .filter(namedRegion -> !validOnly || isValidNamedRegion(namedRegion))
-                .map(Name::getNameName)
+    public ResultWithAttributes<String[]> getDefinedNames(boolean validOnly, String worksheetScope) {
+        Supplier<Stream<? extends Name>> definedNamesSup = () -> workbook.getAllNames().stream()
+                .filter(
+                    n -> (!validOnly || isValidNamedRegion(n)) && 
+                    (worksheetScope == null || n.getSheetIndex() == getSheetIndexForScope(worksheetScope))
+                );
+        String[] definedNames = definedNamesSup.get().map(Name::getNameName).toArray(String[]::new);
+        String[] definedNamesAttributeVals = definedNamesSup.get().map(n -> effectiveScope(worksheetScope, n))
                 .toArray(String[]::new);
+        return new ResultWithAttributes<>(definedNames,
+                Collections.singletonMap(WORKSHEET_SCOPE.toString(), definedNamesAttributeVals));
     }
 
 
     private boolean isValidNamedRegion(Name region) {
         return !region.isDeleted() && hasValidWorkSheet(region);
+    }
+
+    /**
+     * Returns the sheet index for the worksheet name or -1 if the sheet name is ""
+     * @param worksheetScope the worksheet name
+     * @throws NoSuchElementException if no worksheet exists with this name
+     */
+    private int getSheetIndexForScope(String worksheetScope) {
+        if (worksheetScope.isEmpty()) return -1;
+        int index = workbook.getSheetIndex(worksheetScope);
+        if (index < 0) throw new NoSuchElementException("Worksheet " + worksheetScope + " was not found!");
+        else return index;
     }
 
     private boolean hasValidWorkSheet(Name region) {
@@ -248,9 +270,22 @@ public final class Workbook {
         return workbook.getSheet(name) != null;
     }
 
-    public boolean existsName(String name) {
-        return workbook.getName(name) != null;
+    public ResultWithAttributes<Boolean> existsName(String name, String worksheetScope) {
+        try {
+            Name found = getName(name, worksheetScope);
+            String foundInScope = effectiveScope(worksheetScope, found);
+            return new ResultWithAttributes<Boolean>(true, WORKSHEET_SCOPE, foundInScope);
+        } catch (IllegalArgumentException ignored) {
+            warnings.add(ignored.getMessage());
+            return worksheetScope != null ? new ResultWithAttributes<Boolean>(false, WORKSHEET_SCOPE, worksheetScope)
+                    : new ResultWithAttributes<Boolean>(false);
+        }
     }
+
+    private String effectiveScope(String worksheetScope, Name found) {
+        return worksheetScope != null ? worksheetScope : found.getSheetIndex() >= 0 ? getSheet(found.getSheetIndex()).getSheetName() : "";
+    }
+
 
     public void createSheet(String name) {
         if (name.length() > 31)
@@ -288,48 +323,53 @@ public final class Workbook {
         workbook.setSheetName(workbook.getSheetIndex(sheet), newName);
     }
 
-    public void createName(String name, String formula, boolean overwrite) {
-        if (existsName(name)) {
+    public void createName(String name,  String formula, boolean overwrite, String worksheetScope) {
+        if (existsName(name, worksheetScope).getValue()) {
             if (overwrite) {
                 // Name already exists but we overwrite --> remove
-                removeName(name);
+                removeName(name, worksheetScope);
             } else {
                 // Name already exists, but we don't want to overwrite --> error
-                throw new IllegalArgumentException("Specified name '" + name + "' already exists!");
+                throw new IllegalArgumentException("Specified name '" + name + "' already exists " + displayWorksheetScope(worksheetScope));
             }
         }
 
         Name cname = workbook.createName();
+        if(worksheetScope != null) {
+            int sheetIndex = getSheetIndexForScope(worksheetScope);
+            if(sheetIndex >= 0) cname.setSheetIndex(sheetIndex);
+        }
         try {
             cname.setNameName(name);
             cname.setRefersToFormula(formula);
         } catch (Exception e) {
             // --> Clean up (= remove) name
             // Need to set dummy name in order to be able to remove it ...
-            String dummyNameName = "XLConnectDummyName";
-            cname.setNameName(dummyNameName);
-            removeName(dummyNameName);
+            workbook.removeName(cname);
             throw new IllegalArgumentException(e);
         }
     }
 
-    public void removeName(String name) {
-        Name cname = workbook.getName(name);
-        if (cname != null)
+    public void removeName(String name, String worksheetScope) {
+        if (existsName(name, worksheetScope).getValue()) {
+            Name cname = getName(name, worksheetScope);
             workbook.removeName(cname);
+        }
     }
 
-    public String getReferenceFormula(String name) {
-        return getName(name).getRefersToFormula();
+    public ResultWithAttributes<String> getReferenceFormula(String name, String worksheetScope) {
+        Name found = getName(name, worksheetScope);
+        return new ResultWithAttributes<>(
+                found.getRefersToFormula(), WORKSHEET_SCOPE, effectiveScope(worksheetScope, found));
     }
 
     // Keep for backwards compatibility
-    public int[] getReferenceCoordinates(String name) {
-        return getReferenceCoordinatesForName(name);
+    public ResultWithAttributes<int[]> getReferenceCoordinates(String name) {
+        return getReferenceCoordinatesForName(name, null);
     }
 
-    public int[] getReferenceCoordinatesForName(String name) {
-        Name cname = getName(name);
+    public ResultWithAttributes<int[]> getReferenceCoordinatesForName(String name, String worksheetScope) {
+        Name cname = getName(name, worksheetScope);
         AreaReference aref = new AreaReference(cname.getRefersToFormula(), workbook.getSpreadsheetVersion());
         // Get upper left corner
         CellReference first = aref.getFirstCell();
@@ -339,7 +379,9 @@ public final class Workbook {
         int bottom = last.getRow();
         int left = first.getCol();
         int right = last.getCol();
-        return new int[]{top, left, bottom, right};
+        return new ResultWithAttributes<int[]>(new int[] { top, left, bottom, right },
+                WORKSHEET_SCOPE,
+                effectiveScope(worksheetScope, cname));
     }
 
     public String[] getTables(int sheetIndex) {
@@ -577,8 +619,8 @@ public final class Workbook {
         this.onErrorCell = eb;
     }
 
-    public void writeNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells) {
-        Name cname = getName(name);
+    public void writeNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
+        Name cname = getName(name, worksheetScope);
         checkName(cname);
 
         // Get sheet where name is defined in
@@ -604,10 +646,12 @@ public final class Workbook {
         writeData(data, sheet, topLeft.getRow(), topLeft.getCol(), header, overwriteFormulaCells);
     }
 
-    public DataFrame readNamedRegion(String name, boolean header, ReadStrategy readStrategy, DataType[] colTypes,
-                                     boolean forceConversion, String dateTimeFormat, boolean takeCached, int[] subset) {
-        Name cname = getName(name);
+    public ResultWithAttributes<DataFrame> readNamedRegion(String name, boolean header, DataType[] colTypes,
+            boolean forceConversion, String dateTimeFormat,
+                                                   boolean takeCached, int[] subset, ReadStrategy readStrategy, String worksheetScope) {
+        Name cname = getName(name, worksheetScope);
         checkName(cname);
+        String foundInScope = effectiveScope(worksheetScope, cname);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
@@ -621,8 +665,10 @@ public final class Workbook {
         int nrows = bottomRight.getRow() - topLeft.getRow() + 1;
         int ncols = bottomRight.getCol() - topLeft.getCol() + 1;
 
-        return readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
-                forceConversion, dateTimeFormat, takeCached, subset);
+        return new ResultWithAttributes<DataFrame>(
+                readData(sheet, topLeft.getRow(), topLeft.getCol(), nrows, ncols, header, readStrategy, colTypes,
+                        forceConversion, dateTimeFormat, takeCached, subset),
+                WORKSHEET_SCOPE, foundInScope);
     }
 
     public DataFrame readTable(int worksheetIndex, String tableName, boolean header, ReadStrategy readStrategy,
@@ -657,7 +703,10 @@ public final class Workbook {
     }
 
     public void writeWorksheet(DataFrame data, String worksheetName, int startRow, int startCol, boolean header, boolean overwriteFormulaCells) {
-        writeWorksheet(data, workbook.getSheetIndex(worksheetName), startRow, startCol, header, overwriteFormulaCells);
+        int sheetIndex = workbook.getSheetIndex(worksheetName);
+        if(sheetIndex < 0)
+            throw new NoSuchElementException("Worksheet " + worksheetName + " was not found!");
+        writeWorksheet(data, sheetIndex, startRow, startCol, header, overwriteFormulaCells);
     }
 
     public void writeWorksheet(DataFrame data, int worksheetIndex, boolean header, boolean overwriteFormulaCells) {
@@ -716,8 +765,29 @@ public final class Workbook {
                 colTypes, forceConversion, dateTimeFormat, takeCached, subset, autofitRow, autofitCol);
     }
 
-    public void addImage(File imageFile, String name, boolean originalSize) throws IOException {
-        Name cname = getName(name);
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT, 
+                null, false, "", false, null, true, true);
+    }
+    
+    public DataFrame readWorksheet(String worksheetName, int startRow, int startCol, int endRow, int endCol, boolean header,
+            boolean autofitRow, boolean autofitCol) {
+        return readWorksheet(worksheetName, startRow, startCol, endRow, endCol, header, ReadStrategy.DEFAULT,
+                null, false, "", false, null, autofitRow, autofitCol);
+    }
+
+    public DataFrame readWorksheet(String worksheetName, boolean header, ReadStrategy readStrategy, DataType[] colTypes, 
+            boolean forceConversion, String dateTimeFormat) {
+        return readWorksheet(worksheetName, -1, -1, -1, -1, header, readStrategy, colTypes, forceConversion, 
+                dateTimeFormat, false, null, true, true);
+    }
+
+    public DataFrame readWorksheet(String worksheetName, boolean header) {
+        return readWorksheet(worksheetName, header, ReadStrategy.DEFAULT, null, false, "");
+    }
+
+    public void addImage(File imageFile, String name, String worksheetScope, boolean originalSize) throws IOException {
+        Name cname = getName(name, worksheetScope);
 
         // Get sheet where name is defined in
         Sheet sheet = workbook.getSheet(cname.getSheetName());
@@ -727,7 +797,23 @@ public final class Workbook {
         CellReference topLeft = aref.getFirstCell();
         CellReference bottomRight = aref.getLastCell();
 
-        int imageType = getImageType(imageFile);
+        // Determine image type
+        int imageType;
+        String filename = imageFile.getName().toLowerCase();
+        if(filename.endsWith("jpg") || filename.endsWith("jpeg")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
+        } else if(filename.endsWith("png")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
+        } else if(filename.endsWith("wmf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
+        } else if(filename.endsWith("emf")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
+        } else if(filename.endsWith("bmp") || filename.endsWith("dib")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
+        } else if(filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
+            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
+        } else
+            throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
         // TODO once we no longer support java 8, try again to switch to Files.newInputStream(imageFile.toPath()) 
         InputStream is = new FileInputStream(imageFile);
         byte[] bytes = IOUtils.toByteArray(is);
@@ -756,31 +842,11 @@ public final class Workbook {
         anchor.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
 
         Picture picture = drawing.createPicture(anchor, imageIndex);
-        if (originalSize) picture.resize();
+        if(originalSize) picture.resize();
     }
 
-    private static int getImageType(File imageFile) {
-        int imageType;
-        String filename = imageFile.getName().toLowerCase();
-        if (filename.endsWith("jpg") || filename.endsWith("jpeg")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_JPEG;
-        } else if (filename.endsWith("png")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PNG;
-        } else if (filename.endsWith("wmf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_WMF;
-        } else if (filename.endsWith("emf")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_EMF;
-        } else if (filename.endsWith("bmp") || filename.endsWith("dib")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_DIB;
-        } else if (filename.endsWith("pict") || filename.endsWith("pct") || filename.endsWith("pic")) {
-            imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
-        } else
-            throw new IllegalArgumentException("Image type \"" + filename.substring(filename.lastIndexOf('.') + 1) + "\" not supported!");
-        return imageType;
-    }
-
-    public void addImage(String filename, String name, boolean originalSize) throws IOException {
-        addImage(new File(filename), name, originalSize);
+    public void addImage(String filename, String name, boolean originalSize, String worksheetScope) throws IOException {
+        addImage(new File(filename), name, worksheetScope, originalSize);
     }
 
     public CellStyle createCellStyle(String name) {
@@ -911,6 +977,30 @@ public final class Workbook {
             return cname;
         else
             throw new IllegalArgumentException("Name '" + name + "' does not exist!");
+    }
+
+    List<Name> getNames(String name) {
+        return Collections.unmodifiableList(workbook.getNames(name));
+    }
+
+    private Name getName(String name, String worksheetScope) {
+        if (worksheetScope == null)
+            return getName(name);
+        int sheetIndex = getSheetIndexForScope(worksheetScope);
+        List<Name> cNames = getNames(name);
+        for (Name n : cNames)
+            if (n.getSheetIndex() == sheetIndex)
+                return n;
+
+        StringBuffer names = new StringBuffer();
+        String worksheetScopeDisplay = displayWorksheetScope(worksheetScope);
+        cNames.forEach(n -> names.append(n.getSheetIndex() >= 0 ? workbook.getSheetName(n.getSheetIndex()) : "global scope").append(";"));
+        throw new IllegalArgumentException("Name '" + name + "' was not specified '" + worksheetScopeDisplay + "'! " +
+                "Found in sheets: " + names);
+    }
+
+    private String displayWorksheetScope(String worksheetScope) {
+        return null == worksheetScope ? "" : worksheetScope.isEmpty() ? "in global scope" : "in " +worksheetScope;
     }
 
     // Checks only if the reference as such is valid
@@ -1377,17 +1467,18 @@ public final class Workbook {
         return getLastColumn(getSheet(sheetName));
     }
 
-    public void appendNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells) {
-        Sheet sheet = workbook.getSheet(getName(name).getSheetName());
+    public void appendNamedRegion(DataFrame data, String name, boolean header, boolean overwriteFormulaCells, String worksheetScope) {
+        Sheet sheet = workbook.getSheet(getName(name, worksheetScope).getSheetName());
         // top, left, bottom, right
-        int[] coord = getReferenceCoordinates(name);
+        int[] coord = getReferenceCoordinatesForName(name, worksheetScope).getValue();
         writeData(data, sheet, coord[2] + 1, coord[1], header, overwriteFormulaCells);
         int bottom = coord[2] + data.rows();
         int right = Math.max(coord[1] + data.columns() - 1, coord[3]);
         CellRangeAddress cra = new CellRangeAddress(coord[0], bottom, coord[1], right);
         String formula = cra.formatAsString(sheet.getSheetName(), true);
-        createName(name, formula, true);
+        createName(name, formula, true, worksheetScope);
     }
+
 
     public void appendWorksheet(DataFrame data, int worksheetIndex, boolean header) {
         Sheet sheet = getSheet(worksheetIndex);
@@ -1453,10 +1544,10 @@ public final class Workbook {
         clearRange(sheetName, coords);
     }
 
-    public void clearNamedRegion(String name) {
-        String sheetName = getName(name).getSheetName();
-        int[] coords = getReferenceCoordinates(name);
-        clearRange(sheetName, coords);
+    public void clearNamedRegion(String name, String worksheetScope) {
+        String dataSourceSheetName = getName(name, worksheetScope).getSheetName();
+        int[] coords = getReferenceCoordinatesForName(name, worksheetScope).getValue();
+        clearRange(dataSourceSheetName, coords);
     }
 
     public void createFreezePane(int sheetIndex, int colSplit, int rowSplit, int leftColumn, int topRow) {
