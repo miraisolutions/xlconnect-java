@@ -276,7 +276,6 @@ public final class Workbook {
             String foundInScope = effectiveScope(worksheetScope, found);
             return new ResultWithAttributes<Boolean>(true, WORKSHEET_SCOPE, foundInScope);
         } catch (IllegalArgumentException ignored) {
-            warnings.add(ignored.getMessage());
             return worksheetScope != null ? new ResultWithAttributes<Boolean>(false, WORKSHEET_SCOPE, worksheetScope)
                     : new ResultWithAttributes<Boolean>(false);
         }
@@ -995,12 +994,12 @@ public final class Workbook {
         StringBuffer names = new StringBuffer();
         String worksheetScopeDisplay = displayWorksheetScope(worksheetScope);
         cNames.forEach(n -> names.append(n.getSheetIndex() >= 0 ? workbook.getSheetName(n.getSheetIndex()) : "global scope").append(";"));
-        throw new IllegalArgumentException("Name '" + name + "' was not specified '" + worksheetScopeDisplay + "'! " +
+        throw new IllegalArgumentException("Name '" + name + "' was not specified " + worksheetScopeDisplay + "! " +
                 "Found in sheets: " + names);
     }
 
     private String displayWorksheetScope(String worksheetScope) {
-        return null == worksheetScope ? "" : worksheetScope.isEmpty() ? "in global scope" : "in " +worksheetScope;
+        return null == worksheetScope ? "" : worksheetScope.isEmpty() ? "in global scope" : "in '" +worksheetScope+ "'";
     }
 
     // Checks only if the reference as such is valid
