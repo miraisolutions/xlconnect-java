@@ -25,6 +25,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
+
 public final class SSCellStyle implements CellStyle {
 
     org.apache.poi.ss.usermodel.Workbook workbook;
@@ -91,4 +92,24 @@ public final class SSCellStyle implements CellStyle {
     public static void set(Cell c, SSCellStyle cs) {
         c.setCellStyle(cs.cellStyle);
     }
+
+    public void setFontBold(boolean bold) {
+        throw new UnsupportedOperationException("Font operations are not supported in HCellStyle.");
+    }
+
+    public void setFontName(String name) {
+        throw new UnsupportedOperationException("Font operations are not supported for SSCellStyle.");
+    }
+
+    public void setFontItalic(boolean italic) {
+        throw new UnsupportedOperationException("Font operations are not supported for SSCellStyle.");
+    }
+
+    public void setFontSize(int size) {
+        throw new UnsupportedOperationException("Font operations are not supported for SSCellStyle.");
+    }
+    public void setFontColor(short color, byte[] rgb) {
+        throw new UnsupportedOperationException("Font color is not supported for SSCellStyle.");
+    }
+
 }

@@ -90,6 +90,24 @@ public final class HCellStyle implements CellStyle {
         cellStyle.setWrapText(wrap);
     }
 
+    public void setFontBold(boolean bold) {
+        throw new UnsupportedOperationException("Font operations are not supported in HCellStyle.");
+    }
+    public void setFontName(String name) {
+        throw new UnsupportedOperationException("Font operations are not supported for SSCellStyle.");
+    }
+
+    public void setFontItalic(boolean italic) {
+        throw new UnsupportedOperationException("Font operations are not supported for SSCellStyle.");
+    }
+
+    public void setFontSize(int size) {
+        throw new UnsupportedOperationException("Font operations are not supported for SSCellStyle.");
+    }
+    public void setFontColor(short color, byte[] rgb) {
+        throw new UnsupportedOperationException("Font color is not supported for HCellStyle.");
+    }
+
     public static HCellStyle create(HSSFWorkbook workbook, String name) {
         HSSFCellStyle cellStyle = workbook.createCellStyle();
         if (name != null) cellStyle.setUserStyleName(name);

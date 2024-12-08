@@ -24,11 +24,26 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.model.StylesTable;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.DefaultIndexedColorMap;
+import org.apache.poi.xssf.usermodel.IndexedColorMap;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellAlignment;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellFill;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.*;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorder;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTBorderPr;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellAlignment;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyle;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCellStyles;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTFill;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTPatternFill;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTXf;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.STBorderStyle;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.STPatternType;
 
 /**
  * This class uses parts from
@@ -311,6 +326,113 @@ public final class XCellStyle implements CellStyle {
         setFillForegroundColor(clr);
     }
 
+
+public void setFontBold(boolean bold) {
+    cloneAndModifyFont((font) -> font.setBold(bold));
+}
+
+public void setFontName(String name) {
+    cloneAndModifyFont((font) -> font.setFontName(name));
+}
+
+public void setFontItalic(boolean italic) {
+    cloneAndModifyFont((font) -> font.setItalic(italic));
+}
+
+public void setFontColor(short color, byte[] rgb) {
+    StylesTable stylesTable = workbook.getStylesSource();
+    CTXf xf = getXf();
+
+    // Store existing fill and border properties so we don't lose them
+    long oldFillId = xf.getFillId();
+    boolean oldApplyFill = xf.getApplyFill();
+    long oldBorderId = xf.getBorderId();
+    boolean oldApplyBorder = xf.getApplyBorder();
+    long oldNumFmtId = xf.getNumFmtId();
+    boolean oldApplyNumberFormat = xf.getApplyNumberFormat();
+
+    // Alignment and other properties could also be preserved if needed
+    CTCellAlignment oldAlignment = null;
+    if (xf.isSetAlignment()) {
+        oldAlignment = (CTCellAlignment) xf.getAlignment().copy();
+    }
+
+    int currentFontId = (int) xf.getFontId();
+    XSSFFont currentFont = workbook.getFontAt(currentFontId);
+
+    // Create a new font to isolate changes without affecting defaults
+    XSSFFont newFont = workbook.createFont();
+    copyFontProperties(currentFont, newFont);
+
+    // Apply custom color if RGB is given, otherwise use indexed color
+    if (rgb != null) {
+        XSSFColor customColor = new XSSFColor(rgb, stylesTable.getIndexedColors());
+        newFont.setColor(customColor);
+    } else {
+        newFont.setColor(color);
+    }
+
+    // Store the new font and update the style
+    int newFontIndex = stylesTable.putFont(newFont);
+    xf.setFontId(newFontIndex);
+    xf.setApplyFont(true);
+    getCoreXf().setFontId(newFontIndex);
+
+    // Restore the previously saved style attributes so they are not overwritten
+    xf.setFillId(oldFillId);
+    xf.setApplyFill(oldApplyFill);
+    xf.setBorderId(oldBorderId);
+    xf.setApplyBorder(oldApplyBorder);
+    xf.setNumFmtId(oldNumFmtId);
+    xf.setApplyNumberFormat(oldApplyNumberFormat);
+
+    if (oldAlignment != null) {
+        xf.setAlignment(oldAlignment);
+    }
+}
+
+public void setFontSize(int size) {
+    cloneAndModifyFont((font) -> font.setFontHeightInPoints((short) size));
+}
+
+private void cloneAndModifyFont(java.util.function.Consumer<XSSFFont> fontModifier) {
+    StylesTable stylesTable = workbook.getStylesSource();
+    int currentFontId = (int) getXf().getFontId();
+    XSSFFont oldFont = workbook.getFontAt(currentFontId);
+
+    // Create a brand new font to avoid modifying any existing shared font
+    XSSFFont newFont = workbook.createFont();
+
+    // Copy properties from the old font
+    copyFontProperties(oldFont, newFont);
+
+    // Apply the requested modification (bold, italic, name, color, size, etc.)
+    fontModifier.accept(newFont);
+
+    // Add the newly created font to the styles table and update the style
+    int newFontIndex = stylesTable.putFont(newFont);
+    CTXf xf = getXf();
+    xf.setFontId(newFontIndex);
+    xf.setApplyFont(true);
+    getCoreXf().setFontId(newFontIndex);
+}
+
+private void copyFontProperties(XSSFFont source, XSSFFont target) {
+    target.setFontName(source.getFontName());
+    target.setFontHeightInPoints(source.getFontHeightInPoints());
+    target.setBold(source.getBold());
+    target.setItalic(source.getItalic());
+    target.setUnderline(source.getUnderline());
+    target.setStrikeout(source.getStrikeout());
+
+    XSSFColor color = source.getXSSFColor();
+    if (color != null) {
+        target.setColor(color);
+    } else {
+        target.setColor(source.getColor());
+    }
+}
+
     public void setFillPattern(FillPatternType fp) {
         CTFill ct = getCTFill();
         CTPatternFill ptrn = ct.isSetPatternFill() ? ct.getPatternFill() : ct.addNewPatternFill();
@@ -373,6 +495,7 @@ public final class XCellStyle implements CellStyle {
 
         return new XCellStyle(workbook, xfSize - 1, styleXfSize - 1);
     }
+    
 
     /**
      * Used for querying user-named cell styles (style xf only).

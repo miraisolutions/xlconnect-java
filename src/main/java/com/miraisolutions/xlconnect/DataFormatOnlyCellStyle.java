@@ -20,11 +20,12 @@
 
 package com.miraisolutions.xlconnect;
 
-import com.miraisolutions.xlconnect.data.DataType;
+import java.util.EnumMap;
+
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-import java.util.EnumMap;
+import com.miraisolutions.xlconnect.data.DataType;
 
 /**
  * Marker cell style used to specify that a cell style
@@ -96,6 +97,30 @@ public final class DataFormatOnlyCellStyle implements CellStyle {
         throw new UnsupportedOperationException();
     }
 
+    public void setFontBold(boolean bold) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setFontName(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setFontItalic(boolean italic) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setFontUnderline(byte underlineType) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setFontSize(int size) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setFontColor(short color, byte[] rgb) {
+        throw new UnsupportedOperationException();
+    }
+    
     public static DataFormatOnlyCellStyle get(DataType type) {
         DataFormatOnlyCellStyle cs;
         if (instances.containsKey(type))
