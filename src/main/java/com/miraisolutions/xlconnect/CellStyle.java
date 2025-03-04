@@ -49,4 +49,14 @@ public interface CellStyle {
     void setFillPattern(FillPatternType bg);
 
     void setWrapText(boolean wrap);
+    
+    void setFontBold(boolean bold);
+
+    void setFontName(String name);
+
+    void setFontItalic(boolean italic);
+    
+    void setFontSize(int size);
+
+    void setFontColor(short color, byte[] rgb);
 }
