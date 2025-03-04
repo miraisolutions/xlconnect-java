@@ -27,7 +27,6 @@ import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
@@ -65,10 +64,6 @@ public final class Workbook {
     // Formatter
     // NOTE: currently fixed to a RPOSIXDateTimeFormatter
     public final static DateTimeFormatter dateTimeFormatter = new RPOSIXDateTimeFormatter();
-
-    static {
-        ZipSecureFile.setMinInflateRatio(0.001);
-    }
 
     // Apache POI workbook instance
     private final org.apache.poi.ss.usermodel.Workbook workbook;
