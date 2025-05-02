@@ -20,9 +20,10 @@
 
 package com.miraisolutions.xlconnect.integration.r;
 
-import com.miraisolutions.xlconnect.CellStyle;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
+
+import com.miraisolutions.xlconnect.CellStyle;
 
 public final class RCellStyleWrapper {
 
@@ -75,5 +76,24 @@ public final class RCellStyleWrapper {
 
     public void setWrapText(boolean wrap) {
         cellStyle.setWrapText(wrap);
+    }
+
+    public void setFontBold(boolean bold) {
+        cellStyle.setFontBold(bold);
+    }
+    
+    public void setFontName(String name) {
+        cellStyle.setFontName(name);
+    }
+
+    public void setFontItalic(boolean italic) {
+        cellStyle.setFontItalic(italic);
+    }
+
+    public void setFontSize(int size) {
+        cellStyle.setFontSize(size);
+    }
+    public void setFontColor(int indexedColor, byte[] rgb) {
+        cellStyle.setFontColor((short) indexedColor, rgb);
     }
 }
