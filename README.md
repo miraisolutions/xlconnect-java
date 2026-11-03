@@ -5,6 +5,8 @@ A simple Java wrapper around Apache POI, providing the backbone of R package [XL
 
 ## Building
 
+Requires JDK 17 or newer (Apache POI 6 requires Java 17).
+
 1. Build the Java package
 ```
     mvn package
