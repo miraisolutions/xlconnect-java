@@ -20,8 +20,8 @@
 
 package com.miraisolutions.xlconnect.utils;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -30,13 +30,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public final class RPOSIXDateTimeFormatterTest {
 
     private RPOSIXDateTimeFormatter underTest;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         underTest = new RPOSIXDateTimeFormatter();
     }

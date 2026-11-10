@@ -20,16 +20,17 @@
 
 package com.miraisolutions.xlconnect;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BooleanWithAttributesTest {
 
     @Test
     public void getTrueValue() {
         ResultWithAttributes<Boolean> underTest = new ResultWithAttributes<>(true,Attribute.WORKSHEET_SCOPE, "bla");
-        assert underTest.getValue();
+        assertTrue(underTest.getValue());
         assertEquals(1, underTest.getAttributeNames().length);
     }
 }

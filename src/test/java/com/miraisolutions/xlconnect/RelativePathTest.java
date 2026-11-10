@@ -20,16 +20,16 @@
 
 package com.miraisolutions.xlconnect;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * R can change the working directory after rJava has started the JVM. Relative paths must then
@@ -41,13 +41,13 @@ import static org.junit.Assert.assertEquals;
  */
 public class RelativePathTest {
 
-    @Rule
-    public TemporaryFolder tmp = new TemporaryFolder();
+    @TempDir
+    File tmp;
 
     @Test
     public void relativePathsUseTheWorkingDirectory() throws Exception {
-        File workDir = tmp.newFolder("work");
-        File jvmStartDir = tmp.newFolder("jvmStart");
+        File workDir = Files.createDirectory(tmp.toPath().resolve("work")).toFile();
+        File jvmStartDir = Files.createDirectory(tmp.toPath().resolve("jvmStart")).toFile();
 
         for (String name : new String[]{"wb.xls", "wb.xlsx"}) {
             Workbook wb = Workbook.getWorkbook(new File(workDir, name), true);
@@ -67,7 +67,7 @@ public class RelativePathTest {
                 .start();
         String output = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        assertEquals(output, 0, p.waitFor());
+        assertEquals(0, p.waitFor(), output);
     }
 
     public static class Probe {
