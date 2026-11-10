@@ -32,10 +32,10 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -97,22 +97,26 @@ public final class Workbook {
 
     private Workbook(File excelFile, String password) throws IOException {
         /*
-         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
-         * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
-         * TODO once we no longer support java 8, try again to switch to Files.newInputStream(excelFile.toPath()) 
+         * NOTE: We open the workbook from a stream, not from the File, since otherwise using 'save'
+         * multiple times would cause a JVM crash as described here:
+         * https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
+        try (InputStream is = Files.newInputStream(excelFile.toPath())) {
+            this.workbook = WorkbookFactory.create(is, password);
+        }
         this.excelFile = excelFile;
         init();
     }
 
     private Workbook(File excelFile) throws IOException {
         /*
-         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
-         * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
-         * TODO once we no longer support java 8, try again to switch to Files.newInputStream(excelFile.toPath()) 
+         * NOTE: We open the workbook from a stream, not from the File, since otherwise using 'save'
+         * multiple times would cause a JVM crash as described here:
+         * https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
+        try (InputStream is = Files.newInputStream(excelFile.toPath())) {
+            this.workbook = WorkbookFactory.create(is);
+        }
         this.excelFile = excelFile;
         init();
     }
@@ -808,11 +812,8 @@ public final class Workbook {
             imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
         } else
             throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
-        // TODO once we no longer support java 8, try again to switch to Files.newInputStream(imageFile.toPath()) 
-        InputStream is = new FileInputStream(imageFile);
-        byte[] bytes = IOUtils.toByteArray(is);
+        byte[] bytes = Files.readAllBytes(imageFile.toPath());
         int imageIndex = workbook.addPicture(bytes, imageType);
-        is.close();
 
         Drawing<?> drawing;
         if (isHSSF()) {
