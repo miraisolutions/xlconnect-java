@@ -973,7 +973,7 @@ public final class Workbook {
             if (n.getSheetIndex() == sheetIndex)
                 return n;
 
-        StringBuffer names = new StringBuffer();
+        StringBuilder names = new StringBuilder();
         String worksheetScopeDisplay = displayWorksheetScope(worksheetScope);
         cNames.forEach(n -> names.append(n.getSheetIndex() >= 0 ? workbook.getSheetName(n.getSheetIndex()) : "global scope").append(";"));
         throw new IllegalArgumentException("Name '" + name + "' was not specified " + worksheetScopeDisplay + "! " +
