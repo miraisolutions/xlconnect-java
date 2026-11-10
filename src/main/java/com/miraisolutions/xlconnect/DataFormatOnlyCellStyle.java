@@ -97,13 +97,6 @@ public final class DataFormatOnlyCellStyle implements CellStyle {
     }
 
     public static DataFormatOnlyCellStyle get(DataType type) {
-        DataFormatOnlyCellStyle cs;
-        if (instances.containsKey(type))
-            cs = instances.get(type);
-        else {
-            cs = new DataFormatOnlyCellStyle(type);
-            instances.put(type, cs);
-        }
-        return cs;
+        return instances.computeIfAbsent(type, DataFormatOnlyCellStyle::new);
     }
 }
