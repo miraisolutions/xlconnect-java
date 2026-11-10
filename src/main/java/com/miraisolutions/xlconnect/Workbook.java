@@ -35,7 +35,6 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -100,8 +99,10 @@ public final class Workbook {
          * NOTE: We open the workbook from a stream, not from the File, since otherwise using 'save'
          * multiple times would cause a JVM crash as described here:
          * https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         * We use java.io and not java.nio.file: on Windows, NIO resolves relative paths against the
+         * directory the JVM started in, so it ignores a later setwd() in R.
          */
-        try (InputStream is = Files.newInputStream(excelFile.toPath())) {
+        try (InputStream is = new FileInputStream(excelFile)) {
             this.workbook = WorkbookFactory.create(is, password);
         }
         this.excelFile = excelFile;
@@ -113,8 +114,10 @@ public final class Workbook {
          * NOTE: We open the workbook from a stream, not from the File, since otherwise using 'save'
          * multiple times would cause a JVM crash as described here:
          * https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         * We use java.io and not java.nio.file: on Windows, NIO resolves relative paths against the
+         * directory the JVM started in, so it ignores a later setwd() in R.
          */
-        try (InputStream is = Files.newInputStream(excelFile.toPath())) {
+        try (InputStream is = new FileInputStream(excelFile)) {
             this.workbook = WorkbookFactory.create(is);
         }
         this.excelFile = excelFile;
@@ -812,7 +815,11 @@ public final class Workbook {
             imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
         } else
             throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
-        byte[] bytes = Files.readAllBytes(imageFile.toPath());
+        // java.io, not java.nio.file: see the note on relative paths in the constructor
+        byte[] bytes;
+        try (InputStream is = new FileInputStream(imageFile)) {
+            bytes = is.readAllBytes();
+        }
         int imageIndex = workbook.addPicture(bytes, imageType);
 
         Drawing<?> drawing;
