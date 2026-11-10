@@ -24,7 +24,10 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.util.CellReference;
 
-public abstract class CellUtils {
+public final class CellUtils {
+
+    private CellUtils() {
+    }
 
     public static String formatAsString(Cell cell) {
         return (new CellReference(cell).formatAsString());
