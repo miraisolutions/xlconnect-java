@@ -36,26 +36,15 @@ public final class FastColumnBuilder extends ColumnBuilder {
 
     protected void handleCell(Cell c, CellValue cv) {
         switch (cv.getCellType()) {
-            case BLANK:
-                addMissing();
-                break;
-            case BOOLEAN:
-                addValue(c, cv, DataType.Boolean);
-                break;
-            case NUMERIC:
-                addValue(c, cv, DataType.Numeric);
-                break;
-            case STRING:
-                addValue(c, cv, DataType.String);
-                break;
-            case FORMULA:
-                cellError("Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!");
-                break;
-            case ERROR:
-                cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue()));
-                break;
-            default:
-                cellError("Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!");
+            case BLANK -> addMissing();
+            case BOOLEAN -> addValue(c, cv, DataType.Boolean);
+            case NUMERIC -> addValue(c, cv, DataType.Numeric);
+            case STRING -> addValue(c, cv, DataType.String);
+            case FORMULA ->
+                    cellError("Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!");
+            case ERROR ->
+                    cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue()));
+            default -> cellError("Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!");
         }
     }
 }

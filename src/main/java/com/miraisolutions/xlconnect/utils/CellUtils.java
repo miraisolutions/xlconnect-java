@@ -31,24 +31,16 @@ public abstract class CellUtils {
     }
 
     public static String getErrorMessage(FormulaError error) {
-        switch (error) {
-            case DIV0:
-                return "Division by 0";
-            case NA:
-                return "Value is not available";
-            case NAME:
-                return "No such name defined";
-            case NULL:
-                return "Two areas are required to intersect but do not";
-            case NUM:
-                return "Value outside of domain";
-            case REF:
-                return "Invalid cell reference";
-            case VALUE:
-                return "Incompatible type";
-            default:
-                return "Unknown error";
-        }
+        return switch (error) {
+            case DIV0 -> "Division by 0";
+            case NA -> "Value is not available";
+            case NAME -> "No such name defined";
+            case NULL -> "Two areas are required to intersect but do not";
+            case NUM -> "Value outside of domain";
+            case REF -> "Invalid cell reference";
+            case VALUE -> "Incompatible type";
+            default -> "Unknown error";
+        };
     }
 
     public static String getErrorMessage(byte errorCode) {

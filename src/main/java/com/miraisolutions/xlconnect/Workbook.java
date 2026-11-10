@@ -125,16 +125,11 @@ public final class Workbook {
     }
 
     private Workbook(File excelFile, SpreadsheetVersion version) {
-        switch (version) {
-            case EXCEL97:
-                this.workbook = new HSSFWorkbook();
-                break;
-            case EXCEL2007:
-                this.workbook = new XSSFWorkbook();
-                break;
-            default:
-                throw new IllegalArgumentException("Spreadsheet version not supported!");
-        }
+        this.workbook = switch (version) {
+            case EXCEL97 -> new HSSFWorkbook();
+            case EXCEL2007 -> new XSSFWorkbook();
+            default -> throw new IllegalArgumentException("Spreadsheet version not supported!");
+        };
 
         this.excelFile = excelFile;
         init();
@@ -540,19 +535,13 @@ public final class Workbook {
             colset = subset;
         }
 
-        ColumnBuilder cb;
-        switch (readStrategy) {
-            case DEFAULT:
-                cb = new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
-                        missingValue, dateTimeFormat);
-                break;
-            case FAST:
-                cb = new FastColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
-                        dateTimeFormat);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown read strategy!");
-        }
+        ColumnBuilder cb = switch (readStrategy) {
+            case DEFAULT -> new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
+                    missingValue, dateTimeFormat);
+            case FAST -> new FastColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
+                    dateTimeFormat);
+            default -> throw new IllegalArgumentException("Unknown read strategy!");
+        };
 
         // Determine header column
         String[] columnHeaders = new String[colset.length];
@@ -592,21 +581,11 @@ public final class Workbook {
             DataType columnType = ((colTypes != null) && (colTypes.length > 0)) ? colTypes[col % colTypes.length] :
                     cb.determineColumnType();
             switch (columnType) {
-                case Boolean:
-                    data.addColumn(columnHeader, cb.buildBooleanColumn());
-                    break;
-                case DateTime:
-                    data.addColumn(columnHeader, cb.buildDateTimeColumn());
-                    break;
-                case Numeric:
-                    data.addColumn(columnHeader, cb.buildNumericColumn());
-                    break;
-                case String:
-                    data.addColumn(columnHeader, cb.buildStringColumn());
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown data type detected!");
-
+                case Boolean -> data.addColumn(columnHeader, cb.buildBooleanColumn());
+                case DateTime -> data.addColumn(columnHeader, cb.buildDateTimeColumn());
+                case Numeric -> data.addColumn(columnHeader, cb.buildNumericColumn());
+                case String -> data.addColumn(columnHeader, cb.buildStringColumn());
+                default -> throw new IllegalArgumentException("Unknown data type detected!");
             }
             // Collect column builder warnings
             this.warnings.addAll(cb.getWarnings());
@@ -1225,22 +1204,14 @@ public final class Workbook {
                         cstyles.put(HEADER + i, defaultStyles.get(HEADER_STYLE));
                 }
                 for (int i = 0; i < data.columns(); i++) {
-                    switch (data.getColumnType(i)) {
-                        case Boolean:
-                            cstyles.put(COLUMN + i, defaultStyles.get(BOOLEAN_STYLE));
-                            break;
-                        case DateTime:
-                            cstyles.put(COLUMN + i, defaultStyles.get(DATETIME_STYLE));
-                            break;
-                        case Numeric:
-                            cstyles.put(COLUMN + i, defaultStyles.get(NUMERIC_STYLE));
-                            break;
-                        case String:
-                            cstyles.put(COLUMN + i, defaultStyles.get(STRING_STYLE));
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unknown column type detected!");
-                    }
+                    String styleName = switch (data.getColumnType(i)) {
+                        case Boolean -> BOOLEAN_STYLE;
+                        case DateTime -> DATETIME_STYLE;
+                        case Numeric -> NUMERIC_STYLE;
+                        case String -> STRING_STYLE;
+                        default -> throw new IllegalArgumentException("Unknown column type detected!");
+                    };
+                    cstyles.put(COLUMN + i, defaultStyles.get(styleName));
                 }
                 break;
             case DATATYPE:

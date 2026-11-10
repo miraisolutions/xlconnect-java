@@ -314,25 +314,15 @@ public abstract class ColumnBuilder {
         if (valueType == CellType.FORMULA) {
             valueType = cell.getCachedFormulaResultType();
         }
-        switch (valueType) {
-            case BLANK:
-                return null;
-            case BOOLEAN:
-                if (cell.getBooleanCellValue()) {
-                    return CellValue.TRUE;
-                } else {
-                    return CellValue.FALSE;
-                }
-            case NUMERIC:
-                return new CellValue(cell.getNumericCellValue());
-            case STRING:
-                return new CellValue(cell.getStringCellValue());
-            case ERROR:
-                return CellValue.getError(cell.getErrorCellValue());
-            default:
-                String msg = String.format("Could not extract value from cell with cached value type %s", valueType);
-                throw new RuntimeException(msg);
-        }
+        return switch (valueType) {
+            case BLANK -> null;
+            case BOOLEAN -> cell.getBooleanCellValue() ? CellValue.TRUE : CellValue.FALSE;
+            case NUMERIC -> new CellValue(cell.getNumericCellValue());
+            case STRING -> new CellValue(cell.getStringCellValue());
+            case ERROR -> CellValue.getError(cell.getErrorCellValue());
+            default -> throw new RuntimeException(
+                    String.format("Could not extract value from cell with cached value type %s", valueType));
+        };
     }
 
     // extracts the value from a cell by either evaluating it or taking the

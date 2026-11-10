@@ -58,13 +58,9 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
     protected void handleCell(Cell c, CellValue cv) {
         // Determine (evaluated) cell data type
         switch (cv.getCellType()) {
-            case BLANK:
-                addMissing();
-                break;
-            case BOOLEAN:
-                addValue(c, cv, DataType.Boolean);
-                break;
-            case NUMERIC:
+            case BLANK -> addMissing();
+            case BOOLEAN -> addValue(c, cv, DataType.Boolean);
+            case NUMERIC -> {
                 if (DateUtil.isCellDateFormatted(c))
                     addValue(c, cv, DataType.DateTime);
                 else {
@@ -74,22 +70,19 @@ public final class DefaultColumnBuilder extends ColumnBuilder {
                     else
                         addValue(c, cv, DataType.Numeric);
                 }
-                break;
-            case STRING:
+            }
+            case STRING -> {
                 String value = cv.getStringValue();
                 if ((value == null) || missingValueStrings.contains(value))
                     addMissing();
                 else
                     addValue(c, cv, DataType.String);
-                break;
-            case FORMULA:
-                cellError("Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!");
-                break;
-            case ERROR:
-                cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue()));
-                break;
-            default:
-                cellError("Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!");
+            }
+            case FORMULA ->
+                    cellError("Formula detected in already evaluated cell " + CellUtils.formatAsString(c) + "!");
+            case ERROR ->
+                    cellError("Error detected in cell " + CellUtils.formatAsString(c) + " - " + CellUtils.getErrorMessage(cv.getErrorValue()));
+            default -> cellError("Unexpected cell type detected for cell " + CellUtils.formatAsString(c) + "!");
         }
     }
 }
