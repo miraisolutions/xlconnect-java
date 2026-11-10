@@ -1071,10 +1071,10 @@ public final class Workbook {
         if (missingValue.length < 1 || missingValue[0] == null)
             cell.setBlank();
         else {
-            if (missingValue[0] instanceof String) {
-                cell.setCellValue((String) missingValue[0]);
-            } else if (missingValue[0] instanceof Double) {
-                cell.setCellValue((Double) missingValue[0]);
+            if (missingValue[0] instanceof String s) {
+                cell.setCellValue(s);
+            } else if (missingValue[0] instanceof Double d) {
+                cell.setCellValue(d);
             } else {
                 cell.setBlank();
                 return;
@@ -1139,16 +1139,16 @@ public final class Workbook {
 
     private void setCellStyle(Cell c, CellStyle cs) {
         if (cs != null) {
-            if (cs instanceof HCellStyle) {
-                HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
-            } else if (cs instanceof XCellStyle) {
-                XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
-            } else if (cs instanceof DataFormatOnlyCellStyle) {
+            if (cs instanceof HCellStyle hcs) {
+                HCellStyle.set((HSSFCell) c, hcs);
+            } else if (cs instanceof XCellStyle xcs) {
+                XCellStyle.set((XSSFCell) c, xcs);
+            } else if (cs instanceof DataFormatOnlyCellStyle dfcs) {
                 CellStyle csx = getCellStyle(c);
-                csx.setDataFormat(dataFormatMap.get(((DataFormatOnlyCellStyle) cs).getDataType()));
+                csx.setDataFormat(dataFormatMap.get(dfcs.getDataType()));
                 SSCellStyle.set(c, (SSCellStyle) csx);
-            } else {
-                SSCellStyle.set(c, (SSCellStyle) cs);
+            } else if (cs instanceof SSCellStyle scs) {
+                SSCellStyle.set(c, scs);
             }
         }
     }
