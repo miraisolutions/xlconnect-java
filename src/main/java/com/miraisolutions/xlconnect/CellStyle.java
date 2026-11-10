@@ -23,7 +23,7 @@ package com.miraisolutions.xlconnect;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-public interface CellStyle {
+public sealed interface CellStyle permits SSCellStyle, HCellStyle, XCellStyle, DataFormatOnlyCellStyle {
     void setBorderBottom(BorderStyle border);
 
     void setBorderLeft(BorderStyle border);
