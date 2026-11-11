@@ -16,7 +16,12 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: 'szenius/set-timezone@v2.0'
@@ -35,6 +40,7 @@ jobs:
       - name: Build with Maven
         run: mvn -B package --file pom.xml
       - name: Upload successfully built JAR
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@main
         with:
           name: xlconnect_jar

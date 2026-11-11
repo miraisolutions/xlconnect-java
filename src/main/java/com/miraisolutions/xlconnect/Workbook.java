@@ -32,7 +32,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
@@ -97,37 +96,40 @@ public final class Workbook {
 
     private Workbook(File excelFile, String password) throws IOException {
         /*
-         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
-         * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
-         * TODO once we no longer support java 8, try again to switch to Files.newInputStream(excelFile.toPath()) 
+         * NOTE: We open the workbook from a stream, not from the File, since otherwise using 'save'
+         * multiple times would cause a JVM crash as described here:
+         * https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         * We use java.io and not java.nio.file: on Windows, NIO resolves relative paths against the
+         * directory the JVM started in, so it ignores a later setwd() in R.
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile), password);
+        try (InputStream is = new FileInputStream(excelFile)) {
+            this.workbook = WorkbookFactory.create(is, password);
+        }
         this.excelFile = excelFile;
         init();
     }
 
     private Workbook(File excelFile) throws IOException {
         /*
-         * NOTE: We are using a FileInputStream since otherwise using 'save' multiple times would cause
-         * a JVM crash as described here: https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
-         * TODO once we no longer support java 8, try again to switch to Files.newInputStream(excelFile.toPath()) 
+         * NOTE: We open the workbook from a stream, not from the File, since otherwise using 'save'
+         * multiple times would cause a JVM crash as described here:
+         * https://bz.apache.org/bugzilla/show_bug.cgi?id=53515
+         * We use java.io and not java.nio.file: on Windows, NIO resolves relative paths against the
+         * directory the JVM started in, so it ignores a later setwd() in R.
          */
-        this.workbook = WorkbookFactory.create(new FileInputStream(excelFile));
+        try (InputStream is = new FileInputStream(excelFile)) {
+            this.workbook = WorkbookFactory.create(is);
+        }
         this.excelFile = excelFile;
         init();
     }
 
     private Workbook(File excelFile, SpreadsheetVersion version) {
-        switch (version) {
-            case EXCEL97:
-                this.workbook = new HSSFWorkbook();
-                break;
-            case EXCEL2007:
-                this.workbook = new XSSFWorkbook();
-                break;
-            default:
-                throw new IllegalArgumentException("Spreadsheet version not supported!");
-        }
+        this.workbook = switch (version) {
+            case EXCEL97 -> new HSSFWorkbook();
+            case EXCEL2007 -> new XSSFWorkbook();
+            default -> throw new IllegalArgumentException("Spreadsheet version not supported!");
+        };
 
         this.excelFile = excelFile;
         init();
@@ -533,19 +535,13 @@ public final class Workbook {
             colset = subset;
         }
 
-        ColumnBuilder cb;
-        switch (readStrategy) {
-            case DEFAULT:
-                cb = new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
-                        missingValue, dateTimeFormat);
-                break;
-            case FAST:
-                cb = new FastColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
-                        dateTimeFormat);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown read strategy!");
-        }
+        ColumnBuilder cb = switch (readStrategy) {
+            case DEFAULT -> new DefaultColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
+                    missingValue, dateTimeFormat);
+            case FAST -> new FastColumnBuilder(nrows, forceConversion, takeCached, evaluator, onErrorCell,
+                    dateTimeFormat);
+            default -> throw new IllegalArgumentException("Unknown read strategy!");
+        };
 
         // Determine header column
         String[] columnHeaders = new String[colset.length];
@@ -585,21 +581,11 @@ public final class Workbook {
             DataType columnType = ((colTypes != null) && (colTypes.length > 0)) ? colTypes[col % colTypes.length] :
                     cb.determineColumnType();
             switch (columnType) {
-                case Boolean:
-                    data.addColumn(columnHeader, cb.buildBooleanColumn());
-                    break;
-                case DateTime:
-                    data.addColumn(columnHeader, cb.buildDateTimeColumn());
-                    break;
-                case Numeric:
-                    data.addColumn(columnHeader, cb.buildNumericColumn());
-                    break;
-                case String:
-                    data.addColumn(columnHeader, cb.buildStringColumn());
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown data type detected!");
-
+                case Boolean -> data.addColumn(columnHeader, cb.buildBooleanColumn());
+                case DateTime -> data.addColumn(columnHeader, cb.buildDateTimeColumn());
+                case Numeric -> data.addColumn(columnHeader, cb.buildNumericColumn());
+                case String -> data.addColumn(columnHeader, cb.buildStringColumn());
+                default -> throw new IllegalArgumentException("Unknown data type detected!");
             }
             // Collect column builder warnings
             this.warnings.addAll(cb.getWarnings());
@@ -808,11 +794,12 @@ public final class Workbook {
             imageType = org.apache.poi.ss.usermodel.Workbook.PICTURE_TYPE_PICT;
         } else
             throw new IllegalArgumentException("Image type \""+ filename.substring(filename.lastIndexOf('.')+1) +"\" not supported!");
-        // TODO once we no longer support java 8, try again to switch to Files.newInputStream(imageFile.toPath()) 
-        InputStream is = new FileInputStream(imageFile);
-        byte[] bytes = IOUtils.toByteArray(is);
+        // java.io, not java.nio.file: see the note on relative paths in the constructor
+        byte[] bytes;
+        try (InputStream is = new FileInputStream(imageFile)) {
+            bytes = is.readAllBytes();
+        }
         int imageIndex = workbook.addPicture(bytes, imageType);
-        is.close();
 
         Drawing<?> drawing;
         if (isHSSF()) {
@@ -986,7 +973,7 @@ public final class Workbook {
             if (n.getSheetIndex() == sheetIndex)
                 return n;
 
-        StringBuffer names = new StringBuffer();
+        StringBuilder names = new StringBuilder();
         String worksheetScopeDisplay = displayWorksheetScope(worksheetScope);
         cNames.forEach(n -> names.append(n.getSheetIndex() >= 0 ? workbook.getSheetName(n.getSheetIndex()) : "global scope").append(";"));
         throw new IllegalArgumentException("Name '" + name + "' was not specified " + worksheetScopeDisplay + "! " +
@@ -1063,10 +1050,10 @@ public final class Workbook {
         if (missingValue.length < 1 || missingValue[0] == null)
             cell.setBlank();
         else {
-            if (missingValue[0] instanceof String) {
-                cell.setCellValue((String) missingValue[0]);
-            } else if (missingValue[0] instanceof Double) {
-                cell.setCellValue((Double) missingValue[0]);
+            if (missingValue[0] instanceof String s) {
+                cell.setCellValue(s);
+            } else if (missingValue[0] instanceof Double d) {
+                cell.setCellValue(d);
             } else {
                 cell.setBlank();
                 return;
@@ -1131,16 +1118,16 @@ public final class Workbook {
 
     private void setCellStyle(Cell c, CellStyle cs) {
         if (cs != null) {
-            if (cs instanceof HCellStyle) {
-                HCellStyle.set((HSSFCell) c, (HCellStyle) cs);
-            } else if (cs instanceof XCellStyle) {
-                XCellStyle.set((XSSFCell) c, (XCellStyle) cs);
-            } else if (cs instanceof DataFormatOnlyCellStyle) {
+            if (cs instanceof HCellStyle hcs) {
+                HCellStyle.set((HSSFCell) c, hcs);
+            } else if (cs instanceof XCellStyle xcs) {
+                XCellStyle.set((XSSFCell) c, xcs);
+            } else if (cs instanceof DataFormatOnlyCellStyle dfcs) {
                 CellStyle csx = getCellStyle(c);
-                csx.setDataFormat(dataFormatMap.get(((DataFormatOnlyCellStyle) cs).getDataType()));
+                csx.setDataFormat(dataFormatMap.get(dfcs.getDataType()));
                 SSCellStyle.set(c, (SSCellStyle) csx);
-            } else {
-                SSCellStyle.set(c, (SSCellStyle) cs);
+            } else if (cs instanceof SSCellStyle scs) {
+                SSCellStyle.set(c, scs);
             }
         }
     }
@@ -1217,22 +1204,14 @@ public final class Workbook {
                         cstyles.put(HEADER + i, defaultStyles.get(HEADER_STYLE));
                 }
                 for (int i = 0; i < data.columns(); i++) {
-                    switch (data.getColumnType(i)) {
-                        case Boolean:
-                            cstyles.put(COLUMN + i, defaultStyles.get(BOOLEAN_STYLE));
-                            break;
-                        case DateTime:
-                            cstyles.put(COLUMN + i, defaultStyles.get(DATETIME_STYLE));
-                            break;
-                        case Numeric:
-                            cstyles.put(COLUMN + i, defaultStyles.get(NUMERIC_STYLE));
-                            break;
-                        case String:
-                            cstyles.put(COLUMN + i, defaultStyles.get(STRING_STYLE));
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unknown column type detected!");
-                    }
+                    String styleName = switch (data.getColumnType(i)) {
+                        case Boolean -> BOOLEAN_STYLE;
+                        case DateTime -> DATETIME_STYLE;
+                        case Numeric -> NUMERIC_STYLE;
+                        case String -> STRING_STYLE;
+                        default -> throw new IllegalArgumentException("Unknown column type detected!");
+                    };
+                    cstyles.put(COLUMN + i, defaultStyles.get(styleName));
                 }
                 break;
             case DATATYPE:

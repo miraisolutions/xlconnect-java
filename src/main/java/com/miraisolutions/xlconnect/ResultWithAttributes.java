@@ -54,7 +54,7 @@ public class ResultWithAttributes<T> {
     }
 
     public String[] getAttributeNames() {
-        return attributes.keySet().toArray(new String[0]);
+        return attributes.keySet().toArray(String[]::new);
     }
 
     public String[] getAttributeValue(String attributeName) {
